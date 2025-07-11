@@ -1,0 +1,183 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# React/Vite
+
+# Vite React TypeScript
+
+You are an expert in TypeScript, Vite React Router, React, Material UI, Tanstack react-query.
+
+# Development Philosophy
+
+-   Write clean, maintainable, and scalable code
+-   Follow SOLID principles
+-   Prefer functional and declarative programming patterns over imperative
+-   Emphasize type safety and static analysis
+-   Practice component-driven development
+
+# Key Principles
+
+-   Write concise, technical TypeScript code with accurate examples.
+-   Use functional and declarative programming patterns; avoid classes.
+-   Prefer iteration and modularization over code duplication.
+-   Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+-   Structure files: exported component, subcomponents, helpers, static content, types.
+-   Extract react query hooks to another file in /hooks directory.
+-   Use Recoil for state management.
+-   Use Ramda for functional programming.
+
+# Naming Conventions
+
+-   Use lowercase with dashes for directories (e.g., component/auth-wizard).
+-   Favor named exports for components.
+
+# Component Architecture
+
+-   Use functional components with TypeScript interfaces
+-   Define components using the function keyword
+-   Extract reusable logic into custom hooks
+-   Implement proper component composition
+-   Use React.memo() strategically for performance
+-   Implement proper cleanup in useEffect hooks
+
+# TypeScript Usage
+
+-   Use TypeScript for all code; prefer interfaces over types.
+-   Avoid enums; use maps instead.
+-   Use functional components with TypeScript interfaces.
+-   Define clear interfaces for component props, state, and Redux state structure.
+-   Use type guards to handle potential undefined or null values safely.
+-   Apply generics to functions, actions, and slices where type flexibility is needed.
+-   Utilize TypeScript utility types (Partial, Pick, Omit) for cleaner and reusable code.
+-   Prefer interface over type for defining object structures, especially when extending.
+-   Use mapped types for creating variations of existing types dynamically.
+
+# Syntax and Formatting
+
+-   Use the "function" keyword for pure functions.
+-   Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
+-   Use declarative TSX.
+
+# Styling Guidelines
+
+-   Use Material UI for components and styling.
+-   Use Material UI for utility-first, maintainable styling.
+-   Implement Each styled component separated from original component with same name.(button.tsx , button.module.scss)
+-   Ensure color contrast ratios meet accessibility standards for readability.
+-   Maintain consistent spacing values to establish visual harmony.
+-   Define CSS variables for theme colors and spacing to support easy theming and maintainability.
+-   Apply composition patterns to create modular, reusable components.
+
+# Performance Optimization
+
+-   Use dynamic loading for non-critical components.
+-   Optimize images: use WebP format, include size data, implement lazy loading.
+-   Use useCallback for memoizing callback functions
+-   Implement useMemo for expensive computations
+-   Avoid inline function definitions in JSX
+-   Implement code splitting using dynamic imports
+-   Implement proper key props in lists (avoid using index as key)
+
+# Error Boundaries
+
+-   Use error boundaries to catch and handle errors in React component trees gracefully.
+-   Log caught errors to an external service (e.g., Sentry) for tracking and debugging.
+-   Design user-friendly fallback UIs to display when errors occur, keeping users informed without breaking the app.
+
+# Key Conventions
+
+-   Optimize React renders.
+-   Optimize Web Vitals (LCP, CLS, FID).
+
+# Documentation
+
+-   Use JSDoc for documentation
+-   Document all public functions, classes, methods, and interfaces
+-   Add examples when appropriate
+-   Use complete sentences with proper punctuation
+-   Keep descriptions clear and concise
+-   Use proper markdown formatting
+-   Use proper code blocks
+-   Use proper links
+-   Use proper headings
+-   Use proper lists
+
+# Important
+
+-   Repeat the most important instructions in the beginning of the response.
+-   If you are unsure of something, ask for clarification.
+
+# Comments
+
+-   Make sure to Always add comments to the code.
+-   Do not delete existing comments unless they are no longer needed.
+-   Use comments to explain why behind the code in more complex functions.
+
+# Project Structure
+
+Most of the code lives in the `src` folder and looks something like this:
+
+```sh
+src
+|
++-- app               # application layer containing:
+|   |                 # this folder might differ based on the meta framework used
+|   +-- routes        # application routes / can also be pages
+|   +-- app.tsx       # main application component
+|   +-- provider.tsx  # application provider that wraps the entire application with different global providers - this might also differ based on meta framework used
+|   +-- router.tsx    # application router configuration
++-- assets            # assets folder can contain all the static files such as images, fonts, etc.
+|
++-- components        # shared components used across the entire application
+|
++-- config            # global configurations, exported env variables etc.
+|
++-- features          # feature based modules
+|
++-- hooks             # shared hooks used across the entire application
+|
++-- lib               # reusable libraries preconfigured for the application
+|
++-- stores            # global state stores
+|
++-- testing           # test utilities and mocks
+|
++-- types             # shared types used across the application
+|
++-- utils             # shared utility functions
+```
+
+For easy scalability and maintenance, organize most of the code within the features folder. Each feature folder should contain code specific to that feature, keeping things neatly separated. This approach helps prevent mixing feature-related code with shared components, making it simpler to manage and maintain the codebase compared to having many files in a flat folder structure. By adopting this method, you can enhance collaboration, readability, and scalability in the application's architecture.
+
+A feature could have the following structure:
+
+```sh
+src/features/awesome-feature
+|
++-- api         # exported API request declarations and api hooks related to a specific feature
+|
++-- assets      # assets folder can contain all the static files for a specific feature
+|
++-- components  # components scoped to a specific feature
+|
++-- hooks       # hooks scoped to a specific feature
+|
++-- stores      # state stores for a specific feature
+|
++-- types       # typescript types used within the feature
+|
++-- utils       # utility functions for a specific feature
+```
+
+NOTE: You don't need all of these folders for every feature. Only include the ones that are necessary for the feature.
+
+In some cases it might be more practical to keep all API calls outside of the features folders in a dedicated `api` folder where all API calls are defined. This can be useful if you have a lot of shared API calls between features.
+
+In the past, it was recommended to use barrel files to export all the files from a feature. However, it can cause issues for Vite to do tree shaking and can lead to performance issues. Therefore, it is recommended to import the files directly.
+
+It might not be a good idea to import across the features. Instead, compose different features at the application level. This way, you can ensure that each feature is independent which makes the codebase less convoluted.
+
+By following these practices, you can ensure that your codebase is well-organized, scalable, and maintainable. This will help you and your team to work more efficiently and effectively on the project.
+This approach can also make it easier to apply similar architecture to apps built with Next.js, Remix or React Native.

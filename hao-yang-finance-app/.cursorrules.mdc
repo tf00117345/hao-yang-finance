@@ -1,0 +1,347 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 皓揚財務追蹤系統 - 專案說明文件
+
+## 專案概述
+
+皓揚財務追蹤系統是一個整合了貨運單、客戶、司機和發票管理的財務追蹤應用程式。系統主要協助貨運公司管理託運單資料、開立發票，以及追蹤收款狀態。
+
+### 系統特色
+- **託運單管理**：完整的託運單生命週期管理
+- **發票開立**：自動化發票計算與開立流程
+- **付款追蹤**：收款狀態管理與追蹤
+- **基礎資料管理**：公司、司機資料的統一管理
+
+## 技術棧
+
+### 前端技術
+- **React 18** - 使用 Functional Components + Hooks
+- **TypeScript** - 型別安全的開發環境
+- **Vite** - 快速的構建工具
+- **Material-UI** - UI 組件庫
+- **SCSS/SASS** - 樣式預處理器
+- **TanStack Query** - 資料狀態管理
+- **React Router** - 路由管理
+- **AG Grid** - 表格組件（支援 Virtual Scrolling）
+
+### 後端技術
+- **.NET Core API** - RESTful API 服務
+- **PostgreSQL** - 主要資料庫
+- **UUID** - 統一的主鍵格式
+
+### 開發工具
+- **ESLint** - 代碼品質檢查
+- **Prettier** - 代碼格式化
+- **Husky** - Git hooks 管理
+- **Conventional Commits** - 統一的 commit 訊息格式
+
+## 系統架構
+
+### 核心模組
+
+#### 1. 託運單管理模組 (Waybill Management)
+- **責任範圍**：託運單的 CRUD 操作、狀態管理
+- **主要功能**：
+  - 託運單新增、編輯、刪除
+  - 狀態流轉管理 (PENDING → INVOICED → PENDING)
+  - 標記不需開發票功能
+  - 分組顯示與篩選
+
+#### 2. 發票管理模組 (Invoice Management)
+- **責任範圍**：發票開立、付款追蹤
+- **主要功能**：
+  - 發票開立與計算
+  - 付款狀態管理
+  - 發票作廢與刪除
+  - 篩選與查詢
+
+#### 3. 基礎資料管理模組 (Master Data)
+- **責任範圍**：公司、司機資料管理
+- **主要功能**：
+  - 公司資料管理
+  - 司機資料管理
+  - 即時新增功能
+
+## 資料庫設計
+
+### 核心資料表
+
+#### waybill (託運單)
+```sql
+CREATE TABLE waybill (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    waybill_number VARCHAR(50) NOT NULL,
+    date DATE NOT NULL,
+    item VARCHAR(100) NOT NULL,
+    tonnage NUMERIC(8,2) NOT NULL,
+    company_name VARCHAR(100) NOT NULL,
+    company_id UUID,
+    working_time_start TIME NOT NULL,
+    working_time_end TIME NOT NULL,
+    fee NUMERIC(12,2) NOT NULL,
+    driver_name VARCHAR(100) NOT NULL,
+    driver_id UUID,
+    plate_number VARCHAR(10) NOT NULL,
+    notes TEXT,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP NOT NULL DEFAULT now()
+);
+```
+
+#### invoice (發票)
+```sql
+CREATE TABLE invoice (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    invoice_number VARCHAR(50) NOT NULL UNIQUE,
+    date DATE NOT NULL,
+    company_id UUID NOT NULL,
+    company_name VARCHAR(100) NOT NULL,
+    subtotal NUMERIC(12,2) NOT NULL,
+    tax_rate NUMERIC(5,4) NOT NULL DEFAULT 0.05,
+    extra_expenses_include_tax BOOLEAN NOT NULL DEFAULT false,
+    tax NUMERIC(12,2) NOT NULL,
+    total NUMERIC(12,2) NOT NULL,
+    status VARCHAR(10) NOT NULL,
+    payment_method VARCHAR(20),
+    payment_note TEXT,
+    notes TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP NOT NULL DEFAULT now(),
+    paid_at TIMESTAMP
+);
+```
+
+#### invoice_waybill (發票託運單關聯)
+```sql
+CREATE TABLE invoice_waybill (
+    id UUID PRIMARY KEY,
+    invoice_id UUID NOT NULL,
+    waybill_id UUID NOT NULL
+);
+```
+
+#### invoice_extra_expense (發票額外費用)
+```sql
+CREATE TABLE invoice_extra_expense (
+    id UUID PRIMARY KEY,
+    invoice_id UUID NOT NULL,
+    waybill_extra_id UUID NOT NULL
+);
+```
+
+## API 規格
+
+### 託運單管理 API
+
+#### 基本 CRUD
+- `GET /waybills` - 查詢託運單列表
+- `POST /waybills` - 新增託運單
+- `PUT /waybills/{id}` - 更新託運單
+- `DELETE /waybills/{id}` - 刪除託運單
+
+#### 狀態管理
+- `PUT /waybills/{id}/no-invoice` - 標記為不需開發票
+- `PUT /waybills/{id}/restore` - 還原至待開發票狀態
+
+### 發票管理 API
+
+#### 基本 CRUD
+- `GET /invoices` - 查詢發票列表
+- `POST /invoices` - 開立發票
+- `PUT /invoices/{id}` - 修改發票
+- `DELETE /invoices/{id}` - 刪除發票
+
+#### 狀態管理
+- `POST /invoices/{id}/void` - 作廢發票
+- `POST /invoices/{id}/mark-paid` - 標記已收款
+
+### 基礎資料管理 API
+
+#### 公司管理
+- `GET /companies` - 查詢公司列表
+- `POST /companies` - 新增公司
+- `PUT /companies/{id}` - 更新公司
+- `DELETE /companies/{id}` - 刪除公司
+
+#### 司機管理
+- `GET /drivers` - 查詢司機列表
+- `POST /drivers` - 新增司機
+- `PUT /drivers/{id}` - 更新司機
+- `DELETE /drivers/{id}` - 刪除司機
+
+## 狀態管理
+
+### 託運單狀態流轉
+
+```mermaid
+graph TD
+    A[PENDING<br/>待開發票] --> B[INVOICED<br/>已開發票]
+    A --> C[NO_INVOICE_NEEDED<br/>不需開發票]
+    B --> A
+    C --> A
+```
+
+#### 狀態說明
+- **PENDING**: 尚未開立發票，可編輯、刪除、選取開立發票
+- **INVOICED**: 已開立發票，不可編輯、刪除
+- **NO_INVOICE_NEEDED**: 不需開立發票，不可編輯、刪除
+
+### 發票狀態流轉
+
+```mermaid
+graph TD
+    A[issued<br/>已開立] --> B[paid<br/>已收款]
+    A --> C[void<br/>已作廢]
+    B --> C
+```
+
+#### 狀態說明
+- **issued**: 已開立，待收款
+- **paid**: 已收款
+- **void**: 已作廢
+
+## 前端規格
+
+### 組件架構
+
+#### 核心組件
+- `WaybillPage` - 託運單管理頁面
+- `WaybillForm` - 託運單表單
+- `WaybillGrid` - 託運單列表
+- `FinancePage` - 發票管理頁面
+- `InvoicedTable` - 已開發票列表
+- `UninvoicedTable` - 未開發票列表
+- `InvoiceDialog` - 發票開立對話框
+
+#### 共用組件
+- `AgGridTable` - 表格組件
+- `BaseTextInput` - 文字輸入組件
+- `BaseNumber` - 數字輸入組件
+- `BaseCheckbox` - 勾選框組件
+- `MessageAlert` - 訊息提示組件
+- `MonthPicker` - 月份選擇器
+
+### 資料處理
+
+#### 狀態管理
+- 使用 TanStack Query 管理伺服器狀態
+- 使用 Jotai 管理全域狀態
+- 不使用分頁，採用 Virtual Scrolling
+
+#### 表單驗證
+- 必填欄位驗證
+- 數值格式驗證
+- 日期格式驗證
+- 唯一性驗證（發票編號）
+
+## 業務邏輯
+
+### 發票計算邏輯
+
+#### 金額計算
+1. **小計** = 所有託運單金額 + 選定的額外費用
+2. **稅額計算**：
+   - 若勾選「額外費用包含稅率」：稅額 = (託運單金額 + 選定額外費用) × 稅率
+   - 若未勾選：稅額 = 託運單金額 × 稅率
+3. **總計** = 小計 + 稅額
+
+#### 額外費用處理
+- 每筆額外費用提供勾選框
+- 使用者可選擇性加入發票
+- 支援稅率計算選項
+
+### 資料一致性
+
+#### 交易邏輯
+- 發票開立時，託運單狀態自動轉為 `INVOICED`
+- 發票刪除/作廢時，託運單狀態自動還原為 `PENDING`
+- 所有狀態變更必須為原子操作
+
+#### 防呆機制
+- 非 PENDING 狀態的託運單不可編輯/刪除
+- 發票編號唯一性檢查
+- 二次確認刪除/作廢操作
+
+## 開發規範
+
+### 代碼風格
+- 使用 Functional Components + Hooks
+- 遵循 Conventional Commits 規範
+- ESLint + Prettier 統一代碼格式
+- TypeScript 嚴格模式
+
+### 檔案組織
+```
+src/
+├── components/          # 共用組件
+├── features/           # 功能模組
+│   ├── Waybill/       # 託運單管理
+│   ├── Finance/       # 發票管理
+│   └── Settings/      # 基礎資料管理
+├── hooks/             # 自定義 Hooks
+├── stores/            # 狀態管理
+├── types/             # 型別定義
+└── utils/             # 工具函數
+```
+
+### 命名規範
+- 組件使用 PascalCase
+- 函數使用 camelCase
+- 常數使用 UPPER_SNAKE_CASE
+- 檔案名稱使用 kebab-case
+
+## 測試策略
+
+### 單元測試
+- 使用 Jest + React Testing Library
+- 測試組件邏輯
+- 測試自定義 Hooks
+- 測試工具函數
+
+### 整合測試
+- API 整合測試
+- 使用者流程測試
+- 狀態管理測試
+
+## 部署規範
+
+### 環境配置
+- 開發環境：`npm run dev`
+- 測試環境：`npm run build:test`
+- 生產環境：`npm run build`
+
+### 建構最佳化
+- 使用 Vite 的 Code Splitting
+- 懶載入路由組件
+- 圖片資源最佳化
+- Bundle 分析與最佳化
+
+## 注意事項
+
+### 業務規則
+1. 託運單號可重複，不檢查唯一性
+2. 發票編號必須唯一
+3. 只有 PENDING 狀態的託運單可開立發票
+4. 已收款發票被作廢時，付款記錄會保留
+5. 不使用資料庫外鍵約束，使用商業邏輯控制
+
+### 效能考量
+1. 使用 Virtual Scrolling 處理大量資料
+2. 使用 TanStack Query 的快取機制
+3. 避免不必要的重新渲染
+4. 使用 useMemo 和 useCallback 最佳化
+
+### 安全考量
+1. 所有 API 操作需要驗證
+2. 敏感操作需要二次確認
+3. 輸入資料需要完整驗證
+4. 錯誤處理需要完善
+
+---
+
+> 此文件會隨著專案發展持續更新，請保持與最新規格的同步。
+

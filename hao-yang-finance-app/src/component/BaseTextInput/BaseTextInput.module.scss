@@ -1,0 +1,27 @@
+.text-input {
+    font: inherit;
+    padding: 0 8px 0 0;
+    min-height: 1rem;
+    line-height: 1rem;
+    color: inherit;
+    border: 0;
+    outline: 0;
+    width: 100%;
+    background-color: transparent;
+}
+
+.container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.span {
+    font: inherit;
+    min-height: 1rem;
+    line-height: 1rem;
+    border: 0;
+    outline: 0;
+    background-color: transparent;
+    white-space: nowrap;
+}

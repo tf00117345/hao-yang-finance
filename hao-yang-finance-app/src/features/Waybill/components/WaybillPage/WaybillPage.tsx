@@ -1,0 +1,162 @@
+import AddIcon from '@mui/icons-material/Add';
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack } from '@mui/material';
+
+import { endOfMonth, startOfMonth } from 'date-fns';
+import { useState } from 'react';
+import MonthPicker from '../../../../component/MonthPicker/MonthPicker';
+import { useCompaniesQuery, useDriversQuery, useInsertCompanyMutation } from '../../../Settings/api/api';
+import { Company } from '../../../Settings/types/company';
+import { Driver } from '../../../Settings/types/driver';
+
+import { Waybill, WaybillFormData } from '../../types/waybill.types';
+import WaybillForm from '../WaybillForm/WaybillForm';
+import { WaybillGrid } from '../WaybillGrid/WaybillGrid';
+import { useWaybillsQuery } from '../../api/query';
+import { useDeleteWaybillMutation, useInsertWaybillMutation, useUpdateWaybillMutation } from '../../api/mutation';
+import { queryClient } from '../../../../App';
+import { getWaybills } from '../../api/api';
+
+const defaultWaybill: Waybill = {
+	id: '',
+	waybillNumber: '',
+	date: new Date().toISOString().split('T')[0],
+	item: '',
+	customerName: '',
+	customerId: '',
+	loadingLocations: [{ from: '車廠', to: '' }],
+	workingTime: { start: '', end: '' },
+	fee: 5000,
+	driverName: '黃天賜',
+	driverId: '1',
+	plateNumber: '11',
+	notes: '',
+	extraExpenses: [],
+	isInvoiceIssued: false,
+};
+
+export default function WaybillPage() {
+	const [dateRange, setDateRange] = useState<{
+		start: Date;
+		end: Date;
+	}>({
+		start: startOfMonth(new Date()),
+		end: endOfMonth(new Date()),
+	});
+
+	const [selectedWaybill, setSelectedWaybill] = useState<Waybill | null>(null);
+	const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+
+	const { data: waybills, isPending } = useWaybillsQuery(dateRange, selectedDriver?.id);
+	const { mutate: insertWaybill } = useInsertWaybillMutation();
+	const { mutate: deleteWaybill } = useDeleteWaybillMutation();
+	const { mutate: updateWaybill } = useUpdateWaybillMutation();
+
+	const { data: companies = [] } = useCompaniesQuery();
+	const { data: drivers = [] } = useDriversQuery();
+	const { mutate: insertCompany } = useInsertCompanyMutation();
+
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [deleteId, setDeleteId] = useState<string | null>(null);
+
+	const handleSelectWaybill = (waybill: Waybill) => {
+		setSelectedWaybill(waybill);
+	};
+
+	const handleDelete = (id: string) => {
+		setDeleteId(id);
+		setDeleteDialogOpen(true);
+	};
+
+	const confirmDelete = () => {
+		if (deleteId) {
+			deleteWaybill(deleteId);
+			setDeleteDialogOpen(false);
+			setDeleteId(null);
+			setSelectedWaybill(defaultWaybill);
+		}
+	};
+
+	const handleSave = (formData: WaybillFormData) => {
+		if (formData.id) {
+			updateWaybill({ waybillId: formData.id, waybill: formData });
+		} else {
+			const newWaybill = {
+				...formData,
+				id: crypto.randomUUID(),
+			};
+			insertWaybill(newWaybill);
+		}
+	};
+
+	const handleDateChange = (start: Date, end: Date) => {
+		setDateRange({ start, end });
+	};
+
+	const handleDriverChange = (driver: Driver | null) => {
+		setSelectedDriver(driver);
+	};
+
+	const handleAddCompany = (company: Company) => {
+		insertCompany(company);
+	};
+
+	return (
+		<>
+			{/* 主頁面 */}
+			<Stack direction="row" spacing={1} sx={{ height: '100%', width: '100%', overflow: 'hidden' }}>
+				<Stack direction="column" spacing={1} sx={{ flex: '1 1 auto', width: '100%', height: '100%' }}>
+					<Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+						<Button
+							variant="contained"
+							color="primary"
+							onClick={() => setSelectedWaybill({ ...defaultWaybill })}
+							sx={{ mb: 2 }}
+							startIcon={<AddIcon />}
+						>
+							新增託運單
+						</Button>
+					</Stack>
+					<MonthPicker dateRange={dateRange} onDateChange={handleDateChange} />
+					<Stack direction="row" spacing={1}>
+						<Button
+							variant={selectedDriver === null ? 'contained' : 'outlined'}
+							color="primary"
+							onClick={() => handleDriverChange(null)}
+						>
+							全部
+						</Button>
+						{drivers.map((driver) => (
+							<Button
+								key={driver.id}
+								variant={selectedDriver?.id === driver.id ? 'contained' : 'outlined'}
+								color="primary"
+								onClick={() => handleDriverChange(driver)}
+							>
+								{driver.name}
+							</Button>
+						))}
+					</Stack>
+					<WaybillGrid waybills={waybills || []} onDelete={handleDelete} onSelect={handleSelectWaybill} />
+				</Stack>
+				<WaybillForm
+					companies={companies}
+					drivers={drivers}
+					onSave={handleSave}
+					onAddCompany={handleAddCompany}
+					initialData={selectedWaybill}
+				/>
+			</Stack>
+			{/* 刪除確認視窗 */}
+			<Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+				<DialogTitle>確認刪除</DialogTitle>
+				<DialogContent>確定要刪除這筆託運單嗎？</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setDeleteDialogOpen(false)}>取消</Button>
+					<Button onClick={confirmDelete} color="error">
+						刪除
+					</Button>
+				</DialogActions>
+			</Dialog>
+		</>
+	);
+}

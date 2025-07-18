@@ -9,9 +9,12 @@ import { Company } from '../../types/company';
 const initialFormData: Company = {
 	id: '',
 	name: '',
-	taxNumber: '',
+	taxId: '',
 	address: '',
 	phone: [],
+	isActive: true,
+	createdAt: new Date().toISOString(),
+	updatedAt: new Date().toISOString(),
 };
 
 interface CompanyFormProps {
@@ -83,7 +86,7 @@ function CompanyForm({ open, onClose, onSubmit, initialData, isEditing = false, 
 							error={!!errors.name}
 							helperText={errors.name?.message}
 						/>
-						<TextField fullWidth label="統一編號" {...register('taxNumber')} />
+						<TextField fullWidth label="統一編號" {...register('taxId')} />
 						<TextField fullWidth label="地址" {...register('address')} />
 
 						{/* 電話號碼陣列輸入區 */}

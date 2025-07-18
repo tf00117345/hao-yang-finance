@@ -1,8 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 
 export const axiosInstance: AxiosInstance = axios.create({
-	// TODO: 根據實際需求設定 baseURL
-	baseURL: 'http://localhost:3000/api',
+	baseURL: 'https://localhost:7034/api',
 	headers: {
 		'Content-Type': 'application/json',
 	},

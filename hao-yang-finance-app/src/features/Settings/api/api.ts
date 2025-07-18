@@ -1,16 +1,12 @@
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { queryClient } from '../../../App';
-import { companiesData } from '../constant/company-data';
-import { driversData } from '../constant/drivers-data';
-import { Company } from '../types/company';
-import { Driver } from '../types/driver';
+import { axiosInstance } from '../../../utils/axios-instance';
+import { Company, CreateCompanyDto, UpdateCompanyDto } from '../types/company';
+import { Driver, CreateDriverDto, UpdateDriverDto } from '../types/driver';
 
-const getCompanies = (): Promise<Company[]> => {
-	return new Promise((resolve) => {
-		setTimeout(() => {
-			resolve(companiesData);
-		}, 100);
-	});
+const getCompanies = async (): Promise<Company[]> => {
+	const response = await axiosInstance.get<Company[]>('/company');
+	return response.data;
 };
 
 export const useCompaniesQuery = () => {
@@ -20,35 +16,20 @@ export const useCompaniesQuery = () => {
 	});
 };
 
-const insertCompany = async (company: Company): Promise<Company> => {
-	return new Promise((resolve) => {
-		setTimeout(() => {
-			queryClient.setQueryData(['companies'], (old: Company[]) => [...old, company]);
-			resolve(company);
-		}, 100);
-	});
+const insertCompany = async (company: CreateCompanyDto): Promise<Company> => {
+	const response = await axiosInstance.post<Company>('/company', company);
+	queryClient.invalidateQueries({ queryKey: ['companies'] });
+	return response.data;
 };
 
 const deleteCompany = async (companyId: string): Promise<void> => {
-	return new Promise((resolve) => {
-		setTimeout(() => {
-			queryClient.setQueryData(['companies'], (old: Company[]) =>
-				old.filter((company) => company.id !== companyId),
-			);
-			resolve();
-		}, 100);
-	});
+	await axiosInstance.delete(`/company/${companyId}`);
+	queryClient.invalidateQueries({ queryKey: ['companies'] });
 };
 
-const updateCompany = async (company: Company): Promise<Company> => {
-	return new Promise((resolve) => {
-		setTimeout(() => {
-			queryClient.setQueryData(['companies'], (old: Company[]) =>
-				old.map((c) => (c.id === company.id ? company : c)),
-			);
-			resolve(company);
-		}, 100);
-	});
+const updateCompany = async (companyId: string, company: UpdateCompanyDto): Promise<void> => {
+	await axiosInstance.put(`/company/${companyId}`, company);
+	queryClient.invalidateQueries({ queryKey: ['companies'] });
 };
 
 export const useDeleteCompanyMutation = () => {
@@ -65,43 +46,29 @@ export const useInsertCompanyMutation = () => {
 
 export const useUpdateCompanyMutation = () => {
 	return useMutation({
-		mutationFn: updateCompany,
+		mutationFn: ({ id, company }: { id: string; company: UpdateCompanyDto }) => updateCompany(id, company),
 	});
 };
 
-const getDrivers = (): Promise<Driver[]> => {
-	return new Promise((resolve) => {
-		setTimeout(() => {
-			resolve(driversData);
-		}, 100);
-	});
+const getDrivers = async (): Promise<Driver[]> => {
+	const response = await axiosInstance.get<Driver[]>('/driver');
+	return response.data;
 };
 
-const insertDriver = async (driver: Driver): Promise<Driver> => {
-	return new Promise((resolve) => {
-		setTimeout(() => {
-			queryClient.setQueryData(['drivers'], (old: Driver[]) => [...old, driver]);
-			resolve(driver);
-		}, 100);
-	});
+const insertDriver = async (driver: CreateDriverDto): Promise<Driver> => {
+	const response = await axiosInstance.post<Driver>('/driver', driver);
+	queryClient.invalidateQueries({ queryKey: ['drivers'] });
+	return response.data;
 };
 
-const updateDriver = async (driver: Driver): Promise<Driver> => {
-	return new Promise((resolve) => {
-		setTimeout(() => {
-			queryClient.setQueryData(['drivers'], (old: Driver[]) => old.map((d) => (d.id === driver.id ? driver : d)));
-			resolve(driver);
-		}, 100);
-	});
+const updateDriver = async (driverId: string, driver: UpdateDriverDto): Promise<void> => {
+	await axiosInstance.put(`/driver/${driverId}`, driver);
+	queryClient.invalidateQueries({ queryKey: ['drivers'] });
 };
 
 const deleteDriver = async (driverId: string): Promise<void> => {
-	return new Promise((resolve) => {
-		setTimeout(() => {
-			queryClient.setQueryData(['drivers'], (old: Driver[]) => old.filter((driver) => driver.id !== driverId));
-			resolve();
-		}, 100);
-	});
+	await axiosInstance.delete(`/driver/${driverId}`);
+	queryClient.invalidateQueries({ queryKey: ['drivers'] });
 };
 
 export const useDriversQuery = () => {
@@ -119,7 +86,7 @@ export const useInsertDriverMutation = () => {
 
 export const useUpdateDriverMutation = () => {
 	return useMutation({
-		mutationFn: updateDriver,
+		mutationFn: ({ id, driver }: { id: string; driver: UpdateDriverDto }) => updateDriver(id, driver),
 	});
 };
 

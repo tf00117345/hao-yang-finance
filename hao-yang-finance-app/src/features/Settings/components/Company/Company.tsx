@@ -47,7 +47,7 @@ export function Company() {
 				filter: true,
 			},
 			{
-				field: 'taxNumber',
+				field: 'taxId',
 				headerName: '統一編號',
 				flex: 1,
 				sortable: true,
@@ -117,7 +117,7 @@ export function Company() {
 	// 處理表單提交
 	const handleSubmit = (data: CompanyData) => {
 		if (isEditing) {
-			updateCompany(data);
+			updateCompany({ id: data.id, company: data });
 		} else {
 			insertCompany(data);
 		}

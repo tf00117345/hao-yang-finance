@@ -1,10 +1,12 @@
+import { WaybillStatus } from './waybill-status.types';
+
 export interface Waybill {
 	id: string;
 	waybillNumber: string;
 	date: string;
 	item: string;
-	customerName: string;
-	customerId: string;
+	companyName: string;
+	companyId: string;
 	loadingLocations: LoadingLocation[];
 	workingTime: {
 		start: string;
@@ -16,13 +18,13 @@ export interface Waybill {
 	plateNumber: string;
 	notes: string;
 	extraExpenses: ExtraExpense[];
-	isInvoiceIssued: boolean;
+	status: WaybillStatus; // 替代 isInvoiceIssued
 	invoiceId?: string;
 }
 
-export interface WaybillFormData extends Omit<Waybill, 'id' | 'customerId'> {
+export interface WaybillFormData extends Omit<Waybill, 'id' | 'companyId'> {
 	id?: string;
-	customerId?: string;
+	companyId?: string;
 }
 
 export interface LoadingLocation {

@@ -1,8 +1,31 @@
 export interface Company {
 	id: string;
 	name: string;
-	taxNumber?: string;
+	taxId?: string;
+	contactPerson?: string;
+	phone: string[];
 	address?: string;
-	phone: string[]; // 移除可選標記，確保總是陣列
 	email?: string;
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface CreateCompanyDto {
+	name: string;
+	taxId?: string;
+	contactPerson?: string;
+	phone: string[];
+	address?: string;
+	email?: string;
+}
+
+export interface UpdateCompanyDto {
+	name: string;
+	taxId?: string;
+	contactPerson?: string;
+	phone: string[];
+	address?: string;
+	email?: string;
+	isActive: boolean;
 }

@@ -14,6 +14,7 @@ alwaysApply: true
   - Prefer LINQ and lambda expressions for collection operations.
   - Use descriptive variable and method names (e.g., 'IsUserSignedIn', 'CalculateTotal').
   - Structure files according to .NET conventions (Controllers, Models, Services, etc.).
+  - Do not use Minimal API
 
   ## Naming Conventions
   - Use PascalCase for class names, method names, and public members.

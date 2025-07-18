@@ -154,7 +154,7 @@ export function InvoiceDialog({ open, onClose, waybillList, onCreate }: InvoiceD
 						>
 							{companiesData.map((company) => (
 								<MenuItem key={company.id} value={company.id}>
-									{company.name} ({company.taxNumber})
+									{company.name} ({company.taxId})
 								</MenuItem>
 							))}
 						</Select>
@@ -168,7 +168,7 @@ export function InvoiceDialog({ open, onClose, waybillList, onCreate }: InvoiceD
 							{getSelectedCompanyDetails() && (
 								<Stack spacing={1}>
 									<Typography variant="body2">
-										統一編號: {getSelectedCompanyDetails()?.taxNumber}
+										統一編號: {getSelectedCompanyDetails()?.taxId}
 									</Typography>
 									<Typography variant="body2">
 										地址: {getSelectedCompanyDetails()?.address}

@@ -12,6 +12,7 @@ export interface Company {
 }
 
 export interface CreateCompanyDto {
+	id?: string;
 	name: string;
 	taxId?: string;
 	contactPerson?: string;

@@ -23,6 +23,17 @@ namespace hao_yang_finance_api.Models
         [Required]
         public decimal Amount { get; set; }
 
+        // New columns for updated schema
+        [Column("item")]
+        [MaxLength(200)]
+        public string? Item { get; set; }
+
+        [Column("fee")]
+        public decimal? Fee { get; set; }
+
+        [Column("notes")]
+        public string? Notes { get; set; }
+
         [Column("created_at")]
         public string CreatedAt { get; set; } = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
 

@@ -13,16 +13,14 @@ import WaybillForm from '../WaybillForm/WaybillForm';
 import { WaybillGrid } from '../WaybillGrid/WaybillGrid';
 import { useWaybillsQuery } from '../../api/query';
 import { useDeleteWaybillMutation, useInsertWaybillMutation, useUpdateWaybillMutation } from '../../api/mutation';
-import { queryClient } from '../../../../App';
-import { getWaybills } from '../../api/api';
 
 const defaultWaybill: Waybill = {
 	id: '',
 	waybillNumber: '',
 	date: new Date().toISOString().split('T')[0],
 	item: '',
-	customerName: '',
-	customerId: '',
+	companyName: '',
+	companyId: '',
 	loadingLocations: [{ from: '車廠', to: '' }],
 	workingTime: { start: '', end: '' },
 	fee: 5000,
@@ -31,7 +29,8 @@ const defaultWaybill: Waybill = {
 	plateNumber: '11',
 	notes: '',
 	extraExpenses: [],
-	isInvoiceIssued: false,
+	status: 'PENDING',
+	tonnage: 11,
 };
 
 export default function WaybillPage() {

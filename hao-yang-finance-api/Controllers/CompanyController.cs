@@ -91,7 +91,7 @@ namespace hao_yang_finance_api.Controllers
 
             if (existingCompany != null)
             {
-                return Conflict("Company with this name already exists.");
+                return Conflict(new { message = "此公司名稱已存在" });
             }
 
             var company = new Company
@@ -169,7 +169,7 @@ namespace hao_yang_finance_api.Controllers
 
             if (existingCompany != null)
             {
-                return Conflict("Company with this name already exists.");
+                return Conflict(new { message = "此公司名稱已存在" });
             }
 
             company.Name = updateCompanyDto.Name.Trim();
@@ -220,7 +220,7 @@ namespace hao_yang_finance_api.Controllers
 
             if (hasActiveWaybills)
             {
-                return BadRequest("Cannot delete company that is used in waybills. Please set it as inactive instead.");
+                return BadRequest(new { message = "無法刪除已被託運單使用的公司，請改為設定為非活躍狀態" });
             }
 
             // Soft delete - set IsActive to false

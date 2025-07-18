@@ -27,7 +27,7 @@ export function useInvoiceTable(data: Invoice[], onVoidInvoice: (invoiceId: stri
 				enableSorting: false,
 				enableGrouping: false,
 			},
-			invoiceColumnHelper.accessor('customerName', {
+			invoiceColumnHelper.accessor('companyName', {
 				header: '客戶名稱',
 				cell: (info) => info.getValue(),
 			}),

@@ -80,7 +80,7 @@ namespace hao_yang_finance_api.Controllers
 
             if (existingDriver != null)
             {
-                return Conflict("Driver with this name already exists.");
+                return Conflict(new { message = "此司機姓名已存在" });
             }
 
             var driver = new Driver
@@ -129,7 +129,7 @@ namespace hao_yang_finance_api.Controllers
 
             if (existingDriver != null)
             {
-                return Conflict("Driver with this name already exists.");
+                return Conflict(new { message = "此司機姓名已存在" });
             }
 
             driver.Name = updateDriverDto.Name.Trim();
@@ -159,7 +159,7 @@ namespace hao_yang_finance_api.Controllers
 
             if (hasWaybills)
             {
-                return BadRequest("Cannot delete driver that is used in waybills. Please set it as inactive instead.");
+                return BadRequest(new { message = "無法刪除已被託運單使用的司機，請改為設定為非活躍狀態" });
             }
 
             // Soft delete - set IsActive to false

@@ -6,7 +6,15 @@
       "Bash(dotnet run:*)",
       "Bash(del:*)",
       "Bash(rm:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(timeout:*)",
+      "Bash(dir:*)",
+      "Bash(ls:*)",
+      "Bash(dotnet ef:*)",
+      "Bash(sqlite3:*)",
+      "Bash(dotnet --version)",
+      "Bash(csc:*)",
+      "Bash(dotnet tool list:*)"
     ],
     "deny": []
   }

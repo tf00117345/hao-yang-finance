@@ -35,7 +35,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 	const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
 
 	// 未開立發票的 waybill
-	const unInvoicedWaybills = useMemo(() => waybills.filter((b) => !b.isInvoiceIssued), [waybills]);
+	const unInvoicedWaybills = useMemo(() => waybills.filter((b) => b.status === 'PENDING'), [waybills]);
 
 	const { table } = useUninvoicedTable(unInvoicedWaybills);
 
@@ -54,7 +54,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 	// 實際 mock 開立發票
 	function handleCreateInvoice(description: string) {
 		if (selectedWaybills.length === 0) return;
-		const customer = selectedWaybills[0];
+		const company = selectedWaybills[0];
 		const waybillIds = selectedWaybills.map((b) => b.id!).filter(Boolean);
 		const amount = selectedWaybills.reduce(
 			(sum, b) => sum + (b.fee + (b.extraExpenses?.reduce((acc, e) => acc + +e.fee, 0) || 0)) * 1.2,
@@ -63,8 +63,8 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 		const now = new Date().toISOString();
 		const newInvoice: Invoice = {
 			id: `inv-${Date.now()}`,
-			customerId: customer.customerId || '',
-			customerName: customer.customerName,
+			companyId: company.companyId || '',
+			companyName: company.companyName,
 			date: now.slice(0, 10),
 			amount,
 			description,

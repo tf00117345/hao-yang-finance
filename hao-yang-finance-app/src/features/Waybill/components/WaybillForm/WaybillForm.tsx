@@ -4,7 +4,7 @@ import { styled } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { Company } from '../../../Settings/types/company';
+import { Company, CreateCompanyDto } from '../../../Settings/types/company';
 import { Driver } from '../../../Settings/types/driver';
 import CompanyForm from '../../../Settings/components/CompanyForm/CompanyForm';
 import { WaybillFormData } from '../../types/waybill.types';
@@ -115,8 +115,8 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany }: 
 			id: '',
 			date: new Date().toISOString().split('T')[0],
 			item: '',
-			customerName: '',
-			customerId: undefined,
+			companyName: '',
+			companyId: undefined,
 			loadingLocations: [{ from: '', to: '' }],
 			workingTime: {
 				start: '',
@@ -134,7 +134,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany }: 
 		if (initialData) {
 			reset(initialData);
 			// 同時重置 Autocomplete 的 inputValue
-			setInputValue(initialData.customerName || '');
+			setInputValue(initialData.companyName || '');
 		} else {
 			// 如果沒有 initialData，確保 inputValue 也被清空
 			setInputValue('');
@@ -167,8 +167,8 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany }: 
 		// 調用父組件的回調函數
 		onAddCompany(newCompany);
 		// 自動選中新建的公司
-		setValue('customerName', newCompany.name);
-		setValue('customerId', newCompany.id);
+		setValue('companyName', newCompany.name);
+		setValue('companyId', newCompany.id);
 		setInputValue(newCompany.name); // 更新輸入值
 		// 關閉對話框並清除狀態
 		setCompanyFormOpen(false);
@@ -297,28 +297,18 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany }: 
 							<Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
 								<Typography width="50px">噸數：</Typography>
 								<Controller
-									name="plateNumber"
+									name="tonnage"
 									control={control}
 									rules={{ required: '請輸入噸數' }}
 									render={({ field }) => (
-										<Autocomplete
-											options={['11', '17']}
-											value={field.value}
-											onChange={(_, newValue) => {
-												field.onChange(newValue);
-											}}
-											renderInput={(params) => (
-												<StyledTextField
-													{...params}
-													{...field}
-													fullWidth
-													size="small"
-													sx={{ width: '140px' }}
-													error={!!errors.plateNumber}
-													helperText={errors.plateNumber?.message}
-													placeholder="請輸入噸數"
-												/>
-											)}
+										<StyledTextField
+											{...field}
+											fullWidth
+											size="small"
+											sx={{ width: '140px' }}
+											error={!!errors.tonnage}
+											helperText={errors.tonnage?.message}
+											placeholder="請輸入噸數"
 										/>
 									)}
 								/>
@@ -338,7 +328,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany }: 
 							}}
 						>
 							<Controller
-								name="customerName"
+								name="companyName"
 								control={control}
 								rules={{ required: '請輸入貨主名稱' }}
 								render={({ field: { onChange, value, ...field } }) => {
@@ -352,14 +342,16 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany }: 
 
 									// 如果用戶輸入了不在列表中的名稱，添加「新增」選項
 									if (inputValue && !isExistingCompany) {
-										const addNewCompanyOption: Company = {
+										const addNewCompanyOption: CreateCompanyDto = {
 											id: 'ADD_NEW_COMPANY',
 											name: `新增 ${inputValue}`,
-											taxNumber: '',
+											taxId: '',
 											address: '',
 											phone: [],
+											contactPerson: '',
+											email: '',
 										};
-										options.push(addNewCompanyOption);
+										options.push(addNewCompanyOption as unknown as Company);
 									}
 
 									return (
@@ -386,12 +378,12 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany }: 
 													}
 													// 選擇了現有公司
 													onChange(newValue.name);
-													setValue('customerId', newValue.id);
+													setValue('companyId', newValue.id);
 													setInputValue(newValue.name);
 												} else {
 													// 輸入了自定義值
 													onChange(newValue || '');
-													setValue('customerId', undefined);
+													setValue('companyId', undefined);
 													setInputValue(newValue || '');
 												}
 											}}
@@ -401,8 +393,8 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany }: 
 													{...field}
 													fullWidth
 													size="small"
-													error={!!errors.customerName}
-													helperText={errors.customerName?.message}
+													error={!!errors.companyName}
+													helperText={errors.companyName?.message}
 													placeholder="請輸入貨主名稱"
 												/>
 											)}

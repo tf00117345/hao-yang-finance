@@ -49,10 +49,10 @@ export function InvoiceDialog({ open, onClose, waybillList, onCreate }: InvoiceD
 			const firstRow = waybillList[0];
 			if (firstRow) {
 				let matchedCompanyId = '';
-				if (firstRow.customerId) {
-					matchedCompanyId = firstRow.customerId;
-				} else if (firstRow.customerName) {
-					const found = companiesData.find((c) => c.name === firstRow.customerName);
+				if (firstRow.companyId) {
+					matchedCompanyId = firstRow.companyId;
+				} else if (firstRow.companyName) {
+					const found = companiesData.find((c) => c.name === firstRow.companyName);
 					if (found) matchedCompanyId = found.id;
 				}
 				if (matchedCompanyId) {
@@ -231,7 +231,7 @@ export function InvoiceDialog({ open, onClose, waybillList, onCreate }: InvoiceD
 										return (
 											<>
 												<TableRow key={row.id}>
-													<TableCell>{row.customerName}</TableCell>
+													<TableCell>{row.companyName}</TableCell>
 													<TableCell>{row.date}</TableCell>
 													<TableCell align="right">{row.fee}</TableCell>
 													<TableCell align="right">

@@ -9,6 +9,7 @@ import NavigationAppBar from './component/NavigationAppBar/NavigationAppBar';
 import WaybillPage from './features/Waybill/components/WaybillPage/WaybillPage';
 import FinancePage from './features/Finance/components/FinancePage/FinancePage';
 import { SettingPage } from './features/Settings/components/SettingPage/SettingPage';
+import { SnackbarProvider } from './contexts/SnackbarContext';
 
 export const queryClient = new QueryClient({
 	defaultOptions: {
@@ -28,18 +29,20 @@ function App() {
 		<QueryClientProvider client={queryClient}>
 			<ReactQueryDevtools initialIsOpen={false} />
 			<RecoilRoot>
-				<MessageAlert />
-				<BrowserRouter basename="/">
-					<Routes>
-						<Route path="/" element={<NavigationAppBar />}>
-							<Route index element={<Navigate replace to="/waybill" />} />
-							{/* <Route path="/main" element={<MainPage />} /> */}
-							<Route path="/waybill/*" element={<WaybillPage />} />
-							<Route path="/finance" element={<FinancePage />} />
-							<Route path="/settings/*" element={<SettingPage />} />
-						</Route>
-					</Routes>
-				</BrowserRouter>
+				<SnackbarProvider>
+					<MessageAlert />
+					<BrowserRouter basename="/">
+						<Routes>
+							<Route path="/" element={<NavigationAppBar />}>
+								<Route index element={<Navigate replace to="/waybill" />} />
+								{/* <Route path="/main" element={<MainPage />} /> */}
+								<Route path="/waybill/*" element={<WaybillPage />} />
+								<Route path="/finance" element={<FinancePage />} />
+								<Route path="/settings/*" element={<SettingPage />} />
+							</Route>
+						</Routes>
+					</BrowserRouter>
+				</SnackbarProvider>
 			</RecoilRoot>
 		</QueryClientProvider>
 	);

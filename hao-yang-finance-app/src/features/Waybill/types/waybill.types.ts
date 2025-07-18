@@ -5,6 +5,8 @@ export interface Waybill {
 	waybillNumber: string;
 	date: string;
 	item: string;
+	plateNumber: string;
+	tonnage: number;
 	companyName: string;
 	companyId: string;
 	loadingLocations: LoadingLocation[];
@@ -15,11 +17,12 @@ export interface Waybill {
 	fee: number;
 	driverName: string;
 	driverId: string;
-	plateNumber: string;
-	notes: string;
+	notes?: string;
 	extraExpenses: ExtraExpense[];
 	status: WaybillStatus; // 替代 isInvoiceIssued
 	invoiceId?: string;
+	createdAt?: string;
+	updatedAt?: string;
 }
 
 export interface WaybillFormData extends Omit<Waybill, 'id' | 'companyId'> {
@@ -35,5 +38,5 @@ export interface LoadingLocation {
 export interface ExtraExpense {
 	item: string;
 	fee: number;
-	notes: string;
+	notes?: string;
 }

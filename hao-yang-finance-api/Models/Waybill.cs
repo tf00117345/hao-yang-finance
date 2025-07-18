@@ -36,6 +36,10 @@ namespace hao_yang_finance_api.Models
         [Required]
         public string WorkingTimeEnd { get; set; } = string.Empty;
 
+        [Column("tonnage")]
+        [Required]
+        public decimal Tonnage { get; set; }
+
         [Column("fee")]
         [Required]
         public decimal Fee { get; set; }

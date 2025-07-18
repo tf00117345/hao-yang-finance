@@ -27,7 +27,7 @@ export function useUninvoicedTable(data: Waybill[]) {
 				enableSorting: false,
 				enableGrouping: false,
 			},
-			columnHelper.accessor('customerName', {
+			columnHelper.accessor('companyName', {
 				header: '客戶名稱',
 				cell: (info) => info.getValue(),
 			}),

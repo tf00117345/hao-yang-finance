@@ -3,6 +3,7 @@ import { queryClient } from '../../../App';
 import { axiosInstance } from '../../../utils/axios-instance';
 import { Company, CreateCompanyDto, UpdateCompanyDto } from '../types/company';
 import { Driver, CreateDriverDto, UpdateDriverDto } from '../types/driver';
+import { useNotifications } from '../../../hooks/useNotifications';
 
 const getCompanies = async (): Promise<Company[]> => {
 	const response = await axiosInstance.get<Company[]>('/company');
@@ -33,20 +34,44 @@ const updateCompany = async (companyId: string, company: UpdateCompanyDto): Prom
 };
 
 export const useDeleteCompanyMutation = () => {
+	const { notifySuccess, notifyError } = useNotifications();
+
 	return useMutation({
 		mutationFn: deleteCompany,
+		onSuccess: () => {
+			notifySuccess('公司刪除成功');
+		},
+		onError: (error) => {
+			notifyError(error);
+		},
 	});
 };
 
 export const useInsertCompanyMutation = () => {
+	const { notifySuccess, notifyError } = useNotifications();
+
 	return useMutation({
 		mutationFn: insertCompany,
+		onSuccess: () => {
+			notifySuccess('公司新增成功');
+		},
+		onError: (error) => {
+			notifyError(error);
+		},
 	});
 };
 
 export const useUpdateCompanyMutation = () => {
+	const { notifySuccess, notifyError } = useNotifications();
+
 	return useMutation({
 		mutationFn: ({ id, company }: { id: string; company: UpdateCompanyDto }) => updateCompany(id, company),
+		onSuccess: () => {
+			notifySuccess('公司資料更新成功');
+		},
+		onError: (error) => {
+			notifyError(error);
+		},
 	});
 };
 
@@ -79,19 +104,43 @@ export const useDriversQuery = () => {
 };
 
 export const useInsertDriverMutation = () => {
+	const { notifySuccess, notifyError } = useNotifications();
+
 	return useMutation({
 		mutationFn: insertDriver,
+		onSuccess: () => {
+			notifySuccess('司機新增成功');
+		},
+		onError: (error) => {
+			notifyError(error);
+		},
 	});
 };
 
 export const useUpdateDriverMutation = () => {
+	const { notifySuccess, notifyError } = useNotifications();
+
 	return useMutation({
 		mutationFn: ({ id, driver }: { id: string; driver: UpdateDriverDto }) => updateDriver(id, driver),
+		onSuccess: () => {
+			notifySuccess('司機資料更新成功');
+		},
+		onError: (error) => {
+			notifyError(error);
+		},
 	});
 };
 
 export const useDeleteDriverMutation = () => {
+	const { notifySuccess, notifyError } = useNotifications();
+
 	return useMutation({
 		mutationFn: deleteDriver,
+		onSuccess: () => {
+			notifySuccess('司機刪除成功');
+		},
+		onError: (error) => {
+			notifyError(error);
+		},
 	});
 };

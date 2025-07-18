@@ -43,7 +43,7 @@ export function useWaybillTable({ data, onDelete, onSelect }: UseWaybillTablePro
 					return rowDate >= start && rowDate <= end;
 				},
 			}),
-			columnHelper.accessor('customerName', {
+			columnHelper.accessor('companyName', {
 				header: '貨主',
 			}),
 			columnHelper.accessor('item', {

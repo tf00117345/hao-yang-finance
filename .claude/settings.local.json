@@ -14,7 +14,17 @@
       "Bash(sqlite3:*)",
       "Bash(dotnet --version)",
       "Bash(csc:*)",
-      "Bash(dotnet tool list:*)"
+      "Bash(dotnet tool list:*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(dotnet build:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run build:*)",
+      "Bash(yarn lint:*)",
+      "Bash(npx eslint:*)",
+      "Bash(find:*)",
+      "Bash(yarn build)",
+      "Bash(curl:*)",
+      "Bash(yarn dev)"
     ],
     "deny": []
   }

@@ -1,7 +1,9 @@
-import GroupIcon from '@mui/icons-material/Group';
+import React, { useCallback } from 'react';
+
 import CancelIcon from '@mui/icons-material/Cancel';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import GroupIcon from '@mui/icons-material/Group';
 import {
 	IconButton,
 	Stack,
@@ -14,21 +16,24 @@ import {
 	Paper,
 } from '@mui/material';
 import { flexRender, Column } from '@tanstack/react-table';
-import { Waybill } from '../../types/waybill.types';
-import { useWaybillTable } from '../../hooks/useWaybillTable';
+
 import { StyledTableCell, StyledTableRow } from '../../../Finance/components/styles/styles';
+import { useWaybillTable } from '../../hooks/useWaybillTable';
+import { Waybill } from '../../types/waybill.types';
 
 interface WaybillGridProps {
 	waybills: Waybill[];
 	onDelete: (id: string) => void;
 	onSelect: (waybill: Waybill) => void;
+	onView: (waybill: Waybill) => void;
 }
 
-export function WaybillGrid({ waybills, onDelete, onSelect }: WaybillGridProps) {
+export function WaybillGrid({ waybills, onDelete, onSelect, onView }: WaybillGridProps) {
 	const { table } = useWaybillTable({
 		data: waybills,
 		onDelete,
 		onSelect,
+		onView,
 	});
 
 	const handleGrouping = (e: React.MouseEvent, column: Column<Waybill, any>) => {
@@ -40,6 +45,41 @@ export function WaybillGrid({ waybills, onDelete, onSelect }: WaybillGridProps) 
 		column.toggleSorting();
 		e.stopPropagation();
 	};
+
+	// 渲染單元格內容的函數
+	const renderCellContent = useCallback((cell: any, row: any) => {
+		if (cell.getIsGrouped()) {
+			return (
+				<Stack direction="row" alignItems="center" spacing={1}>
+					<IconButton
+						size="small"
+						onClick={row.getToggleExpandedHandler()}
+						sx={{
+							cursor: row.getCanExpand() ? 'pointer' : 'default',
+						}}
+					>
+						{row.getIsExpanded() ? (
+							<ExpandMoreIcon fontSize="small" />
+						) : (
+							<ChevronRightIcon fontSize="small" />
+						)}
+					</IconButton>
+					{flexRender(cell.column.columnDef.cell, cell.getContext())}
+					<span>({row.subRows.length})</span>
+				</Stack>
+			);
+		}
+
+		if (cell.getIsAggregated()) {
+			return flexRender(cell.column.columnDef.aggregatedCell ?? cell.column.columnDef.cell, cell.getContext());
+		}
+
+		if (cell.getIsPlaceholder()) {
+			return null;
+		}
+
+		return flexRender(cell.column.columnDef.cell, cell.getContext());
+	}, []);
 
 	return (
 		<Stack sx={{ flexGrow: 1, overflow: 'auto' }} spacing={1}>
@@ -90,32 +130,7 @@ export function WaybillGrid({ waybills, onDelete, onSelect }: WaybillGridProps) 
 							<StyledTableRow key={row.id}>
 								{row.getVisibleCells().map((cell) => (
 									<TableCell size="small" key={cell.id}>
-										{cell.getIsGrouped() ? (
-											<Stack direction="row" alignItems="center" spacing={1}>
-												<IconButton
-													size="small"
-													onClick={row.getToggleExpandedHandler()}
-													sx={{
-														cursor: row.getCanExpand() ? 'pointer' : 'default',
-													}}
-												>
-													{row.getIsExpanded() ? (
-														<ExpandMoreIcon fontSize="small" />
-													) : (
-														<ChevronRightIcon fontSize="small" />
-													)}
-												</IconButton>
-												{flexRender(cell.column.columnDef.cell, cell.getContext())}
-												<span>({row.subRows.length})</span>
-											</Stack>
-										) : cell.getIsAggregated() ? (
-											flexRender(
-												cell.column.columnDef.aggregatedCell ?? cell.column.columnDef.cell,
-												cell.getContext(),
-											)
-										) : cell.getIsPlaceholder() ? null : (
-											flexRender(cell.column.columnDef.cell, cell.getContext())
-										)}
+										{renderCellContent(cell, row)}
 									</TableCell>
 								))}
 							</StyledTableRow>

@@ -66,6 +66,7 @@ namespace hao_yang_finance_api.DTOs
 
     public class ExtraExpenseDto
     {
+        public string Id { get; set; } = string.Empty;
         public string Item { get; set; } = string.Empty;
         public decimal Fee { get; set; }
         public string? Notes { get; set; }

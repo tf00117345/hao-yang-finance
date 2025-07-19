@@ -41,7 +41,7 @@
     "uuid": "^11.0.5"
   },
   "devDependencies": {
-    "@tanstack/eslint-plugin-query": "^5.66.0",
+    "@tanstack/eslint-plugin-query": "4",
     "@types/hammerjs": "^2.0.45",
     "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^24.0.12",

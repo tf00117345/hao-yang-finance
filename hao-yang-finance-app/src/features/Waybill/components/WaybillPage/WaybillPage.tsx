@@ -1,18 +1,19 @@
-import AddIcon from '@mui/icons-material/Add';
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack } from '@mui/material';
-
-import { endOfMonth, startOfMonth } from 'date-fns';
 import { useState } from 'react';
+
+import AddIcon from '@mui/icons-material/Add';
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Skeleton, Stack } from '@mui/material';
+import { endOfMonth, startOfMonth } from 'date-fns';
+
 import MonthPicker from '../../../../component/MonthPicker/MonthPicker';
-import { useCompaniesQuery, useDriversQuery, useInsertCompanyMutation } from '../../../Settings/api/api';
+import { useInsertCompanyMutation } from '../../../Settings/api/mutation';
+import { useCompaniesQuery, useDriversQuery } from '../../../Settings/api/query';
 import { Company } from '../../../Settings/types/company';
 import { Driver } from '../../../Settings/types/driver';
-
+import { useDeleteWaybillMutation, useInsertWaybillMutation, useUpdateWaybillMutation } from '../../api/mutation';
+import { useWaybillsQuery } from '../../api/query';
 import { Waybill, WaybillFormData } from '../../types/waybill.types';
 import WaybillForm from '../WaybillForm/WaybillForm';
 import { WaybillGrid } from '../WaybillGrid/WaybillGrid';
-import { useWaybillsQuery } from '../../api/query';
-import { useDeleteWaybillMutation, useInsertWaybillMutation, useUpdateWaybillMutation } from '../../api/mutation';
 
 const defaultWaybill: Waybill = {
 	id: '',
@@ -25,7 +26,7 @@ const defaultWaybill: Waybill = {
 	workingTime: { start: '', end: '' },
 	fee: 5000,
 	driverName: '黃天賜',
-	driverId: '1',
+	driverId: '32dde0f7-9274-4813-be36-adab21c415f3',
 	plateNumber: '11',
 	notes: '',
 	extraExpenses: [],
@@ -45,7 +46,7 @@ export default function WaybillPage() {
 	const [selectedWaybill, setSelectedWaybill] = useState<Waybill | null>(null);
 	const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
-	const { data: waybills, isPending } = useWaybillsQuery(dateRange, selectedDriver?.id);
+	const { data: waybills = [], isPending } = useWaybillsQuery(dateRange, selectedDriver?.id);
 	const { mutate: insertWaybill } = useInsertWaybillMutation();
 	const { mutate: deleteWaybill } = useDeleteWaybillMutation();
 	const { mutate: updateWaybill } = useUpdateWaybillMutation();
@@ -58,6 +59,10 @@ export default function WaybillPage() {
 	const [deleteId, setDeleteId] = useState<string | null>(null);
 
 	const handleSelectWaybill = (waybill: Waybill) => {
+		setSelectedWaybill(waybill);
+	};
+
+	const handleViewWaybill = (waybill: Waybill) => {
 		setSelectedWaybill(waybill);
 	};
 
@@ -135,7 +140,16 @@ export default function WaybillPage() {
 							</Button>
 						))}
 					</Stack>
-					<WaybillGrid waybills={waybills || []} onDelete={handleDelete} onSelect={handleSelectWaybill} />
+					{isPending ? (
+						<Skeleton variant="rectangular" height={500} />
+					) : (
+						<WaybillGrid
+							waybills={waybills || []}
+							onDelete={handleDelete}
+							onSelect={handleSelectWaybill}
+							onView={handleViewWaybill}
+						/>
+					)}
 				</Stack>
 				<WaybillForm
 					companies={companies}
@@ -143,6 +157,7 @@ export default function WaybillPage() {
 					onSave={handleSave}
 					onAddCompany={handleAddCompany}
 					initialData={selectedWaybill}
+					readonly={selectedWaybill?.status !== 'PENDING'}
 				/>
 			</Stack>
 			{/* 刪除確認視窗 */}

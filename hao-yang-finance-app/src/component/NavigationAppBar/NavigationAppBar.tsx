@@ -9,6 +9,7 @@ import { CSSObject, styled, Theme } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+
 const routeConfig = [
 	// {
 	// 	name: '首頁',

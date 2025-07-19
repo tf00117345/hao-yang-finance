@@ -82,6 +82,7 @@ namespace hao_yang_finance_api.Controllers
                     }).ToList(),
                 ExtraExpenses = w.ExtraExpenses.Select(e => new ExtraExpenseDto
                 {
+                    Id = e.Id,
                     Item = e.Item ?? e.Description,
                     Fee = e.Fee ?? e.Amount,
                     Notes = e.Notes
@@ -479,6 +480,111 @@ namespace hao_yang_finance_api.Controllers
             return Ok(new { message = "託運單已成功標記為不需開發票" });
         }
 
+        // PUT: api/Waybill/no-invoice-batch
+        [HttpPut("no-invoice-batch")]
+        public async Task<IActionResult> MarkAsNoInvoiceNeededBatch([FromBody] List<string> waybillIds)
+        {
+            if (waybillIds == null || !waybillIds.Any())
+            {
+                return BadRequest(new { message = "請提供要標記的託運單ID列表" });
+            }
+
+            var results = new List<object>();
+            var successCount = 0;
+            var failureCount = 0;
+
+            // 批量查詢所有託運單
+            var waybills = await _context.Waybills
+                .Where(w => waybillIds.Contains(w.Id))
+                .ToListAsync();
+
+            var foundWaybillIds = waybills.Select(w => w.Id).ToHashSet();
+            var notFoundIds = waybillIds.Where(id => !foundWaybillIds.Contains(id)).ToList();
+
+            // 處理找不到的託運單
+            foreach (var notFoundId in notFoundIds)
+            {
+                results.Add(new
+                {
+                    id = notFoundId,
+                    success = false,
+                    message = "找不到指定的託運單"
+                });
+                failureCount++;
+            }
+
+            // 處理找到的託運單
+            foreach (var waybill in waybills)
+            {
+                try
+                {
+                    // 檢查狀態：只有 PENDING 狀態可以標記為不需開發票
+                    if (waybill.Status != "PENDING")
+                    {
+                        results.Add(new
+                        {
+                            id = waybill.Id,
+                            waybillNumber = waybill.WaybillNumber,
+                            success = false,
+                            message = $"無法將狀態為 '{waybill.Status}' 的託運單標記為不需開發票，只有 'PENDING' 狀態的託運單可以標記"
+                        });
+                        failureCount++;
+                        continue;
+                    }
+
+                    // 更新狀態
+                    waybill.Status = "NO_INVOICE_NEEDED";
+                    waybill.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+                    results.Add(new
+                    {
+                        id = waybill.Id,
+                        waybillNumber = waybill.WaybillNumber,
+                        success = true,
+                        message = "託運單已成功標記為不需開發票"
+                    });
+                    successCount++;
+                }
+                catch (Exception ex)
+                {
+                    results.Add(new
+                    {
+                        id = waybill.Id,
+                        waybillNumber = waybill.WaybillNumber,
+                        success = false,
+                        message = $"標記託運單時發生錯誤：{ex.Message}"
+                    });
+                    failureCount++;
+                }
+            }
+
+            // 批量保存變更
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = "批量標記過程中發生資料庫錯誤",
+                    error = ex.Message
+                });
+            }
+
+            return Ok(new
+            {
+                message = $"批量標記完成：成功 {successCount} 筆，失敗 {failureCount} 筆",
+                summary = new
+                {
+                    total = waybillIds.Count,
+                    success = successCount,
+                    failure = failureCount
+                },
+                details = results
+            });
+        }
+
         // PUT: api/Waybill/5/restore
         [HttpPut("{id}/restore")]
         public async Task<IActionResult> RestoreWaybill(string id)
@@ -502,6 +608,111 @@ namespace hao_yang_finance_api.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "託運單已成功還原為待處理狀態" });
+        }
+
+        // PUT: api/Waybill/restore-batch
+        [HttpPut("restore-batch")]
+        public async Task<IActionResult> RestoreWaybillsBatch([FromBody] List<string> waybillIds)
+        {
+            if (waybillIds == null || !waybillIds.Any())
+            {
+                return BadRequest(new { message = "請提供要還原的託運單ID列表" });
+            }
+
+            var results = new List<object>();
+            var successCount = 0;
+            var failureCount = 0;
+
+            // 批量查詢所有託運單
+            var waybills = await _context.Waybills
+                .Where(w => waybillIds.Contains(w.Id))
+                .ToListAsync();
+
+            var foundWaybillIds = waybills.Select(w => w.Id).ToHashSet();
+            var notFoundIds = waybillIds.Where(id => !foundWaybillIds.Contains(id)).ToList();
+
+            // 處理找不到的託運單
+            foreach (var notFoundId in notFoundIds)
+            {
+                results.Add(new
+                {
+                    id = notFoundId,
+                    success = false,
+                    message = "找不到指定的託運單"
+                });
+                failureCount++;
+            }
+
+            // 處理找到的託運單
+            foreach (var waybill in waybills)
+            {
+                try
+                {
+                    // 檢查狀態：只有 NO_INVOICE_NEEDED 狀態可以還原
+                    if (waybill.Status != "NO_INVOICE_NEEDED")
+                    {
+                        results.Add(new
+                        {
+                            id = waybill.Id,
+                            waybillNumber = waybill.WaybillNumber,
+                            success = false,
+                            message = $"無法還原狀態為 '{waybill.Status}' 的託運單，只有 'NO_INVOICE_NEEDED' 狀態的託運單可以還原"
+                        });
+                        failureCount++;
+                        continue;
+                    }
+
+                    // 更新狀態
+                    waybill.Status = "PENDING";
+                    waybill.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+                    results.Add(new
+                    {
+                        id = waybill.Id,
+                        waybillNumber = waybill.WaybillNumber,
+                        success = true,
+                        message = "託運單已成功還原為待處理狀態"
+                    });
+                    successCount++;
+                }
+                catch (Exception ex)
+                {
+                    results.Add(new
+                    {
+                        id = waybill.Id,
+                        waybillNumber = waybill.WaybillNumber,
+                        success = false,
+                        message = $"還原託運單時發生錯誤：{ex.Message}"
+                    });
+                    failureCount++;
+                }
+            }
+
+            // 批量保存變更
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = "批量還原過程中發生資料庫錯誤",
+                    error = ex.Message
+                });
+            }
+
+            return Ok(new
+            {
+                message = $"批量還原完成：成功 {successCount} 筆，失敗 {failureCount} 筆",
+                summary = new
+                {
+                    total = waybillIds.Count,
+                    success = successCount,
+                    failure = failureCount
+                },
+                details = results
+            });
         }
     }
 }

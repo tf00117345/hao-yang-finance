@@ -1,6 +1,8 @@
-import { Box, Stack, Tab, Tabs } from '@mui/material';
 import { useEffect } from 'react';
+
+import { Box, Stack, Tab, Tabs } from '@mui/material';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+
 import { Company } from '../Company/Company';
 import { Driver } from '../Driver/Driver';
 

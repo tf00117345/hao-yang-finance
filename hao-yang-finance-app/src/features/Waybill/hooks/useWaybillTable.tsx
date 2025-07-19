@@ -1,3 +1,9 @@
+import { useMemo, useState } from 'react';
+
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import { Chip, IconButton } from '@mui/material';
 import {
 	ColumnDef,
 	ColumnFiltersState,
@@ -12,10 +18,7 @@ import {
 	GroupingState,
 	useReactTable,
 } from '@tanstack/react-table';
-import { Chip, IconButton } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import { useMemo, useState } from 'react';
+
 import { Waybill, ExtraExpense } from '../types/waybill.types';
 
 const columnHelper = createColumnHelper<Waybill>();
@@ -24,9 +27,10 @@ export interface UseWaybillTableProps {
 	data: Waybill[];
 	onDelete: (id: string) => void;
 	onSelect: (waybill: Waybill) => void;
+	onView: (waybill: Waybill) => void;
 }
 
-export function useWaybillTable({ data, onDelete, onSelect }: UseWaybillTableProps) {
+export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybillTableProps) {
 	const columns = useMemo<ColumnDef<Waybill, any>[]>(
 		() => [
 			columnHelper.accessor('waybillNumber', {
@@ -66,15 +70,19 @@ export function useWaybillTable({ data, onDelete, onSelect }: UseWaybillTablePro
 				header: '運費',
 				enableGrouping: false,
 			}),
-			columnHelper.accessor('isInvoiceIssued', {
-				header: '已開立發票',
+			columnHelper.accessor('status', {
+				header: '狀態',
 				enableGrouping: false,
-				cell: ({ getValue }) =>
-					getValue() ? (
-						<Chip label="已開立" color="success" size="small" variant="filled" />
-					) : (
-						<Chip label="未開立" color="error" size="small" variant="filled" />
-					),
+				cell: ({ getValue }) => {
+					if (getValue() === 'PENDING') {
+						return <Chip label="未開立" color="error" size="small" variant="filled" />;
+					} else if (getValue() === 'NO_INVOICE_NEEDED') {
+						return <Chip label="無須開發票" color="warning" size="small" variant="filled" />;
+					} else if (getValue() === 'INVOICED') {
+						return <Chip label="已開立" color="success" size="small" variant="filled" />;
+					}
+					return <Chip label="無狀態" color="info" size="small" variant="filled" />;
+				},
 			}),
 			columnHelper.accessor(
 				(row) => row.extraExpenses?.reduce((acc: number, expense: ExtraExpense) => +acc + +expense.fee, 0),
@@ -90,16 +98,25 @@ export function useWaybillTable({ data, onDelete, onSelect }: UseWaybillTablePro
 				// 不在這裡定義 cell 渲染器，而是在 WaybillGrid 組件中處理
 				enableGrouping: false,
 				enableSorting: false,
-				cell: ({ row }) => (
-					<>
-						<IconButton size="small" onClick={() => onSelect(row.original)}>
-							<EditIcon />
+				cell: ({ row }) => {
+					if (row.original.status === 'PENDING') {
+						return (
+							<>
+								<IconButton size="small" onClick={() => onSelect(row.original)}>
+									<EditIcon />
+								</IconButton>
+								<IconButton size="small" color="error" onClick={() => onDelete(row.original.id ?? '')}>
+									<DeleteIcon />
+								</IconButton>
+							</>
+						);
+					}
+					return (
+						<IconButton size="small" onClick={() => onView(row.original)}>
+							<VisibilityIcon />
 						</IconButton>
-						<IconButton size="small" color="error" onClick={() => onDelete(row.original.id ?? '')}>
-							<DeleteIcon />
-						</IconButton>
-					</>
-				),
+					);
+				},
 			},
 		],
 		[],
@@ -117,6 +134,7 @@ export function useWaybillTable({ data, onDelete, onSelect }: UseWaybillTablePro
 			grouping,
 			columnFilters,
 		},
+		autoResetPageIndex: false,
 		onColumnFiltersChange: setColumnFilters,
 		onGroupingChange: setGrouping,
 		columnResizeMode,
@@ -127,8 +145,8 @@ export function useWaybillTable({ data, onDelete, onSelect }: UseWaybillTablePro
 		getGroupedRowModel: getGroupedRowModel(),
 		getCoreRowModel: getCoreRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
-		debugTable: true,
-		debugHeaders: true,
+		debugTable: false,
+		debugHeaders: false,
 		debugColumns: false,
 	});
 

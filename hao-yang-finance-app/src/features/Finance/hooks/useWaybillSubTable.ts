@@ -1,13 +1,19 @@
-import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useMemo } from 'react';
-import { Waybill } from '../../Waybill/types/waybill.types';
 
-const columnHelper = createColumnHelper<Waybill>();
+import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 
-export function useWaybillSubTable(data: Waybill[], invoiceId: string) {
+import { InvoiceWaybill } from '../types/invoice.type';
+
+const columnHelper = createColumnHelper<InvoiceWaybill>();
+
+export function useWaybillSubTable(data: InvoiceWaybill[], invoiceId: string) {
 	const columns = useMemo(
 		() => [
-			columnHelper.accessor('id', {
+			// columnHelper.accessor('waybillId', {
+			// 	header: '貨運單ID',
+			// 	cell: (info) => info.getValue(),
+			// }),
+			columnHelper.accessor('waybillNumber', {
 				header: '貨運單編號',
 				cell: (info) => info.getValue(),
 			}),
@@ -38,7 +44,7 @@ export function useWaybillSubTable(data: Waybill[], invoiceId: string) {
 		data: stableData,
 		columns,
 		getCoreRowModel: getCoreRowModel(),
-		getRowId: (row) => `${invoiceId}-${row.id}`, // 使用 invoiceId 前綴來避免 ID 衝突
+		getRowId: (row) => `${invoiceId}-${row.waybillId}`, // 使用 invoiceId 前綴來避免 ID 衝突
 	});
 
 	return { table, columns };

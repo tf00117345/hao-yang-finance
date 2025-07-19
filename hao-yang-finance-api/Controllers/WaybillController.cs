@@ -82,6 +82,7 @@ namespace hao_yang_finance_api.Controllers
                     }).ToList(),
                 ExtraExpenses = w.ExtraExpenses.Select(e => new ExtraExpenseDto
                 {
+                    Id = e.Id,
                     Item = e.Item ?? e.Description,
                     Fee = e.Fee ?? e.Amount,
                     Notes = e.Notes

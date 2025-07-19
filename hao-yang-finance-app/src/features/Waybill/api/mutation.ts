@@ -1,12 +1,13 @@
 import { useMutation } from '@tanstack/react-query';
-import { deleteWaybill, insertWaybill, updateWaybill, markWaybillAsNoInvoiceNeeded, restoreWaybill } from './api';
+
 import { queryClient } from '../../../App';
 import { useNotifications } from '../../../hooks/useNotifications';
+import { deleteWaybill, insertWaybill, updateWaybill, markWaybillAsNoInvoiceNeeded, restoreWaybill } from './api';
 
 // 更新託運單
 export const useUpdateWaybillMutation = () => {
 	const { notifySuccess, notifyError } = useNotifications();
-	
+
 	return useMutation({
 		mutationFn: updateWaybill,
 		onSuccess: () => {
@@ -22,7 +23,7 @@ export const useUpdateWaybillMutation = () => {
 // 新增託運單
 export const useInsertWaybillMutation = () => {
 	const { notifySuccess, notifyError } = useNotifications();
-	
+
 	return useMutation({
 		mutationFn: insertWaybill,
 		onSuccess: () => {
@@ -38,7 +39,7 @@ export const useInsertWaybillMutation = () => {
 // 刪除託運單
 export const useDeleteWaybillMutation = () => {
 	const { notifySuccess, notifyError } = useNotifications();
-	
+
 	return useMutation({
 		mutationFn: deleteWaybill,
 		onSuccess: () => {
@@ -54,7 +55,7 @@ export const useDeleteWaybillMutation = () => {
 // 標記為不需開發票
 export const useMarkWaybillAsNoInvoiceNeededMutation = () => {
 	const { notifySuccess, notifyError } = useNotifications();
-	
+
 	return useMutation({
 		mutationFn: markWaybillAsNoInvoiceNeeded,
 		onSuccess: () => {
@@ -70,7 +71,7 @@ export const useMarkWaybillAsNoInvoiceNeededMutation = () => {
 // 還原託運單
 export const useRestoreWaybillMutation = () => {
 	const { notifySuccess, notifyError } = useNotifications();
-	
+
 	return useMutation({
 		mutationFn: restoreWaybill,
 		onSuccess: () => {

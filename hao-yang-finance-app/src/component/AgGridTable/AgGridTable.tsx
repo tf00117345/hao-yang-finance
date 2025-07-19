@@ -21,7 +21,6 @@ interface AgGridTableProps<T> {
 	onRowClicked?: (event: any) => void;
 	onGridReady?: (params: GridReadyEvent) => void;
 	onColumnResized?: (params: any) => void;
-	children?: React.ReactNode;
 }
 
 function AgGridTable<T = any>({

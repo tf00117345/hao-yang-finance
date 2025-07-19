@@ -1,17 +1,15 @@
+import { useCallback, useMemo, useRef, useState } from 'react';
+
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, IconButton, InputAdornment, Stack, TextField } from '@mui/material';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
-import { useCallback, useMemo, useRef, useState } from 'react';
+
 import AgGridTable from '../../../../component/AgGridTable/AgGridTable';
-import {
-	useCompaniesQuery,
-	useDeleteCompanyMutation,
-	useInsertCompanyMutation,
-	useUpdateCompanyMutation,
-} from '../../api/api';
+import { useDeleteCompanyMutation, useInsertCompanyMutation, useUpdateCompanyMutation } from '../../api/mutation';
+import { useCompaniesQuery } from '../../api/query';
 import { Company as CompanyData } from '../../types/company';
 import CompanyForm from '../CompanyForm/CompanyForm';
 

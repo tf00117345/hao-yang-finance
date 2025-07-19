@@ -27,39 +27,25 @@ import {
 } from '@mui/material';
 import { flexRender } from '@tanstack/react-table';
 
-import { useMarkWaybillAsNoInvoiceNeededMutation } from '../../../Waybill/api/mutation';
+import { useRestoreWaybillMutation } from '../../../Waybill/api/mutation';
 import { Waybill } from '../../../Waybill/types/waybill.types';
 import { useUninvoicedTable } from '../../hooks/useUninvoicedTable';
-import { InvoiceDialog } from '../InvoiceDialog/InvoiceDialog';
 import { StyledTableCell, StyledTableRow } from '../styles/styles';
 
-interface UninvoicedTableProps {
+interface NoInvoicedNeededTableProps {
 	waybills: Waybill[];
 }
 
-export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
+export function NoInvoicedNeededTable({ waybills }: NoInvoicedNeededTableProps) {
 	const [selectedWaybills, setSelectedWaybills] = useState<Waybill[]>([]);
-	const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
 	const [confirmNoInvoiceDialogOpen, setConfirmNoInvoiceDialogOpen] = useState(false);
 	const [processingNoInvoice, setProcessingNoInvoice] = useState(false);
 
 	// 未開立發票的 waybill
-	const unInvoicedWaybills = useMemo(() => waybills.filter((b) => b.status === 'PENDING'), [waybills]);
+	const noInvoicedWaybills = useMemo(() => waybills.filter((b) => b.status === 'NO_INVOICE_NEEDED'), [waybills]);
 
-	const { table } = useUninvoicedTable(unInvoicedWaybills);
-	const markAsNoInvoiceNeededMutation = useMarkWaybillAsNoInvoiceNeededMutation();
-
-	// 處理開立發票
-	function handleOpenInvoiceDialog() {
-		const selected = table.getSelectedRowModel().rows.map((row) => row.original);
-		if (selected.length === 0) {
-			alert('請先選擇至少一筆資料');
-			return;
-		}
-
-		setSelectedWaybills(selected);
-		setInvoiceDialogOpen(true);
-	}
+	const { table } = useUninvoicedTable(noInvoicedWaybills);
+	const restoreWaybillMutation = useRestoreWaybillMutation();
 
 	// 處理無須開發票
 	function handleOpenNoInvoiceDialog() {
@@ -73,8 +59,8 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 		setConfirmNoInvoiceDialogOpen(true);
 	}
 
-	// 確認標記為無須開發票
-	const handleConfirmNoInvoice = async () => {
+	// 確認還原貨運單
+	const handleConfirmRestoreWaybill = async () => {
 		if (selectedWaybills.length === 0) return;
 
 		setProcessingNoInvoice(true);
@@ -82,7 +68,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 		try {
 			// 逐一處理每筆託運單
 			for (const waybill of selectedWaybills) {
-				await markAsNoInvoiceNeededMutation.mutateAsync(waybill.id);
+				await restoreWaybillMutation.mutateAsync(waybill.id);
 			}
 
 			// 處理完成後清理狀態
@@ -91,20 +77,11 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 			table.resetRowSelection();
 		} catch (error) {
 			// 錯誤處理已由 mutation 的 onError 處理
-			console.error('批次標記無須開發票失敗:', error);
+			console.error('批次還原貨運單失敗:', error);
 		} finally {
 			setProcessingNoInvoice(false);
 		}
 	};
-
-	// 開立發票成功後的處理
-	const handleInvoiceCreated = useCallback(() => {
-		// 關閉對話框並清理選擇狀態
-		setInvoiceDialogOpen(false);
-		setSelectedWaybills([]);
-		// 清除 table 選擇狀態
-		table.resetRowSelection();
-	}, [table]);
 
 	// 分組與排序處理
 	const handleGrouping = useCallback((e: React.MouseEvent, column: any) => {
@@ -115,10 +92,6 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 	const handleSorting = useCallback((e: React.MouseEvent, column: any) => {
 		column.toggleSorting();
 		e.stopPropagation();
-	}, []);
-
-	const handleCloseInvoiceDialog = useCallback(() => {
-		setInvoiceDialogOpen(false);
 	}, []);
 
 	// 為表頭創建穩定的處理函數
@@ -205,20 +178,10 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 			<Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
 				<Stack direction="row" spacing={1}>
 					<Typography sx={{ flex: '1 1 100%', px: 2 }} variant="h6" component="div">
-						未開立發票之貨運單
+						無須開發票之貨運單
 					</Typography>
 				</Stack>
 				<Stack direction="row" spacing={1}>
-					<Button
-						sx={{ width: '100px' }}
-						size="small"
-						variant="contained"
-						startIcon={<ReceiptIcon />}
-						onClick={handleOpenInvoiceDialog}
-						disabled={table.getSelectedRowModel().rows.length === 0}
-					>
-						開發票
-					</Button>
 					<Button
 						sx={{ width: '120px' }}
 						size="small"
@@ -227,7 +190,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 						onClick={handleOpenNoInvoiceDialog}
 						disabled={table.getSelectedRowModel().rows.length === 0}
 					>
-						無須開發票
+						還原貨運單
 					</Button>
 				</Stack>
 			</Stack>
@@ -304,12 +267,6 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 					</TableBody>
 				</Table>
 			</TableContainer>
-			<InvoiceDialog
-				open={invoiceDialogOpen}
-				onClose={handleCloseInvoiceDialog}
-				waybillList={selectedWaybills}
-				onSuccess={handleInvoiceCreated}
-			/>
 			<Dialog
 				open={confirmNoInvoiceDialogOpen}
 				onClose={() => setConfirmNoInvoiceDialogOpen(false)}
@@ -327,7 +284,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 						取消
 					</Button>
 					<Button
-						onClick={handleConfirmNoInvoice}
+						onClick={handleConfirmRestoreWaybill}
 						color="error"
 						variant="contained"
 						disabled={processingNoInvoice}

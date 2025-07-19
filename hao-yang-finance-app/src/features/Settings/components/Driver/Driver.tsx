@@ -1,3 +1,5 @@
+import { useCallback, useMemo, useRef, useState } from 'react';
+
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -13,20 +15,15 @@ import {
 	TextField,
 } from '@mui/material';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
-import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
+
 import AgGridTable from '../../../../component/AgGridTable/AgGridTable';
-import {
-	useDeleteDriverMutation,
-	useDriversQuery,
-	useInsertDriverMutation,
-	useUpdateDriverMutation,
-} from '../../api/api';
-import { Driver as DriverData } from '../../types/driver';
+import { useDeleteDriverMutation, useInsertDriverMutation, useUpdateDriverMutation } from '../../api/mutation';
+import { useDriversQuery } from '../../api/query';
+import { CreateDriverDto, Driver as DriverData } from '../../types/driver';
 
 // 初始表單數據
-const initialFormData: DriverData = {
-	id: '',
+const initialFormData: CreateDriverDto = {
 	name: '',
 };
 
@@ -109,7 +106,7 @@ export function Driver() {
 	// 處理表單提交
 	const onSubmit = (data: DriverData) => {
 		if (isEditing) {
-			updateDriver(data);
+			updateDriver({ id: data.id, driver: { name: data.name, isActive: data.isActive, phone: data.phone } });
 		} else {
 			insertDriver(data);
 		}

@@ -1,25 +1,19 @@
 import React from 'react';
+
 import { Box, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import { flexRender } from '@tanstack/react-table';
-import { Invoice } from '../../types/invoice.type';
-import { Waybill } from '../../../Waybill/types/waybill.types';
+
 import { useWaybillSubTable } from '../../hooks/useWaybillSubTable';
+import { Invoice } from '../../types/invoice.type';
 
 interface InvoicedWaybillSubTableProps {
 	invoice: Invoice;
-	waybillMap: Record<string, Waybill>;
 }
 
-const InvoicedWaybillSubTable = React.memo(function InvoicedWaybillSubTable({
-	invoice,
-	waybillMap,
-}: InvoicedWaybillSubTableProps) {
-	const subRows = React.useMemo(
-		() => invoice.waybillIds.map((bid) => waybillMap[bid]).filter(Boolean),
-		[invoice.waybillIds, waybillMap],
-	);
+const InvoicedWaybillSubTable = React.memo(function InvoicedWaybillSubTable({ invoice }: InvoicedWaybillSubTableProps) {
+	const subRows = invoice.waybills;
 
-	const { table: subTable } = useWaybillSubTable(subRows, invoice.id);
+	const { table: subTable } = useWaybillSubTable(invoice.waybills, invoice.id);
 
 	// 如果沒有子資料，顯示提示訊息
 	if (subRows.length === 0) {

@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+
 import {
 	Box,
 	Button,
@@ -19,154 +21,292 @@ import {
 	TextField,
 	Typography,
 	Checkbox,
+	Switch,
+	FormControlLabel,
+	Divider,
 } from '@mui/material';
-import { useState, useEffect } from 'react';
-import { Waybill } from '../../../Waybill/types/waybill.types';
+import { Controller, useForm } from 'react-hook-form';
+
+import { useCompaniesQuery } from '../../../Settings/api/query';
 import { Company } from '../../../Settings/types/company';
-import { companiesData } from '../../../Settings/constant/company-data';
+import { Waybill } from '../../../Waybill/types/waybill.types';
+import { useCreateInvoiceMutation, useUpdateInvoiceMutation } from '../../api/mutation';
+import { CreateInvoiceRequest, Invoice } from '../../types/invoice.type';
 
 interface InvoiceDialogProps {
 	open: boolean;
 	onClose: () => void;
 	waybillList: Waybill[];
-	onCreate: (description: string) => void;
+	editingInvoice?: Invoice;
+	onSuccess?: () => void;
 }
 
-export function InvoiceDialog({ open, onClose, waybillList, onCreate }: InvoiceDialogProps) {
-	const [selectedCompany, setSelectedCompany] = useState<string>('');
-	const [invoiceAmount, setInvoiceAmount] = useState<string>('');
-	const [invoiceDesc, setInvoiceDesc] = useState<string>('');
+export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSuccess }: InvoiceDialogProps) {
+	const createMutation = useCreateInvoiceMutation();
+	const updateMutation = useUpdateInvoiceMutation();
+	const { data: companies = [] } = useCompaniesQuery();
 
-	/**
-	 * 記錄每筆 waybill row 下，每個 extraExpense 是否被選取
-	 * 結構: { [rowId]: { [extraIdx]: boolean } }
-	 */
-	const [includedExtraExpenses, setIncludedExtraExpenses] = useState<Record<string, Record<number, boolean>>>({});
+	const [selectedExtraExpenses, setSelectedExtraExpenses] = useState<string[]>([]);
 
-	// 當 open 為 true 時，自動帶入公司與金額，並初始化額外支出勾選狀態
-	useEffect(() => {
-		if (open && waybillList.length > 0) {
-			const firstRow = waybillList[0];
-			if (firstRow) {
-				let matchedCompanyId = '';
-				if (firstRow.companyId) {
-					matchedCompanyId = firstRow.companyId;
-				} else if (firstRow.companyName) {
-					const found = companiesData.find((c) => c.name === firstRow.companyName);
-					if (found) matchedCompanyId = found.id;
-				}
-				if (matchedCompanyId) {
-					setSelectedCompany(matchedCompanyId);
-				}
-			}
-			// 初始化 includedExtraExpenses，預設全選
-			const initial: Record<string, Record<number, boolean>> = {};
-			waybillList.forEach((row) => {
-				if (row.extraExpenses) {
-					initial[row.id ?? ''] = {};
-					row.extraExpenses.forEach((_, idx) => {
-						initial[row.id ?? ''][idx] = true;
-					});
-				}
-			});
-			setIncludedExtraExpenses(initial);
-		}
-		if (!open) {
-			setSelectedCompany('');
-			setInvoiceAmount('');
-			setInvoiceDesc('');
-			setIncludedExtraExpenses({});
-		}
-	}, [open, waybillList]);
+	const {
+		control,
+		handleSubmit,
+		watch,
+		reset,
+		formState: { errors },
+	} = useForm<CreateInvoiceRequest>({
+		defaultValues: {
+			invoiceNumber: '',
+			date: new Date().toISOString().split('T')[0],
+			companyId: '',
+			taxRate: 0.05,
+			extraExpensesIncludeTax: false,
+			notes: '',
+			waybillIds: [],
+			extraExpenseIds: [],
+		},
+	});
 
-	// 當 includedExtraExpenses 變動時，自動更新發票金額
+	const watchedValues = watch();
+
+	// 初始化表單資料
 	useEffect(() => {
 		if (open) {
-			setInvoiceAmount(calculateTotalAmount().toString());
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [includedExtraExpenses]);
+			if (editingInvoice) {
+				// 編輯模式
+				reset({
+					invoiceNumber: editingInvoice.invoiceNumber,
+					date: editingInvoice.date,
+					companyId: editingInvoice.companyId,
+					taxRate: editingInvoice.taxRate,
+					extraExpensesIncludeTax: editingInvoice.extraExpensesIncludeTax,
+					notes: editingInvoice.notes || '',
+					waybillIds: editingInvoice.waybills.map((w) => w.waybillId),
+					extraExpenseIds: editingInvoice.extraExpenses.map((e) => e.extraExpenseId),
+				});
+				setSelectedExtraExpenses(editingInvoice.extraExpenses.map((e) => e.extraExpenseId));
+			} else {
+				// 新增模式
+				const waybillIds = waybillList.map((w) => w.id).filter(Boolean) as string[];
+				const firstWaybill = waybillList[0];
 
-	// 處理對話框關閉並重置表單
+				// 預設選擇第一個託運單的公司
+				let defaultCompanyId = '';
+				if (firstWaybill?.companyId) {
+					defaultCompanyId = firstWaybill.companyId;
+				} else if (firstWaybill?.companyName && companies.length > 0) {
+					const found = companies.find((c) => c.name === firstWaybill.companyName);
+					if (found) defaultCompanyId = found.id;
+				}
+
+				// 收集所有額外費用ID並預設全選
+				const allExtraExpenseIds: string[] = [];
+				waybillList.forEach((waybill) => {
+					if (waybill.extraExpenses) {
+						waybill.extraExpenses.forEach((expense) => {
+							if (expense.id) allExtraExpenseIds.push(expense.id);
+						});
+					}
+				});
+
+				reset({
+					invoiceNumber: '',
+					date: new Date().toISOString().split('T')[0],
+					companyId: defaultCompanyId,
+					taxRate: 0.05,
+					extraExpensesIncludeTax: false,
+					notes: '',
+					waybillIds,
+					extraExpenseIds: allExtraExpenseIds,
+				});
+				setSelectedExtraExpenses(allExtraExpenseIds);
+			}
+		} else {
+			// 重置表單
+			reset({
+				invoiceNumber: '',
+				date: new Date().toISOString().split('T')[0],
+				companyId: '',
+				taxRate: 0.05,
+				extraExpensesIncludeTax: false,
+				notes: '',
+				waybillIds: [],
+				extraExpenseIds: [],
+			});
+			setSelectedExtraExpenses([]);
+		}
+	}, [open, editingInvoice, waybillList, companies, reset]);
+
+	// 處理對話框關閉
 	const handleClose = () => {
 		onClose();
-		setSelectedCompany('');
-		setInvoiceAmount('');
-		setInvoiceDesc('');
-		setIncludedExtraExpenses({});
 	};
 
-	// 處理發票提交
-	const handleSubmit = () => {
-		if (!selectedCompany || !invoiceAmount) {
-			alert('請填寫必要資訊');
-			return;
+	// 處理表單提交
+	const onSubmit = (data: CreateInvoiceRequest) => {
+		// 更新選中的額外費用ID
+		const baseData = {
+			...data,
+			extraExpenseIds: selectedExtraExpenses,
+		};
+
+		if (editingInvoice) {
+			// 編輯模式：使用 UpdateInvoiceRequest 格式
+			const updateData = {
+				invoiceNumber: baseData.invoiceNumber,
+				date: baseData.date,
+				taxRate: baseData.taxRate,
+				extraExpensesIncludeTax: baseData.extraExpensesIncludeTax,
+				notes: baseData.notes,
+				waybillIds: baseData.waybillIds,
+				extraExpenseIds: baseData.extraExpenseIds,
+			};
+
+			updateMutation.mutate(
+				{ id: editingInvoice.id, data: updateData },
+				{
+					onSuccess: () => {
+						handleClose();
+						onSuccess?.();
+					},
+				},
+			);
+		} else {
+			// 新增模式：使用 CreateInvoiceRequest 格式
+			createMutation.mutate(baseData, {
+				onSuccess: () => {
+					handleClose();
+					onSuccess?.();
+				},
+			});
 		}
-		onCreate(invoiceDesc);
-		handleClose();
 	};
 
 	// 獲取選中的公司詳細資料
 	const getSelectedCompanyDetails = (): Company | undefined => {
-		return companiesData.find((company) => company.id === selectedCompany);
+		return companies.find((company) => company.id === watchedValues.companyId);
 	};
 
-	// 計算選中項目的總金額（僅納入被勾選的額外支出）
-	function calculateTotalAmount(): number {
-		return waybillList?.reduce((sum, row) => {
-			const base = row.fee || 0;
-			const extra =
-				row.extraExpenses?.reduce((acc, expense, idx) => {
-					if (includedExtraExpenses[row.id ?? '']?.[idx]) {
-						return acc + expense.fee;
-					}
-					return acc;
-				}, 0) || 0;
-			return sum + base + extra;
+	// 計算金額
+	const calculateAmounts = () => {
+		const waybillAmount = waybillList.reduce((sum, waybill) => sum + (waybill.fee || 0), 0);
+		const extraExpenseAmount = waybillList.reduce((sum, waybill) => {
+			if (!waybill.extraExpenses) return sum;
+			return (
+				sum +
+				waybill.extraExpenses
+					.filter((expense) => selectedExtraExpenses.includes(expense.id || ''))
+					.reduce((expenseSum, expense) => expenseSum + expense.fee, 0)
+			);
 		}, 0);
-	}
 
-	// 新增：計算總稅金
-	function calculateTotalTax(): number {
-		const subtotal = calculateTotalAmount();
-		return subtotal * 0.2;
-	}
+		let subtotal: number;
+		let tax: number;
+		let total: number;
 
-	// 新增：計算含稅總額
-	function calculateTotalAmountWithTax(): number {
-		const subtotal = calculateTotalAmount();
-		const tax = subtotal * 0.2;
-		return subtotal + tax;
-	}
+		if (watchedValues.extraExpensesIncludeTax) {
+			// 額外費用包含稅率：稅額 = (託運單金額 + 額外費用) × 稅率
+			subtotal = waybillAmount + extraExpenseAmount;
+			tax = subtotal * watchedValues.taxRate;
+			total = subtotal + tax;
+		} else {
+			// 額外費用不包含稅率：稅額 = 託運單金額 × 稅率
+			subtotal = waybillAmount + extraExpenseAmount;
+			tax = waybillAmount * watchedValues.taxRate;
+			total = subtotal + tax;
+		}
+
+		return { waybillAmount, extraExpenseAmount, subtotal, tax, total };
+	};
+
+	const { waybillAmount, extraExpenseAmount, subtotal, tax, total } = calculateAmounts();
+
+	// 處理額外費用選擇變更
+	const handleExtraExpenseToggle = (expenseId: string, checked: boolean) => {
+		setSelectedExtraExpenses((prev) => {
+			if (checked) {
+				return [...prev, expenseId];
+			}
+			return prev.filter((id) => id !== expenseId);
+		});
+	};
 
 	return (
-		<Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-			<DialogTitle>開立發票</DialogTitle>
-			<DialogContent dividers>
-				<Stack spacing={3}>
-					<FormControl fullWidth>
-						<InputLabel id="company-select-label">選擇公司</InputLabel>
-						<Select
-							labelId="company-select-label"
-							value={selectedCompany}
-							label="選擇公司"
-							onChange={(e) => setSelectedCompany(e.target.value)}
-						>
-							{companiesData.map((company) => (
-								<MenuItem key={company.id} value={company.id}>
-									{company.name} ({company.taxId})
-								</MenuItem>
-							))}
-						</Select>
-					</FormControl>
+		<Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth>
+			<form onSubmit={handleSubmit(onSubmit)}>
+				<DialogTitle>{editingInvoice ? '編輯發票' : '開立發票'}</DialogTitle>
+				<DialogContent dividers>
+					<Stack spacing={3}>
+						{/* 基本資訊 */}
+						<Stack direction="row" spacing={2}>
+							<Controller
+								name="invoiceNumber"
+								control={control}
+								rules={{ required: '發票號碼為必填' }}
+								render={({ field }) => (
+									<TextField
+										{...field}
+										label="發票號碼"
+										fullWidth
+										error={!!errors.invoiceNumber}
+										helperText={errors.invoiceNumber?.message}
+									/>
+								)}
+							/>
+							<Controller
+								name="date"
+								control={control}
+								rules={{ required: '發票日期為必填' }}
+								render={({ field }) => (
+									<TextField
+										{...field}
+										label="發票日期"
+										type="date"
+										fullWidth
+										InputLabelProps={{ shrink: true }}
+										error={!!errors.date}
+										helperText={errors.date?.message}
+									/>
+								)}
+							/>
+						</Stack>
 
-					{selectedCompany && (
-						<Box sx={{ border: '1px solid #e0e0e0', p: 2, borderRadius: 1 }}>
-							<Typography variant="subtitle1" gutterBottom>
-								公司資訊
-							</Typography>
-							{getSelectedCompanyDetails() && (
-								<Stack spacing={1}>
+						{/* 公司選擇 */}
+						<Controller
+							name="companyId"
+							control={control}
+							rules={{ required: '請選擇公司' }}
+							render={({ field }) => (
+								<FormControl fullWidth error={!!errors.companyId}>
+									<InputLabel>選擇公司</InputLabel>
+									<Select {...field} label="選擇公司" disabled={!!editingInvoice}>
+										{companies.map((company) => (
+											<MenuItem key={company.id} value={company.id}>
+												{company.name} ({company.taxId})
+											</MenuItem>
+										))}
+									</Select>
+									{editingInvoice && (
+										<Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1.5 }}>
+											編輯模式下無法修改公司
+										</Typography>
+									)}
+									{errors.companyId && (
+										<Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+											{errors.companyId.message}
+										</Typography>
+									)}
+								</FormControl>
+							)}
+						/>
+
+						{/* 公司資訊顯示 */}
+						{watchedValues.companyId && getSelectedCompanyDetails() && (
+							<Box sx={{ border: '1px solid #e0e0e0', p: 2, borderRadius: 1, bgcolor: '#fafafa' }}>
+								<Typography variant="subtitle2" gutterBottom>
+									公司資訊
+								</Typography>
+								<Stack spacing={0.5}>
 									<Typography variant="body2">
 										統一編號: {getSelectedCompanyDetails()?.taxId}
 									</Typography>
@@ -177,125 +317,170 @@ export function InvoiceDialog({ open, onClose, waybillList, onCreate }: InvoiceD
 										電話: {getSelectedCompanyDetails()?.phone?.join(', ')}
 									</Typography>
 								</Stack>
-							)}
+							</Box>
+						)}
+
+						{/* 稅率設定 */}
+						<Stack direction="row" spacing={2} alignItems="center">
+							<Controller
+								name="taxRate"
+								control={control}
+								rules={{
+									required: '稅率為必填',
+									min: { value: 0, message: '稅率不可小於0' },
+									max: { value: 1, message: '稅率不可大於1' },
+								}}
+								render={({ field }) => (
+									<TextField
+										{...field}
+										label="稅率"
+										type="number"
+										inputProps={{ min: 0, max: 1, step: 0.01 }}
+										error={!!errors.taxRate}
+										helperText={errors.taxRate?.message || '預設 0.05 (5%)'}
+										sx={{ width: 200 }}
+									/>
+								)}
+							/>
+							<Controller
+								name="extraExpensesIncludeTax"
+								control={control}
+								render={({ field }) => (
+									<FormControlLabel
+										control={<Switch checked={field.value} onChange={field.onChange} />}
+										label="額外費用包含稅率"
+									/>
+								)}
+							/>
+						</Stack>
+
+						{/* 備註 */}
+						<Controller
+							name="notes"
+							control={control}
+							render={({ field }) => <TextField {...field} label="備註" fullWidth multiline rows={2} />}
+						/>
+
+						<Divider />
+
+						{/* 金額計算顯示 */}
+						<Box sx={{ border: '1px solid #e0e0e0', p: 2, borderRadius: 1, bgcolor: '#f5f5f5' }}>
+							<Typography variant="subtitle2" gutterBottom>
+								發票金額計算
+							</Typography>
+							<Stack spacing={1}>
+								<Stack direction="row" justifyContent="space-between">
+									<Typography variant="body2">託運單金額:</Typography>
+									<Typography variant="body2">${waybillAmount.toLocaleString()}</Typography>
+								</Stack>
+								<Stack direction="row" justifyContent="space-between">
+									<Typography variant="body2">額外費用:</Typography>
+									<Typography variant="body2">${extraExpenseAmount.toLocaleString()}</Typography>
+								</Stack>
+								<Stack direction="row" justifyContent="space-between">
+									<Typography variant="body2">小計:</Typography>
+									<Typography variant="body2">${subtotal.toLocaleString()}</Typography>
+								</Stack>
+								<Stack direction="row" justifyContent="space-between">
+									<Typography variant="body2">
+										稅額 ({(watchedValues.taxRate * 100).toFixed(1)}%):
+									</Typography>
+									<Typography variant="body2">${tax.toLocaleString()}</Typography>
+								</Stack>
+								<Divider />
+								<Stack direction="row" justifyContent="space-between">
+									<Typography variant="h6">總計:</Typography>
+									<Typography variant="h6" color="primary">
+										${total.toLocaleString()}
+									</Typography>
+								</Stack>
+							</Stack>
 						</Box>
-					)}
 
-					<TextField
-						label="發票金額（含稅）"
-						type="number"
-						value={calculateTotalAmountWithTax()}
-						fullWidth
-						InputProps={{ readOnly: true }}
-						helperText={`未稅: ${calculateTotalAmount()}，稅金: ${calculateTotalTax()}，含稅: ${calculateTotalAmountWithTax()}`}
-					/>
+						{/* 託運單列表 */}
+						<Box sx={{ border: '1px solid #e0e0e0', p: 2, borderRadius: 1 }}>
+							<Typography variant="subtitle2" gutterBottom>
+								選中的託運單 ({waybillList.length})
+							</Typography>
+							<TableContainer sx={{ maxHeight: 300 }}>
+								<Table size="small">
+									<TableHead>
+										<TableRow>
+											<TableCell>託運單號</TableCell>
+											<TableCell>日期</TableCell>
+											<TableCell>品項</TableCell>
+											<TableCell>司機</TableCell>
+											<TableCell align="right">費用</TableCell>
+										</TableRow>
+									</TableHead>
+									<TableBody>
+										{waybillList.map((waybill) => (
+											<TableRow key={waybill.id}>
+												<TableCell>{waybill.waybillNumber}</TableCell>
+												<TableCell>{waybill.date}</TableCell>
+												<TableCell>{waybill.item}</TableCell>
+												<TableCell>{waybill.driverName}</TableCell>
+												<TableCell align="right">${waybill.fee?.toLocaleString()}</TableCell>
+											</TableRow>
+										))}
+									</TableBody>
+								</Table>
+							</TableContainer>
+						</Box>
 
-					<TextField
-						label="發票說明"
-						value={invoiceDesc}
-						onChange={(e) => setInvoiceDesc(e.target.value)}
-						fullWidth
-						multiline
-						rows={1}
-					/>
-
-					<Box sx={{ border: '1px solid #e0e0e0', p: 2, borderRadius: 1 }}>
-						<Typography variant="subtitle1" gutterBottom>
-							選中項目 ({waybillList?.length})
-						</Typography>
-						<TableContainer sx={{ maxHeight: '200px' }}>
-							<Table size="small">
-								<TableHead>
-									<TableRow>
-										<TableCell>客戶</TableCell>
-										<TableCell>日期</TableCell>
-										<TableCell align="right">金額</TableCell>
-										<TableCell align="right">額外支出</TableCell>
-										<TableCell align="right">稅金</TableCell>
-										<TableCell align="right">發票金額（含稅）</TableCell>
-									</TableRow>
-								</TableHead>
-								<TableBody>
-									{waybillList?.map((row) => {
-										// 計算該 row 被勾選的額外支出總額
-										const includedExtra =
-											row.extraExpenses?.reduce((acc, expense, idx) => {
-												if (includedExtraExpenses[row.id ?? '']?.[idx]) {
-													return acc + expense.fee;
-												}
-												return acc;
-											}, 0) || 0;
-										const subtotal = (row.fee || 0) + includedExtra;
-										const tax = subtotal * 0.2;
-										const invoiceTotal = subtotal + tax;
-										return (
-											<>
-												<TableRow key={row.id}>
-													<TableCell>{row.companyName}</TableCell>
-													<TableCell>{row.date}</TableCell>
-													<TableCell align="right">{row.fee}</TableCell>
-													<TableCell align="right">
-														{/* 顯示額外支出總額 */}
-														{row.extraExpenses?.reduce(
-															(acc, expense) => acc + expense.fee,
-															0,
-														)}
-													</TableCell>
-													<TableCell align="right">{tax}</TableCell>
-													<TableCell align="right">{invoiceTotal}</TableCell>
-												</TableRow>
-												{/* 額外支出明細，並可勾選是否納入 */}
-												{row.extraExpenses?.length > 0 && (
-													<TableRow>
-														<TableCell colSpan={6} sx={{ background: '#fafafa' }}>
-															<Stack spacing={1} direction="row" flexWrap="wrap">
-																{row.extraExpenses.map((expense, idx) => (
-																	<Box
-																		key={idx}
-																		display="flex"
-																		alignItems="center"
-																		mr={2}
-																	>
-																		<Checkbox
-																			checked={
-																				includedExtraExpenses[row.id ?? '']?.[
-																					idx
-																				] ?? false
-																			}
-																			onChange={(e) => {
-																				setIncludedExtraExpenses((prev) => ({
-																					...prev,
-																					[row.id ?? '']: {
-																						...prev[row.id ?? ''],
-																						[idx]: e.target.checked,
-																					},
-																				}));
-																			}}
-																		/>
-																		<Typography variant="body2">
-																			{expense.item}：{expense.fee} 元
-																		</Typography>
-																	</Box>
-																))}
-															</Stack>
-														</TableCell>
-													</TableRow>
-												)}
-											</>
-										);
-									})}
-								</TableBody>
-							</Table>
-						</TableContainer>
-					</Box>
-				</Stack>
-			</DialogContent>
-			<DialogActions>
-				<Button onClick={handleClose}>取消</Button>
-				<Button variant="contained" onClick={handleSubmit}>
-					確認開立
-				</Button>
-			</DialogActions>
+						{/* 額外費用選擇 */}
+						{waybillList.some((w) => w.extraExpenses && w.extraExpenses.length > 0) && (
+							<Box sx={{ border: '1px solid #e0e0e0', p: 2, borderRadius: 1 }}>
+								<Typography variant="subtitle2" gutterBottom>
+									額外費用選擇
+								</Typography>
+								<Stack spacing={2}>
+									{waybillList.map((waybill) =>
+										waybill.extraExpenses && waybill.extraExpenses.length > 0 ? (
+											<Box key={waybill.id}>
+												<Typography variant="body2" fontWeight="medium" gutterBottom>
+													{waybill.waybillNumber} 的額外費用:
+												</Typography>
+												<Stack direction="row" flexWrap="wrap" gap={1}>
+													{waybill.extraExpenses.map((expense) => (
+														<FormControlLabel
+															key={expense.id}
+															control={
+																<Checkbox
+																	checked={selectedExtraExpenses.includes(
+																		expense.id || '',
+																	)}
+																	onChange={(e) =>
+																		handleExtraExpenseToggle(
+																			expense.id || '',
+																			e.target.checked,
+																		)
+																	}
+																/>
+															}
+															label={`${expense.item} - $${expense.fee.toLocaleString()}`}
+														/>
+													))}
+												</Stack>
+											</Box>
+										) : null,
+									)}
+								</Stack>
+							</Box>
+						)}
+					</Stack>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={handleClose}>取消</Button>
+					<Button
+						type="submit"
+						variant="contained"
+						disabled={createMutation.isPending || updateMutation.isPending}
+					>
+						{editingInvoice ? '更新發票' : '確認開立'}
+					</Button>
+				</DialogActions>
+			</form>
 		</Dialog>
 	);
 }

@@ -36,6 +36,7 @@ export interface LoadingLocation {
 }
 
 export interface ExtraExpense {
+	id: string;
 	item: string;
 	fee: number;
 	notes?: string;

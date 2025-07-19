@@ -27,11 +27,11 @@ const transformWaybillFromApi = (apiWaybill: any): Waybill => {
 		companyId: apiWaybill.companyId,
 		loadingLocations: apiWaybill.loadingLocations.map((location: any) => ({
 			from: location.from,
-			to: location.to
+			to: location.to,
 		})),
 		workingTime: {
 			start: apiWaybill.workingTimeStart,
-			end: apiWaybill.workingTimeEnd
+			end: apiWaybill.workingTimeEnd,
 		},
 		fee: apiWaybill.fee,
 		driverName: apiWaybill.driverName,
@@ -42,7 +42,7 @@ const transformWaybillFromApi = (apiWaybill: any): Waybill => {
 		status: apiWaybill.status,
 		invoiceId: apiWaybill.invoiceId,
 		createdAt: apiWaybill.createdAt,
-		updatedAt: apiWaybill.updatedAt
+		updatedAt: apiWaybill.updatedAt,
 	};
 };
 
@@ -62,16 +62,13 @@ const transformWaybillToApi = (waybill: WaybillFormData): any => {
 		notes: waybill.notes,
 		loadingLocations: waybill.loadingLocations.map((location) => ({
 			from: location.from,
-			to: location.to
+			to: location.to,
 		})),
-		extraExpenses: waybill.extraExpenses
+		extraExpenses: waybill.extraExpenses,
 	};
 };
 
-export const updateWaybill = async (params: {
-	waybillId: string;
-	waybill: WaybillFormData;
-}): Promise<Waybill> => {
+export const updateWaybill = async (params: { waybillId: string; waybill: WaybillFormData }): Promise<Waybill> => {
 	const apiData = transformWaybillToApi(params.waybill);
 	const response = await axiosInstance.put(`/waybill/${params.waybillId}`, apiData);
 	queryClient.invalidateQueries({ queryKey: ['waybills'] });

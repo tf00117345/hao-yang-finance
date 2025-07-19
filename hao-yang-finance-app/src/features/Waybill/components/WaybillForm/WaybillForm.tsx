@@ -1,12 +1,15 @@
+import { useEffect, useState } from 'react';
+
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Autocomplete, Box, Button, IconButton, Stack, TextField, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { useEffect, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+
+import { generateUUID } from '../../../../utils/general';
+import CompanyForm from '../../../Settings/components/CompanyForm/CompanyForm';
 import { Company, CreateCompanyDto } from '../../../Settings/types/company';
 import { Driver } from '../../../Settings/types/driver';
-import CompanyForm from '../../../Settings/components/CompanyForm/CompanyForm';
 import { WaybillFormData } from '../../types/waybill.types';
 
 // 定義樣式化組件
@@ -91,11 +94,12 @@ interface WaybillFormProps {
 	initialData: WaybillFormData | null;
 	drivers: Driver[];
 	companies: Company[];
+	readonly: boolean;
 	onSave: (data: WaybillFormData) => void;
 	onAddCompany: (company: Company) => void; // 新增公司的回調函數
 }
 
-function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany }: WaybillFormProps) {
+function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, readonly = false }: WaybillFormProps) {
 	const navigate = useNavigate();
 	// 新增公司相關狀態
 	const [companyFormOpen, setCompanyFormOpen] = useState(false);
@@ -338,7 +342,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany }: 
 									);
 
 									// 創建選項列表
-									let options = [...updatedCompanies];
+									const options = [...updatedCompanies];
 
 									// 如果用戶輸入了不在列表中的名稱，添加「新增」選項
 									if (inputValue && !isExistingCompany) {
@@ -485,6 +489,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany }: 
 								variant="contained"
 								color="primary"
 								onClick={handleAddLocation}
+								disabled={readonly}
 							>
 								新增裝卸地點
 							</Button>
@@ -624,7 +629,8 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany }: 
 								sx={{ width: '100%' }}
 								variant="contained"
 								color="primary"
-								onClick={() => appendExtraExpense({ item: '', fee: 0, notes: '' })}
+								onClick={() => appendExtraExpense({ id: generateUUID(), item: '', fee: 0, notes: '' })}
+								disabled={readonly}
 							>
 								新增額外費用
 							</Button>
@@ -654,10 +660,10 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany }: 
 				</FormContainer>
 
 				<Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', mt: 2 }}>
-					<Button variant="outlined" color="error" onClick={handleCancel} disabled={!isDirty}>
+					<Button variant="outlined" color="error" onClick={handleCancel} disabled={!isDirty || readonly}>
 						取消
 					</Button>
-					<Button variant="contained" color="primary" type="submit" disabled={!isDirty}>
+					<Button variant="contained" color="primary" type="submit" disabled={!isDirty || readonly}>
 						儲存
 					</Button>
 				</Stack>

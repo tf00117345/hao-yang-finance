@@ -1,3 +1,5 @@
+import { useMemo, useState } from 'react';
+
 import {
 	ColumnFiltersState,
 	ColumnResizeDirection,
@@ -12,7 +14,7 @@ import {
 	useReactTable,
 	RowSelectionState,
 } from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
+
 import { Waybill, ExtraExpense } from '../../Waybill/types/waybill.types';
 
 const columnHelper = createColumnHelper<Waybill>();
@@ -61,30 +63,38 @@ export function useUninvoicedTable(data: Waybill[]) {
 					enableGrouping: false,
 				},
 			),
-			columnHelper.accessor(
-				(row) =>
-					(row.fee +
-						row.extraExpenses?.reduce((acc: number, expense: ExtraExpense) => +acc + +expense.fee, 0)) *
-					0.2,
-				{
-					header: '稅金',
-					cell: (info) => info.getValue(),
-					enableGrouping: false,
-				},
-			),
-			columnHelper.accessor(
-				(row) =>
-					(row.fee +
-						row.extraExpenses?.reduce((acc: number, expense: ExtraExpense) => +acc + +expense.fee, 0)) *
-						0.2 +
-					row.extraExpenses?.reduce((acc: number, expense: ExtraExpense) => +acc + +expense.fee, 0) +
-					row.fee,
-				{
-					header: '發票金額',
-					cell: (info) => info.getValue(),
-					enableGrouping: false,
-				},
-			),
+			// columnHelper.accessor(
+			// 	(row) => {
+			// 		const extraExpensesSum =
+			// 			row.extraExpenses?.reduce(
+			// 				(acc: number, expense: ExtraExpense) => acc + Number(expense.fee),
+			// 				0,
+			// 			) || 0;
+			// 		return (row.fee + extraExpensesSum) * 0.05;
+			// 	},
+			// 	{
+			// 		header: '稅金',
+			// 		cell: (info) => info.getValue(),
+			// 		enableGrouping: false,
+			// 	},
+			// ),
+			// columnHelper.accessor(
+			// 	(row) => {
+			// 		const extraExpensesSum =
+			// 			row.extraExpenses?.reduce(
+			// 				(acc: number, expense: ExtraExpense) => acc + Number(expense.fee),
+			// 				0,
+			// 			) || 0;
+			// 		const subtotal = row.fee + extraExpensesSum;
+			// 		const tax = subtotal * 0.05;
+			// 		return subtotal + tax;
+			// 	},
+			// 	{
+			// 		header: '發票金額',
+			// 		cell: (info) => info.getValue(),
+			// 		enableGrouping: false,
+			// 	},
+			// ),
 			columnHelper.accessor('driverName', {
 				header: '司機',
 				cell: (info) => info.getValue(),

@@ -35,8 +35,8 @@ export default function MainPage() {
 	return (
 		<Box sx={{ p: 3, maxWidth: 'md', mx: 'auto' }}>
 			<Stack spacing={2}>
-				{invoiceStatuses.map((status, index) => (
-					<Card key={index} sx={{ width: '100%' }}>
+				{invoiceStatuses.map((status) => (
+					<Card key={status.title} sx={{ width: '100%' }}>
 						<CardContent>
 							<Box
 								sx={{

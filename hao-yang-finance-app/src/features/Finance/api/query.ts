@@ -1,20 +1,29 @@
 import { useQuery } from '@tanstack/react-query';
-import { Invoice } from '../types/invoice.type';
-import { getInvoices, getUninvoicedWaybills } from './api';
-import { Waybill } from '../../Waybill/types/waybill.types';
-import { DateRange } from '../../../types/date-range';
+
+import { Invoice, InvoiceQueryParams, InvoiceStats } from '../types/invoice.type';
+import { getInvoices, getInvoice, getInvoiceStats } from './api';
 
 // 取得發票列表
-export const useInvoicesQuery = (dateRange: DateRange) => {
+export const useInvoicesQuery = (params?: InvoiceQueryParams) => {
 	return useQuery<Invoice[]>({
-		queryKey: ['invoices'],
-		queryFn: () => getInvoices(dateRange),
+		queryKey: ['invoices', params],
+		queryFn: () => getInvoices(params),
 	});
 };
 
-export const useUninvoicedWaybillsQuery = (dateRange: DateRange, driverId?: string) => {
-	return useQuery<Waybill[]>({
-		queryKey: ['uninvoicedWaybills'],
-		queryFn: () => getUninvoicedWaybills(dateRange, driverId),
+// 取得單一發票
+export const useInvoiceQuery = (id: string) => {
+	return useQuery<Invoice>({
+		queryKey: ['invoice', id],
+		queryFn: () => getInvoice(id),
+		enabled: !!id,
+	});
+};
+
+// 取得發票統計
+export const useInvoiceStatsQuery = (startDate?: string, endDate?: string) => {
+	return useQuery<InvoiceStats>({
+		queryKey: ['invoice-stats', startDate, endDate],
+		queryFn: () => getInvoiceStats(startDate, endDate),
 	});
 };

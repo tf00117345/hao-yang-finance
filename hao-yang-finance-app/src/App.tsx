@@ -10,6 +10,7 @@ import NavigationAppBar from './component/NavigationAppBar/NavigationAppBar';
 import { SnackbarProvider } from './contexts/SnackbarContext';
 import FinancePage from './features/Finance/components/FinancePage/FinancePage';
 import { SettingPage } from './features/Settings/components/SettingPage/SettingPage';
+import { StatisticsPage } from './features/Statistics/components/StatisticsPage';
 import WaybillPage from './features/Waybill/components/WaybillPage/WaybillPage';
 
 export const queryClient = new QueryClient({
@@ -39,6 +40,7 @@ function App() {
 								{/* <Route path="/main" element={<MainPage />} /> */}
 								<Route path="/waybill/*" element={<WaybillPage />} />
 								<Route path="/finance" element={<FinancePage />} />
+								<Route path="/statistics" element={<StatisticsPage />} />
 								<Route path="/settings/*" element={<SettingPage />} />
 							</Route>
 						</Routes>

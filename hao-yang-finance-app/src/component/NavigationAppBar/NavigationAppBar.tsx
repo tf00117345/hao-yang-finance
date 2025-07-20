@@ -1,6 +1,7 @@
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import ReceiptLong from '@mui/icons-material/ReceiptLong';
 import SettingsIcon from '@mui/icons-material/Settings';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import Divider from '@mui/material/Divider';
@@ -25,6 +26,11 @@ const routeConfig = [
 		name: '財務表',
 		path: 'finance',
 		icon: <ReceiptLong />,
+	},
+	{
+		name: '業績統計',
+		path: 'statistics',
+		icon: <TrendingUpIcon />,
 	},
 ];
 

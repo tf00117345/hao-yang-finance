@@ -27,7 +27,6 @@ import {
 	InputLabel,
 	Select,
 	MenuItem,
-	InputAdornment,
 } from '@mui/material';
 import { flexRender } from '@tanstack/react-table';
 import { Controller, useForm } from 'react-hook-form';
@@ -400,7 +399,7 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 										<SmartFilterInput
 											columnId={header.id}
 											columnHeader={header.column.columnDef.header as string}
-											value={getFilterValue(header.id)}
+											value={getFilterValue(header.id) as string}
 											onChange={(value) => handleFilterChange(header.id, value)}
 											onClear={() => clearFilter(header.id)}
 										/>

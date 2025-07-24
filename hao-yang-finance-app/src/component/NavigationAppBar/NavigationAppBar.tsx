@@ -2,7 +2,21 @@ import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import ReceiptLong from '@mui/icons-material/ReceiptLong';
 import SettingsIcon from '@mui/icons-material/Settings';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import { Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { 
+  Box, 
+  List, 
+  ListItem, 
+  ListItemButton, 
+  ListItemIcon, 
+  ListItemText,
+  IconButton,
+  Menu,
+  MenuItem,
+  Avatar,
+  Chip,
+} from '@mui/material';
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import Divider from '@mui/material/Divider';
 import MuiDrawer from '@mui/material/Drawer';
@@ -10,6 +24,8 @@ import { CSSObject, styled, Theme } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useAuth } from '../../features/Auth/context/AuthContext';
 
 const routeConfig = [
 	// {
@@ -108,6 +124,8 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 function NavigationAppBar() {
 	const navigate = useNavigate();
 	const location = useLocation();
+	const { user, logout } = useAuth();
+	const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
 
 	const currentPath = location.pathname;
 
@@ -115,33 +133,77 @@ function NavigationAppBar() {
 		navigate(path);
 	};
 
+	const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+		setUserMenuAnchor(event.currentTarget);
+	};
+
+	const handleUserMenuClose = () => {
+		setUserMenuAnchor(null);
+	};
+
+	const handleLogout = async () => {
+		handleUserMenuClose();
+		await logout();
+		navigate('/login');
+	};
+
 	return (
 		<Box sx={{ display: 'flex', backgroundColor: '#F9F9F9' }}>
 			<AppBar position="fixed">
 				<Toolbar>
-					<Typography variant="h6" noWrap component="div">
+					<Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
 						皓揚財務管理系統
 					</Typography>
-					{/* <Box sx={{ flexGrow: 1 }} />
-					<Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-						<IconButton id="navigation__setting" size="large" color="inherit">
-							<SettingsIcon />
-						</IconButton>
-						<IconButton size="large" color="inherit">
-							<AccountCircle />
-						</IconButton>
-						<IconButton size="large" color="inherit">
-							<HistoryEduIcon />
-						</IconButton>
-						<IconButton size="large" edge="end" color="inherit">
-							<LogoutIcon />
-						</IconButton>
+					
+					{/* User Menu */}
+					<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+						{user && (
+							<>
+								<Chip 
+									label={user.role === 'Admin' ? '管理員' : '用戶'} 
+									size="small" 
+									color={user.role === 'Admin' ? 'secondary' : 'default'}
+								/>
+								<IconButton
+									size="large"
+									color="inherit"
+									onClick={handleUserMenuOpen}
+									sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+								>
+									<AccountCircleIcon />
+								</IconButton>
+								<Menu
+									anchorEl={userMenuAnchor}
+									open={Boolean(userMenuAnchor)}
+									onClose={handleUserMenuClose}
+									anchorOrigin={{
+										vertical: 'bottom',
+										horizontal: 'right',
+									}}
+									transformOrigin={{
+										vertical: 'top',
+										horizontal: 'right',
+									}}
+								>
+									<MenuItem disabled>
+										<Box sx={{ textAlign: 'center' }}>
+											<Typography variant="subtitle2">{user.fullName || user.username}</Typography>
+											<Typography variant="caption" color="text.secondary">
+												{user.email}
+											</Typography>
+										</Box>
+									</MenuItem>
+									<Divider />
+									<MenuItem onClick={handleLogout}>
+										<ListItemIcon>
+											<LogoutIcon />
+										</ListItemIcon>
+										<ListItemText primary="登出" />
+									</MenuItem>
+								</Menu>
+							</>
+						)}
 					</Box>
-					<Box sx={{ display: { xs: 'flex', md: 'none' } }}>
-						<IconButton size="large" color="inherit">
-							<MoreIcon />
-						</IconButton>
-					</Box> */}
 				</Toolbar>
 			</AppBar>
 			<Drawer

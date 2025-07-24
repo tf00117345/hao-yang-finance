@@ -10,6 +10,7 @@ namespace hao_yang_finance_api.Data
         {
         }
 
+        public DbSet<User> Users { get; set; }
         public DbSet<Company> Companies { get; set; }
         public DbSet<CompanyPhone> CompanyPhones { get; set; }
         public DbSet<Driver> Drivers { get; set; }

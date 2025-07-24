@@ -24,7 +24,10 @@
       "Bash(find:*)",
       "Bash(yarn build)",
       "Bash(curl:*)",
-      "Bash(yarn dev)"
+      "Bash(yarn dev)",
+      "Bash(dotnet restore:*)",
+      "Bash(powershell:*)",
+      "Bash(dotnet script:*)"
     ],
     "deny": []
   }

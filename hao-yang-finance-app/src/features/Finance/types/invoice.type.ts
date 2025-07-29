@@ -18,6 +18,7 @@ export interface Invoice {
 	updatedAt: string;
 	paidAt?: string;
 	waybills: InvoiceWaybill[];
+	extraExpenses: InvoiceExtraExpense[];
 }
 
 // 發票託運單關聯
@@ -39,6 +40,7 @@ export interface InvoiceExtraExpense {
 	fee: number;
 	notes?: string;
 	waybillNumber: string;
+	isSelected: boolean; // 標示此額外費用是否被選中
 }
 
 // 建立發票請求

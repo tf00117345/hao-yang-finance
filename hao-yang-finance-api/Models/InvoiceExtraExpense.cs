@@ -18,6 +18,9 @@ namespace hao_yang_finance_api.Models
         [Required]
         public string ExtraExpenseId { get; set; } = string.Empty;
 
+        [Column("is_selected")]
+        public bool IsSelected { get; set; } = true;
+
         [Column("created_at")]
         public string CreatedAt { get; set; } = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
 

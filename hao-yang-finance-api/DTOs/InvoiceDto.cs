@@ -112,6 +112,7 @@ namespace hao_yang_finance_api.DTOs
         public decimal Fee { get; set; }
         public string? Notes { get; set; }
         public string WaybillNumber { get; set; } = string.Empty;
+        public bool IsSelected { get; set; } = false; // 標示此額外費用是否被選中
     }
 
     // 發票查詢參數 DTO

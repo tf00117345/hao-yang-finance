@@ -112,19 +112,21 @@ namespace hao_yang_finance_api.Controllers
                                 Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
                                 Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
                                 Notes = iee.ExtraExpense.Notes,
-                                WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber
+                                WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber,
+                                IsSelected = iee.IsSelected,
                             }).ToList()
                     })
                     .OrderBy(x => x.WaybillNumber)
                     .ToList(),
-                // ExtraExpenses = i.InvoiceExtraExpenses.Select(iee => new InvoiceExtraExpenseDto
-                // {
-                //     ExtraExpenseId = iee.ExtraExpenseId,
-                //     Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
-                //     Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
-                //     Notes = iee.ExtraExpense.Notes,
-                //     WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber
-                // }).ToList()
+                ExtraExpenses = i.InvoiceExtraExpenses.Select(iee => new InvoiceExtraExpenseDto
+                {
+                    ExtraExpenseId = iee.ExtraExpenseId,
+                    Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
+                    Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
+                    Notes = iee.ExtraExpense.Notes,
+                    WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber,
+                    IsSelected = iee.IsSelected,
+                }).ToList()
             }).ToList();
 
             return Ok(result);
@@ -185,17 +187,18 @@ namespace hao_yang_finance_api.Controllers
                             Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
                             Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
                             Notes = iee.ExtraExpense.Notes,
-                            WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber
+                            WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber,
+                            IsSelected = iee.IsSelected,
                         }).ToList()
                 }).ToList(),
-                ExtraExpenses = invoice.InvoiceExtraExpenses.Select(iee => new InvoiceExtraExpenseDto
-                {
-                    ExtraExpenseId = iee.ExtraExpenseId,
-                    Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
-                    Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
-                    Notes = iee.ExtraExpense.Notes,
-                    WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber
-                }).ToList()
+                // ExtraExpenses = invoice.InvoiceExtraExpenses.Select(iee => new InvoiceExtraExpenseDto
+                // {
+                //     ExtraExpenseId = iee.ExtraExpenseId,
+                //     Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
+                //     Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
+                //     Notes = iee.ExtraExpense.Notes,
+                //     WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber
+                // }).ToList()
             };
 
             return Ok(result);
@@ -309,7 +312,8 @@ namespace hao_yang_finance_api.Controllers
                 var invoiceExtraExpense = new InvoiceExtraExpense
                 {
                     InvoiceId = invoice.Id,
-                    ExtraExpenseId = extraExpenseId
+                    ExtraExpenseId = extraExpenseId,
+                    IsSelected = true
                 };
                 _context.InvoiceExtraExpenses.Add(invoiceExtraExpense);
             }

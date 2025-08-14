@@ -27,7 +27,9 @@
       "Bash(yarn dev)",
       "Bash(dotnet restore:*)",
       "Bash(powershell:*)",
-      "Bash(dotnet script:*)"
+      "Bash(dotnet script:*)",
+      "WebFetch(domain:docs.railway.com)",
+      "Bash(railway up:*)"
     ],
     "deny": []
   }

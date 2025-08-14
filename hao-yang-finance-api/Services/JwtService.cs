@@ -29,10 +29,10 @@ namespace hao_yang_finance_api.Services
 
         public string GenerateAccessToken(User user)
         {
-            var jwtKey = _configuration["JWT:Key"] ?? throw new InvalidOperationException("JWT Key is not configured");
-            var jwtIssuer = _configuration["JWT:Issuer"] ?? throw new InvalidOperationException("JWT Issuer is not configured");
-            var jwtAudience = _configuration["JWT:Audience"] ?? throw new InvalidOperationException("JWT Audience is not configured");
-            var jwtExpireMinutes = int.Parse(_configuration["JWT:ExpireMinutes"] ?? "30");
+            var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ?? _configuration["JWT:Key"] ?? throw new InvalidOperationException("JWT Key is not configured");
+            var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? _configuration["JWT:Issuer"] ?? throw new InvalidOperationException("JWT Issuer is not configured");
+            var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? _configuration["JWT:Audience"] ?? throw new InvalidOperationException("JWT Audience is not configured");
+            var jwtExpireMinutes = Environment.GetEnvironmentVariable("JWT_EXPIRE_MINUTES") ?? _configuration["JWT:ExpireMinutes"] ?? throw new InvalidOperationException("JWT Expire Minutes is not configured");
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -55,7 +55,7 @@ namespace hao_yang_finance_api.Services
                 issuer: jwtIssuer,
                 audience: jwtAudience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(jwtExpireMinutes),
+                expires: DateTime.UtcNow.AddMinutes(int.Parse(jwtExpireMinutes)),
                 signingCredentials: creds
             );
 

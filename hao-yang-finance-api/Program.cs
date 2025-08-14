@@ -12,10 +12,45 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add Entity Framework with PostgreSQL
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection") ??
-                      "Host=localhost;Database=hao_yang_finance;Username=postgres;Password=your_password"));
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection") ??
+                          "Host=localhost;Database=hao_yang_finance;Username=postgres;Password=your_password"));
+}
+else
+{
+    // Add Entity Framework with PostgreSQL for Railway
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    {
+        var connectionString = "";
+
+        // Try to get Railway DATABASE_URL
+        var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+
+        if (!string.IsNullOrEmpty(databaseUrl))
+        {
+            // Parse PostgreSQL URL to standard format for Railway
+            try
+            {
+                Console.WriteLine($"Database URL: {databaseUrl}");
+                var uri = new Uri(databaseUrl);
+                connectionString =
+                    $"Host={uri.Host};Port={uri.Port};Database={uri.LocalPath.TrimStart('/')};Username={uri.UserInfo.Split(':')[0]};Password={uri.UserInfo.Split(':')[1]};";
+            }
+            catch
+            {
+                // If URL parsing fails, try individual variables
+                databaseUrl = null;
+            }
+        }
+
+        Console.WriteLine(
+            $"Using connection string: Host={connectionString?.Split(';')[0]};Database={connectionString?.Split(';')[2]};...");
+        options.UseNpgsql(connectionString);
+    });
+}
+
 
 // Add Authentication Services
 builder.Services.AddScoped<IJwtService, JwtService>();
@@ -23,8 +58,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Add JWT Authentication
 var jwtKey = builder.Configuration["JWT:Key"] ?? throw new InvalidOperationException("JWT Key is not configured");
-var jwtIssuer = builder.Configuration["JWT:Issuer"] ?? throw new InvalidOperationException("JWT Issuer is not configured");
-var jwtAudience = builder.Configuration["JWT:Audience"] ?? throw new InvalidOperationException("JWT Audience is not configured");
+var jwtIssuer = builder.Configuration["JWT:Issuer"] ??
+                throw new InvalidOperationException("JWT Issuer is not configured");
+var jwtAudience = builder.Configuration["JWT:Audience"] ??
+                  throw new InvalidOperationException("JWT Audience is not configured");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -44,7 +81,7 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ClockSkew = TimeSpan.Zero
     };
-    
+
     options.Events = new JwtBearerEvents
     {
         OnAuthenticationFailed = context =>
@@ -53,6 +90,7 @@ builder.Services.AddAuthentication(options =>
             {
                 context.Response.Headers.Add("Token-Expired", "true");
             }
+
             return Task.CompletedTask;
         }
     };
@@ -61,12 +99,26 @@ builder.Services.AddAuthentication(options =>
 // Add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        builder =>
+    options.AddPolicy("AllowFrontend",
+        policy =>
         {
-            builder.AllowAnyOrigin()
+            var allowedOrigins = builder.Configuration.GetSection("CORS:AllowedOrigins").Get<string[]>()
+                                 ?? new[] { "http://localhost:5173", "http://localhost:3000" };
+
+            if (builder.Environment.IsProduction())
+            {
+                // In production, use specific frontend URL from environment variable
+                var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL");
+                if (!string.IsNullOrEmpty(frontendUrl))
+                {
+                    allowedOrigins = new[] { frontendUrl };
+                }
+            }
+
+            policy.WithOrigins(allowedOrigins)
+                .AllowAnyHeader()
                 .AllowAnyMethod()
-                .AllowAnyHeader();
+                .AllowCredentials();
         });
 });
 
@@ -79,9 +131,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Only use HTTPS redirection in development
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
 
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();

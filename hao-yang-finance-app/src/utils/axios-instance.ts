@@ -7,8 +7,11 @@ const STORAGE_KEYS = {
   USER: 'auth_user',
 } as const;
 
+// Get API URL from environment variable or use default
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:7034';
+
 export const axiosInstance: AxiosInstance = axios.create({
-	baseURL: 'https://localhost:7034/api',
+	baseURL: `${API_BASE_URL}/api`,
 	headers: {
 		'Content-Type': 'application/json',
 	},

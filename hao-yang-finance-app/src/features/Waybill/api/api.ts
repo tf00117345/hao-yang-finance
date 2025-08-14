@@ -1,4 +1,4 @@
-import { queryClient } from '../../../App';
+import { QueryClientInstance } from '../../../cache/queryClient';
 import { DateRange } from '../../../types/date-range';
 import { axiosInstance } from '../../../utils/axios-instance';
 import { Waybill, WaybillFormData } from '../types/waybill.types';
@@ -71,42 +71,42 @@ const transformWaybillToApi = (waybill: WaybillFormData): any => {
 export const updateWaybill = async (params: { waybillId: string; waybill: WaybillFormData }): Promise<Waybill> => {
 	const apiData = transformWaybillToApi(params.waybill);
 	const response = await axiosInstance.put(`/waybill/${params.waybillId}`, apiData);
-	queryClient.invalidateQueries({ queryKey: ['waybills'] });
+	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
 	return transformWaybillFromApi(response.data.data || response.data);
 };
 
 export const insertWaybill = async (waybill: WaybillFormData): Promise<Waybill> => {
 	const apiData = transformWaybillToApi(waybill);
 	const response = await axiosInstance.post('/waybill', apiData);
-	queryClient.invalidateQueries({ queryKey: ['waybills'] });
+	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
 	return transformWaybillFromApi(response.data.data || response.data);
 };
 
 export const deleteWaybill = async (waybillId: string): Promise<void> => {
 	await axiosInstance.delete(`/waybill/${waybillId}`);
-	queryClient.invalidateQueries({ queryKey: ['waybills'] });
+	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
 };
 
 export const markWaybillAsNoInvoiceNeeded = async (waybillId: string): Promise<void> => {
 	await axiosInstance.put(`/waybill/${waybillId}/no-invoice`);
-	queryClient.invalidateQueries({ queryKey: ['waybills'] });
+	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
 };
 
 export const restoreWaybill = async (waybillId: string): Promise<void> => {
 	await axiosInstance.put(`/waybill/${waybillId}/restore`);
-	queryClient.invalidateQueries({ queryKey: ['waybills'] });
+	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
 };
 
 // 批次標記託運單為無須開發票
 export const markWaybillsAsNoInvoiceNeededBatch = async (waybillIds: string[]): Promise<any> => {
 	const response = await axiosInstance.put('/waybill/no-invoice-batch', waybillIds);
-	queryClient.invalidateQueries({ queryKey: ['waybills'] });
+	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
 	return response.data;
 };
 
 // 批次還原託運單
 export const restoreWaybillsBatch = async (waybillIds: string[]): Promise<any> => {
 	const response = await axiosInstance.put('/waybill/restore-batch', waybillIds);
-	queryClient.invalidateQueries({ queryKey: ['waybills'] });
+	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
 	return response.data;
 };

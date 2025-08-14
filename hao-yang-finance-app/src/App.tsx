@@ -1,37 +1,25 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { RecoilRoot } from 'recoil';
 
 import './App.css';
 
+import { QueryClientInstance } from './cache/queryClient';
 import MessageAlert from './component/MessageAlert/MessageAlert';
 import NavigationAppBar from './component/NavigationAppBar/NavigationAppBar';
 import { SnackbarProvider } from './contexts/SnackbarContext';
-import { AuthProvider } from './features/Auth/context/AuthContext';
 import { LoginPage } from './features/Auth/components/LoginPage/LoginPage';
 import { ProtectedRoute } from './features/Auth/components/ProtectedRoute/ProtectedRoute';
+import { AuthProvider } from './features/Auth/context/AuthContext';
 import FinancePage from './features/Finance/components/FinancePage/FinancePage';
 import { SettingPage } from './features/Settings/components/SettingPage/SettingPage';
 import { StatisticsPage } from './features/Statistics/components/StatisticsPage';
 import WaybillPage from './features/Waybill/components/WaybillPage/WaybillPage';
 
-export const queryClient = new QueryClient({
-	defaultOptions: {
-		queries: {
-			retry: false,
-			refetchOnWindowFocus: false,
-			refetchOnMount: false,
-			refetchOnReconnect: false,
-			refetchInterval: false,
-			refetchIntervalInBackground: false,
-		},
-	},
-});
-
 function App() {
 	return (
-		<QueryClientProvider client={queryClient}>
+		<QueryClientProvider client={QueryClientInstance}>
 			<ReactQueryDevtools initialIsOpen={false} />
 			<RecoilRoot>
 				<SnackbarProvider>
@@ -41,10 +29,10 @@ function App() {
 							<Routes>
 								{/* Public route - Login */}
 								<Route path="/login" element={<LoginPage />} />
-								
+
 								{/* Protected routes */}
-								<Route 
-									path="/" 
+								<Route
+									path="/"
 									element={
 										<ProtectedRoute>
 											<NavigationAppBar />
@@ -57,7 +45,7 @@ function App() {
 									<Route path="/statistics" element={<StatisticsPage />} />
 									<Route path="/settings/*" element={<SettingPage />} />
 								</Route>
-								
+
 								{/* Catch all route - redirect to login */}
 								<Route path="*" element={<Navigate to="/login" replace />} />
 							</Routes>

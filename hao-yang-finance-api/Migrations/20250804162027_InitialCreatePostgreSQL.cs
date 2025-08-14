@@ -5,7 +5,7 @@
 namespace hao_yang_finance_api.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialCreatePostgreSQL : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -14,15 +14,15 @@ namespace hao_yang_finance_api.Migrations
                 name: "company",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "TEXT", nullable: false),
-                    name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    tax_id = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
-                    contact_person = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    address = table.Column<string>(type: "TEXT", nullable: true),
-                    email = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
-                    is_active = table.Column<bool>(type: "INTEGER", nullable: false),
-                    created_at = table.Column<string>(type: "TEXT", nullable: false),
-                    updated_at = table.Column<string>(type: "TEXT", nullable: false)
+                    id = table.Column<string>(type: "text", nullable: false),
+                    name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    tax_id = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    contact_person = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    address = table.Column<string>(type: "text", nullable: true),
+                    email = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false),
+                    created_at = table.Column<string>(type: "text", nullable: false),
+                    updated_at = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -33,12 +33,12 @@ namespace hao_yang_finance_api.Migrations
                 name: "driver",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "TEXT", nullable: false),
-                    name = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    phone = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
-                    is_active = table.Column<bool>(type: "INTEGER", nullable: false),
-                    created_at = table.Column<string>(type: "TEXT", nullable: false),
-                    updated_at = table.Column<string>(type: "TEXT", nullable: false)
+                    id = table.Column<string>(type: "text", nullable: false),
+                    name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false),
+                    created_at = table.Column<string>(type: "text", nullable: false),
+                    updated_at = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -46,13 +46,35 @@ namespace hao_yang_finance_api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Username = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Email = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    PasswordHash = table.Column<string>(type: "text", nullable: false),
+                    FullName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Role = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<string>(type: "text", nullable: false),
+                    UpdatedAt = table.Column<string>(type: "text", nullable: false),
+                    LastLoginAt = table.Column<string>(type: "text", nullable: true),
+                    RefreshToken = table.Column<string>(type: "text", nullable: true),
+                    RefreshTokenExpiryTime = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "company_phone",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "TEXT", nullable: false),
-                    company_id = table.Column<string>(type: "TEXT", nullable: false),
-                    phone_number = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    created_at = table.Column<string>(type: "TEXT", nullable: false)
+                    id = table.Column<string>(type: "text", nullable: false),
+                    company_id = table.Column<string>(type: "text", nullable: false),
+                    phone_number = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    created_at = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -69,22 +91,22 @@ namespace hao_yang_finance_api.Migrations
                 name: "invoice",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "TEXT", nullable: false),
-                    invoice_number = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    date = table.Column<string>(type: "TEXT", nullable: false),
-                    company_id = table.Column<string>(type: "TEXT", nullable: false),
-                    subtotal = table.Column<decimal>(type: "TEXT", nullable: false),
-                    tax_rate = table.Column<decimal>(type: "TEXT", nullable: false),
-                    extra_expenses_include_tax = table.Column<bool>(type: "INTEGER", nullable: false),
-                    tax = table.Column<decimal>(type: "TEXT", nullable: false),
-                    total = table.Column<decimal>(type: "TEXT", nullable: false),
-                    status = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
-                    payment_method = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
-                    payment_note = table.Column<string>(type: "TEXT", nullable: true),
-                    notes = table.Column<string>(type: "TEXT", nullable: true),
-                    created_at = table.Column<string>(type: "TEXT", nullable: false),
-                    updated_at = table.Column<string>(type: "TEXT", nullable: false),
-                    paid_at = table.Column<string>(type: "TEXT", nullable: true)
+                    id = table.Column<string>(type: "text", nullable: false),
+                    invoice_number = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    date = table.Column<string>(type: "text", nullable: false),
+                    company_id = table.Column<string>(type: "text", nullable: false),
+                    subtotal = table.Column<decimal>(type: "numeric", nullable: false),
+                    tax_rate = table.Column<decimal>(type: "numeric", nullable: false),
+                    extra_expenses_include_tax = table.Column<bool>(type: "boolean", nullable: false),
+                    tax = table.Column<decimal>(type: "numeric", nullable: false),
+                    total = table.Column<decimal>(type: "numeric", nullable: false),
+                    status = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    payment_method = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    payment_note = table.Column<string>(type: "text", nullable: true),
+                    notes = table.Column<string>(type: "text", nullable: true),
+                    created_at = table.Column<string>(type: "text", nullable: false),
+                    updated_at = table.Column<string>(type: "text", nullable: false),
+                    paid_at = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -101,22 +123,22 @@ namespace hao_yang_finance_api.Migrations
                 name: "waybill",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "TEXT", nullable: false),
-                    waybill_number = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    date = table.Column<string>(type: "TEXT", nullable: false),
-                    item = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    company_id = table.Column<string>(type: "TEXT", nullable: false),
-                    working_time_start = table.Column<string>(type: "TEXT", nullable: false),
-                    working_time_end = table.Column<string>(type: "TEXT", nullable: false),
-                    tonnage = table.Column<decimal>(type: "TEXT", nullable: false),
-                    fee = table.Column<decimal>(type: "TEXT", nullable: false),
-                    driver_id = table.Column<string>(type: "TEXT", nullable: false),
-                    plate_number = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
-                    notes = table.Column<string>(type: "TEXT", nullable: true),
-                    status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    invoice_id = table.Column<string>(type: "TEXT", nullable: true),
-                    created_at = table.Column<string>(type: "TEXT", nullable: false),
-                    updated_at = table.Column<string>(type: "TEXT", nullable: false)
+                    id = table.Column<string>(type: "text", nullable: false),
+                    waybill_number = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    date = table.Column<string>(type: "text", nullable: false),
+                    item = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    company_id = table.Column<string>(type: "text", nullable: false),
+                    working_time_start = table.Column<string>(type: "text", nullable: false),
+                    working_time_end = table.Column<string>(type: "text", nullable: false),
+                    tonnage = table.Column<decimal>(type: "numeric", nullable: false),
+                    fee = table.Column<decimal>(type: "numeric", nullable: false),
+                    driver_id = table.Column<string>(type: "text", nullable: false),
+                    plate_number = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    notes = table.Column<string>(type: "text", nullable: true),
+                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    invoice_id = table.Column<string>(type: "text", nullable: true),
+                    created_at = table.Column<string>(type: "text", nullable: false),
+                    updated_at = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -145,12 +167,14 @@ namespace hao_yang_finance_api.Migrations
                 name: "extra_expense",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "TEXT", nullable: false),
-                    waybill_id = table.Column<string>(type: "TEXT", nullable: false),
-                    item = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    fee = table.Column<decimal>(type: "TEXT", nullable: false),
-                    notes = table.Column<string>(type: "TEXT", nullable: true),
-                    created_at = table.Column<string>(type: "TEXT", nullable: false)
+                    id = table.Column<string>(type: "text", nullable: false),
+                    waybill_id = table.Column<string>(type: "text", nullable: false),
+                    description = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    item = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    fee = table.Column<decimal>(type: "numeric", nullable: true),
+                    notes = table.Column<string>(type: "text", nullable: true),
+                    created_at = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -167,10 +191,10 @@ namespace hao_yang_finance_api.Migrations
                 name: "invoice_waybill",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "TEXT", nullable: false),
-                    invoice_id = table.Column<string>(type: "TEXT", nullable: false),
-                    waybill_id = table.Column<string>(type: "TEXT", nullable: false),
-                    created_at = table.Column<string>(type: "TEXT", nullable: false)
+                    id = table.Column<string>(type: "text", nullable: false),
+                    invoice_id = table.Column<string>(type: "text", nullable: false),
+                    waybill_id = table.Column<string>(type: "text", nullable: false),
+                    created_at = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -193,12 +217,12 @@ namespace hao_yang_finance_api.Migrations
                 name: "loading_location",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "TEXT", nullable: false),
-                    waybill_id = table.Column<string>(type: "TEXT", nullable: false),
-                    from_location = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    to_location = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    sequence_order = table.Column<int>(type: "INTEGER", nullable: false),
-                    created_at = table.Column<string>(type: "TEXT", nullable: false)
+                    id = table.Column<string>(type: "text", nullable: false),
+                    waybill_id = table.Column<string>(type: "text", nullable: false),
+                    from_location = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    to_location = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    sequence_order = table.Column<int>(type: "integer", nullable: false),
+                    created_at = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -215,10 +239,11 @@ namespace hao_yang_finance_api.Migrations
                 name: "invoice_extra_expense",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "TEXT", nullable: false),
-                    invoice_id = table.Column<string>(type: "TEXT", nullable: false),
-                    extra_expense_id = table.Column<string>(type: "TEXT", nullable: false),
-                    created_at = table.Column<string>(type: "TEXT", nullable: false)
+                    id = table.Column<string>(type: "text", nullable: false),
+                    invoice_id = table.Column<string>(type: "text", nullable: false),
+                    extra_expense_id = table.Column<string>(type: "text", nullable: false),
+                    is_selected = table.Column<bool>(type: "boolean", nullable: false),
+                    created_at = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -307,6 +332,9 @@ namespace hao_yang_finance_api.Migrations
 
             migrationBuilder.DropTable(
                 name: "loading_location");
+
+            migrationBuilder.DropTable(
+                name: "Users");
 
             migrationBuilder.DropTable(
                 name: "extra_expense");

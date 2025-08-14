@@ -12,10 +12,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add Entity Framework with SQLite
+// Add Entity Framework with PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ??
-                      "Data Source=hao-yang-finance.db"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection") ??
+                      "Host=localhost;Database=hao_yang_finance;Username=postgres;Password=your_password"));
 
 // Add Authentication Services
 builder.Services.AddScoped<IJwtService, JwtService>();

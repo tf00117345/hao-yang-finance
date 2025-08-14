@@ -72,10 +72,7 @@ export const getDriverStatsById = async (
 };
 
 // 獲取統計摘要
-export const getStatsSummary = async (params: {
-	startDate?: string;
-	endDate?: string;
-}): Promise<StatsSummaryDto> => {
+export const getStatsSummary = async (params: { startDate?: string; endDate?: string }): Promise<StatsSummaryDto> => {
 	const response = await axiosInstance.get('/DriverStats/summary', { params });
 	return response.data;
 };

@@ -1,8 +1,16 @@
 import { useMutation } from '@tanstack/react-query';
 
-import { queryClient } from '../../../App';
+import { QueryClientInstance } from '../../../cache/queryClient';
 import { useNotifications } from '../../../hooks/useNotifications';
-import { deleteWaybill, insertWaybill, updateWaybill, markWaybillAsNoInvoiceNeeded, restoreWaybill, markWaybillsAsNoInvoiceNeededBatch, restoreWaybillsBatch } from './api';
+import {
+	deleteWaybill,
+	insertWaybill,
+	updateWaybill,
+	markWaybillAsNoInvoiceNeeded,
+	restoreWaybill,
+	markWaybillsAsNoInvoiceNeededBatch,
+	restoreWaybillsBatch,
+} from './api';
 
 // 更新託運單
 export const useUpdateWaybillMutation = () => {
@@ -11,7 +19,7 @@ export const useUpdateWaybillMutation = () => {
 	return useMutation({
 		mutationFn: updateWaybill,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
 			notifySuccess('託運單更新成功');
 		},
 		onError: (error) => {
@@ -27,7 +35,7 @@ export const useInsertWaybillMutation = () => {
 	return useMutation({
 		mutationFn: insertWaybill,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
 			notifySuccess('託運單建立成功');
 		},
 		onError: (error) => {
@@ -43,7 +51,7 @@ export const useDeleteWaybillMutation = () => {
 	return useMutation({
 		mutationFn: deleteWaybill,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
 			notifySuccess('託運單刪除成功');
 		},
 		onError: (error) => {
@@ -59,7 +67,7 @@ export const useMarkWaybillAsNoInvoiceNeededMutation = () => {
 	return useMutation({
 		mutationFn: markWaybillAsNoInvoiceNeeded,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
 			notifySuccess('託運單已標記為不需開發票');
 		},
 		onError: (error) => {
@@ -75,7 +83,7 @@ export const useRestoreWaybillMutation = () => {
 	return useMutation({
 		mutationFn: restoreWaybill,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
 			notifySuccess('託運單已還原為待處理狀態');
 		},
 		onError: (error) => {
@@ -91,7 +99,7 @@ export const useMarkWaybillsAsNoInvoiceNeededBatchMutation = () => {
 	return useMutation({
 		mutationFn: markWaybillsAsNoInvoiceNeededBatch,
 		onSuccess: (data) => {
-			queryClient.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
 			const { summary } = data;
 			notifySuccess(`批次標記完成：成功 ${summary.success} 筆，失敗 ${summary.failure} 筆`);
 		},
@@ -108,7 +116,7 @@ export const useRestoreWaybillsBatchMutation = () => {
 	return useMutation({
 		mutationFn: restoreWaybillsBatch,
 		onSuccess: (data) => {
-			queryClient.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
 			const { summary } = data;
 			notifySuccess(`批次還原完成：成功 ${summary.success} 筆，失敗 ${summary.failure} 筆`);
 		},

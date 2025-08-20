@@ -239,7 +239,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 									)}
 								/>
 							</Stack>
-							<Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+							{/* <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
 								<Typography>托運單號：</Typography>
 								<Controller
 									name="waybillNumber"
@@ -256,7 +256,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 										/>
 									)}
 								/>
-							</Stack>
+							</Stack> */}
 						</Box>
 						<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
 							<Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
@@ -502,7 +502,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 							<Controller
 								name="workingTime.start"
 								control={control}
-								rules={{ required: '請輸入開始時間' }}
+								// rules={{ required: '請輸入開始時間' }}
 								render={({ field }) => (
 									<StyledTextField
 										{...field}
@@ -519,7 +519,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 							<Controller
 								name="workingTime.end"
 								control={control}
-								rules={{ required: '請輸入結束時間' }}
+								// rules={{ required: '請輸入結束時間' }}
 								render={({ field }) => (
 									<StyledTextField
 										{...field}

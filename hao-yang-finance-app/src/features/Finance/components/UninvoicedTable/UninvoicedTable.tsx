@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 
+import { ArrowUpward, ArrowDownward, UnfoldMore } from '@mui/icons-material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupIcon from '@mui/icons-material/Group';
 import ReceiptIcon from '@mui/icons-material/Receipt';
-import { ArrowUpward, ArrowDownward, UnfoldMore } from '@mui/icons-material';
 import {
 	Button,
 	Checkbox,
@@ -59,26 +59,35 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 	}, []);
 
 	// 處理篩選變更
-	const handleFilterChange = useCallback((columnId: string, value: string) => {
-		if (!isMountedRef.current) return;
-		setColumnFilters((prev) =>
-			prev.filter((filter) => filter.id !== columnId).concat(value ? [{ id: columnId, value }] : []),
-		);
-	}, [setColumnFilters]);
+	const handleFilterChange = useCallback(
+		(columnId: string, value: string) => {
+			if (!isMountedRef.current) return;
+			setColumnFilters((prev) =>
+				prev.filter((filter) => filter.id !== columnId).concat(value ? [{ id: columnId, value }] : []),
+			);
+		},
+		[setColumnFilters],
+	);
 
 	// 清除特定欄位的篩選
-	const clearFilter = useCallback((columnId: string) => {
-		if (!isMountedRef.current) return;
-		setColumnFilters((prev) => prev.filter((filter) => filter.id !== columnId));
-	}, [setColumnFilters]);
+	const clearFilter = useCallback(
+		(columnId: string) => {
+			if (!isMountedRef.current) return;
+			setColumnFilters((prev) => prev.filter((filter) => filter.id !== columnId));
+		},
+		[setColumnFilters],
+	);
 
 	// 取得特定欄位的篩選值
-	const getFilterValue = useCallback((columnId: string) => {
-		return columnFilters.find((filter) => filter.id === columnId)?.value || '';
-	}, [columnFilters]);
+	const getFilterValue = useCallback(
+		(columnId: string) => {
+			return columnFilters.find((filter) => filter.id === columnId)?.value || '';
+		},
+		[columnFilters],
+	);
 
 	// 處理開立發票
-	function handleOpenInvoiceDialog() {
+	const handleOpenInvoiceDialog = useCallback(() => {
 		const selected = table.getSelectedRowModel().rows.map((row) => row.original);
 		if (selected.length === 0) {
 			alert('請先選擇至少一筆資料');
@@ -87,10 +96,10 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 
 		setSelectedWaybills(selected);
 		setInvoiceDialogOpen(true);
-	}
+	}, [table]);
 
 	// 處理無須開發票
-	function handleOpenNoInvoiceDialog() {
+	const handleOpenNoInvoiceDialog = useCallback(() => {
 		const selected = table.getSelectedRowModel().rows.map((row) => row.original);
 		if (selected.length === 0) {
 			alert('請先選擇至少一筆資料');
@@ -99,7 +108,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 
 		setSelectedWaybills(selected);
 		setConfirmNoInvoiceDialogOpen(true);
-	}
+	}, [table]);
 
 	// 確認標記為無須開發票
 	const handleConfirmNoInvoice = async () => {

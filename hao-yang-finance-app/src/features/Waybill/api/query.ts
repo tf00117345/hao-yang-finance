@@ -2,12 +2,21 @@ import { useQuery } from '@tanstack/react-query';
 
 import { DateRange } from '../../../types/date-range';
 import { Waybill } from '../types/waybill.types';
-import { getWaybills } from './api';
+import { getWaybills, getWaybillsByIds } from './api';
 
 // 取得託運單列表
 export const useWaybillsQuery = (dateRange: DateRange, driverId?: string) => {
 	return useQuery<Waybill[]>({
 		queryKey: ['waybills', dateRange.start.toISOString(), dateRange.end.toISOString(), driverId],
 		queryFn: () => getWaybills(dateRange, driverId),
+	});
+};
+
+// 依多個 ID 取得託運單（不受日期/司機篩選）
+export const useWaybillsByIdsQuery = (waybillIds: string[]) => {
+	return useQuery<Waybill[]>({
+		queryKey: ['waybills-by-ids', waybillIds],
+		queryFn: () => getWaybillsByIds(waybillIds),
+		enabled: Array.isArray(waybillIds) && waybillIds.length > 0,
 	});
 };

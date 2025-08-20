@@ -60,7 +60,7 @@ namespace hao_yang_finance_api.Controllers
             var result = waybills.Select(w => new WaybillDto
             {
                 Id = w.Id,
-                WaybillNumber = w.WaybillNumber,
+                // WaybillNumber = w.WaybillNumber,
                 Date = w.Date,
                 Item = w.Item,
                 Tonnage = w.Tonnage,
@@ -115,7 +115,7 @@ namespace hao_yang_finance_api.Controllers
             var result = new WaybillDto
             {
                 Id = waybill.Id,
-                WaybillNumber = waybill.WaybillNumber,
+                // WaybillNumber = waybill.WaybillNumber,
                 Date = waybill.Date,
                 Item = waybill.Item,
                 Tonnage = waybill.Tonnage,
@@ -169,18 +169,18 @@ namespace hao_yang_finance_api.Controllers
             }
 
             // 檢查託運單號碼是否重複 (僅提醒，不阻止)
-            var existingWaybill = await _context.Waybills
-                .FirstOrDefaultAsync(w => w.WaybillNumber == createWaybillDto.WaybillNumber);
-
+            // var existingWaybill = await _context.Waybills
+            //     .FirstOrDefaultAsync(w => w.WaybillNumber == createWaybillDto.WaybillNumber);
+            
             var warnings = new List<string>();
-            if (existingWaybill != null)
-            {
-                warnings.Add($"託運單號碼 '{createWaybillDto.WaybillNumber}' 已存在，請確認是否重複。");
-            }
+            // if (existingWaybill != null)
+            // {
+            //     warnings.Add($"託運單號碼 '{createWaybillDto.WaybillNumber}' 已存在，請確認是否重複。");
+            // }
 
             var waybill = new Waybill
             {
-                WaybillNumber = createWaybillDto.WaybillNumber,
+                // WaybillNumber = createWaybillDto.WaybillNumber,
                 Date = createWaybillDto.Date,
                 Item = createWaybillDto.Item,
                 Tonnage = createWaybillDto.Tonnage,
@@ -239,7 +239,7 @@ namespace hao_yang_finance_api.Controllers
             var result = new WaybillDto
             {
                 Id = createdWaybill!.Id,
-                WaybillNumber = createdWaybill.WaybillNumber,
+                // WaybillNumber = createdWaybill.WaybillNumber,
                 Date = createdWaybill.Date,
                 Item = createdWaybill.Item,
                 Tonnage = createdWaybill.Tonnage,
@@ -315,17 +315,17 @@ namespace hao_yang_finance_api.Controllers
             }
 
             // 檢查託運單號碼是否重複 (僅提醒，不阻止)
-            var existingWaybill = await _context.Waybills
-                .FirstOrDefaultAsync(w => w.WaybillNumber == updateWaybillDto.WaybillNumber && w.Id != id);
+            // var existingWaybill = await _context.Waybills
+            //     .FirstOrDefaultAsync(w => w.WaybillNumber == updateWaybillDto.WaybillNumber && w.Id != id);
 
             var warnings = new List<string>();
-            if (existingWaybill != null)
-            {
-                warnings.Add($"託運單號碼 '{updateWaybillDto.WaybillNumber}' 已存在，請確認是否重複。");
-            }
+            // if (existingWaybill != null)
+            // {
+            //     warnings.Add($"託運單號碼 '{updateWaybillDto.WaybillNumber}' 已存在，請確認是否重複。");
+            // }
 
             // 更新主要資料
-            waybill.WaybillNumber = updateWaybillDto.WaybillNumber;
+            // waybill.WaybillNumber = updateWaybillDto.WaybillNumber;
             waybill.Date = updateWaybillDto.Date;
             waybill.Item = updateWaybillDto.Item;
             waybill.Tonnage = updateWaybillDto.Tonnage;
@@ -384,7 +384,7 @@ namespace hao_yang_finance_api.Controllers
             var result = new WaybillDto
             {
                 Id = updatedWaybill!.Id,
-                WaybillNumber = updatedWaybill.WaybillNumber,
+                // WaybillNumber = updatedWaybill.WaybillNumber,
                 Date = updatedWaybill.Date,
                 Item = updatedWaybill.Item,
                 Tonnage = updatedWaybill.Tonnage,
@@ -526,7 +526,7 @@ namespace hao_yang_finance_api.Controllers
                         results.Add(new
                         {
                             id = waybill.Id,
-                            waybillNumber = waybill.WaybillNumber,
+                            // waybillNumber = waybill.WaybillNumber,
                             success = false,
                             message = $"無法將狀態為 '{waybill.Status}' 的託運單標記為不需開發票，只有 'PENDING' 狀態的託運單可以標記"
                         });
@@ -541,7 +541,7 @@ namespace hao_yang_finance_api.Controllers
                     results.Add(new
                     {
                         id = waybill.Id,
-                        waybillNumber = waybill.WaybillNumber,
+                        // waybillNumber = waybill.WaybillNumber,
                         success = true,
                         message = "託運單已成功標記為不需開發票"
                     });
@@ -552,7 +552,7 @@ namespace hao_yang_finance_api.Controllers
                     results.Add(new
                     {
                         id = waybill.Id,
-                        waybillNumber = waybill.WaybillNumber,
+                        // waybillNumber = waybill.WaybillNumber,
                         success = false,
                         message = $"標記託運單時發生錯誤：{ex.Message}"
                     });
@@ -656,7 +656,7 @@ namespace hao_yang_finance_api.Controllers
                         results.Add(new
                         {
                             id = waybill.Id,
-                            waybillNumber = waybill.WaybillNumber,
+                            // waybillNumber = waybill.WaybillNumber,
                             success = false,
                             message = $"無法還原狀態為 '{waybill.Status}' 的託運單，只有 'NO_INVOICE_NEEDED' 狀態的託運單可以還原"
                         });
@@ -671,7 +671,7 @@ namespace hao_yang_finance_api.Controllers
                     results.Add(new
                     {
                         id = waybill.Id,
-                        waybillNumber = waybill.WaybillNumber,
+                        // waybillNumber = waybill.WaybillNumber,
                         success = true,
                         message = "託運單已成功還原為待處理狀態"
                     });
@@ -682,7 +682,7 @@ namespace hao_yang_finance_api.Controllers
                     results.Add(new
                     {
                         id = waybill.Id,
-                        waybillNumber = waybill.WaybillNumber,
+                        // waybillNumber = waybill.WaybillNumber,
                         success = false,
                         message = $"還原託運單時發生錯誤：{ex.Message}"
                     });
@@ -715,6 +715,64 @@ namespace hao_yang_finance_api.Controllers
                 },
                 details = results
             });
+        }
+
+        // POST: api/Waybill/by-ids
+        [HttpPost("by-ids")]
+        public async Task<ActionResult<IEnumerable<WaybillDto>>> GetWaybillsByIds([FromBody] List<string> waybillIds)
+        {
+            if (waybillIds == null || !waybillIds.Any())
+            {
+                return BadRequest(new { message = "請提供託運單ID列表" });
+            }
+
+            var waybills = await _context.Waybills
+                .Include(w => w.Company)
+                .Include(w => w.Driver)
+                .Include(w => w.LoadingLocations)
+                .Include(w => w.ExtraExpenses)
+                .Where(w => waybillIds.Contains(w.Id))
+                .OrderByDescending(w => w.Date)
+                .ThenByDescending(w => w.CreatedAt)
+                .ToListAsync();
+
+            var result = waybills.Select(w => new WaybillDto
+            {
+                Id = w.Id,
+                // WaybillNumber = w.WaybillNumber,
+                Date = w.Date,
+                Item = w.Item,
+                Tonnage = w.Tonnage,
+                CompanyId = w.CompanyId,
+                CompanyName = w.Company.Name,
+                WorkingTimeStart = w.WorkingTimeStart,
+                WorkingTimeEnd = w.WorkingTimeEnd,
+                Fee = w.Fee,
+                DriverId = w.DriverId,
+                DriverName = w.Driver.Name,
+                PlateNumber = w.PlateNumber,
+                Notes = w.Notes,
+                Status = w.Status,
+                InvoiceId = w.InvoiceId,
+                LoadingLocations = w.LoadingLocations
+                    .OrderBy(l => l.SequenceOrder)
+                    .Select(l => new LoadingLocationDto
+                    {
+                        From = l.FromLocation,
+                        To = l.ToLocation
+                    }).ToList(),
+                ExtraExpenses = w.ExtraExpenses.Select(e => new ExtraExpenseDto
+                {
+                    Id = e.Id,
+                    Item = e.Item ?? e.Description,
+                    Fee = e.Fee ?? e.Amount,
+                    Notes = e.Notes
+                }).ToList(),
+                CreatedAt = w.CreatedAt,
+                UpdatedAt = w.UpdatedAt
+            }).ToList();
+
+            return Ok(result);
         }
     }
 }

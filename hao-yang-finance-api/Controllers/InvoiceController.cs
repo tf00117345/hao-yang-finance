@@ -98,7 +98,7 @@ namespace hao_yang_finance_api.Controllers
                     .Select(iw => new InvoiceWaybillDto
                     {
                         WaybillId = iw.WaybillId,
-                        WaybillNumber = iw.Waybill.WaybillNumber,
+                        // WaybillNumber = iw.Waybill.WaybillNumber,
                         Date = iw.Waybill.Date,
                         Item = iw.Waybill.Item,
                         Fee = iw.Waybill.Fee,
@@ -112,7 +112,7 @@ namespace hao_yang_finance_api.Controllers
                                 Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
                                 Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
                                 Notes = iee.ExtraExpense.Notes,
-                                WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber,
+                                // WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber,
                                 IsSelected = iee.IsSelected,
                             }).ToList()
                     })
@@ -124,7 +124,7 @@ namespace hao_yang_finance_api.Controllers
                     Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
                     Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
                     Notes = iee.ExtraExpense.Notes,
-                    WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber,
+                    // WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber,
                     IsSelected = iee.IsSelected,
                 }).ToList()
             }).ToList();
@@ -173,7 +173,7 @@ namespace hao_yang_finance_api.Controllers
                 Waybills = invoice.InvoiceWaybills.Select(iw => new InvoiceWaybillDto
                 {
                     WaybillId = iw.WaybillId,
-                    WaybillNumber = iw.Waybill.WaybillNumber,
+                    // WaybillNumber = iw.Waybill.WaybillNumber,
                     Date = iw.Waybill.Date,
                     Item = iw.Waybill.Item,
                     Fee = iw.Waybill.Fee,
@@ -187,7 +187,7 @@ namespace hao_yang_finance_api.Controllers
                             Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
                             Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
                             Notes = iee.ExtraExpense.Notes,
-                            WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber,
+                            // WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber,
                             IsSelected = iee.IsSelected,
                         }).ToList()
                 }).ToList(),
@@ -234,12 +234,12 @@ namespace hao_yang_finance_api.Controllers
                 return BadRequest(new { message = "部分託運單不存在" });
             }
 
-            var nonPendingWaybills = waybills.Where(w => w.Status != "PENDING").ToList();
-            if (nonPendingWaybills.Any())
-            {
-                var waybillNumbers = string.Join(", ", nonPendingWaybills.Select(w => w.WaybillNumber));
-                return BadRequest(new { message = $"以下託運單狀態不是 PENDING，無法開立發票：{waybillNumbers}" });
-            }
+            // var nonPendingWaybills = waybills.Where(w => w.Status != "PENDING").ToList();
+            // if (nonPendingWaybills.Any())
+            // {
+            //     var waybillNumbers = string.Join(", ", nonPendingWaybills.Select(w => w.WaybillNumber));
+            //     return BadRequest(new { message = $"以下託運單狀態不是 PENDING，無法開立發票：{waybillNumbers}" });
+            // }
 
             // 驗證額外費用存在且屬於選定的託運單
             var extraExpenses = new List<ExtraExpense>();
@@ -361,7 +361,7 @@ namespace hao_yang_finance_api.Controllers
                 Waybills = createdInvoice.InvoiceWaybills.Select(iw => new InvoiceWaybillDto
                 {
                     WaybillId = iw.WaybillId,
-                    WaybillNumber = iw.Waybill.WaybillNumber,
+                    // WaybillNumber = iw.Waybill.WaybillNumber,
                     Date = iw.Waybill.Date,
                     Item = iw.Waybill.Item,
                     Fee = iw.Waybill.Fee,
@@ -375,7 +375,7 @@ namespace hao_yang_finance_api.Controllers
                             Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
                             Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
                             Notes = iee.ExtraExpense.Notes,
-                            WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber
+                            // WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber
                         }).ToList()
                 }).ToList(),
                 ExtraExpenses = createdInvoice.InvoiceExtraExpenses.Select(iee => new InvoiceExtraExpenseDto
@@ -384,7 +384,7 @@ namespace hao_yang_finance_api.Controllers
                     Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
                     Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
                     Notes = iee.ExtraExpense.Notes,
-                    WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber
+                    // WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber
                 }).ToList()
             };
 
@@ -436,8 +436,8 @@ namespace hao_yang_finance_api.Controllers
 
             if (invalidWaybills.Any())
             {
-                var waybillNumbers = string.Join(", ", invalidWaybills.Select(w => w.WaybillNumber));
-                return BadRequest(new { message = $"以下託運單狀態無效：{waybillNumbers}" });
+                // var waybillNumbers = string.Join(", ", invalidWaybills.Select(w => w.WaybillNumber));
+                return BadRequest(new { message = $"託運單狀態無效" });
             }
 
             // 驗證額外費用存在且屬於選定的託運單

@@ -11,9 +11,8 @@ namespace hao_yang_finance_api.Models
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
         [Column("waybill_number")]
-        [Required]
         [MaxLength(50)]
-        public string WaybillNumber { get; set; } = string.Empty;
+        public string? WaybillNumber { get; set; }
 
         [Column("date")]
         [Required]
@@ -29,12 +28,10 @@ namespace hao_yang_finance_api.Models
         public string CompanyId { get; set; } = string.Empty;
 
         [Column("working_time_start")]
-        [Required]
-        public string WorkingTimeStart { get; set; } = string.Empty;
+        public string? WorkingTimeStart { get; set; }
 
         [Column("working_time_end")]
-        [Required]
-        public string WorkingTimeEnd { get; set; } = string.Empty;
+        public string? WorkingTimeEnd { get; set; }
 
         [Column("tonnage")]
         [Required]

@@ -33,11 +33,11 @@ export interface UseWaybillTableProps {
 export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybillTableProps) {
 	const columns = useMemo<ColumnDef<Waybill, any>[]>(
 		() => [
-			columnHelper.accessor('waybillNumber', {
-				header: '託運單號',
-				enableHiding: true,
-				enableGrouping: false,
-			}),
+			// columnHelper.accessor('waybillNumber', {
+			// 	header: '託運單號',
+			// 	enableHiding: true,
+			// 	enableGrouping: false,
+			// }),
 			columnHelper.accessor('date', {
 				header: '日期',
 				filterFn: (row, columnId, filterValue: [Date, Date]) => {
@@ -74,14 +74,17 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 				header: '狀態',
 				enableGrouping: false,
 				cell: ({ getValue }) => {
+					let component: React.ReactNode;
 					if (getValue() === 'PENDING') {
-						return <Chip label="未開立" color="error" size="small" variant="filled" />;
+						component = <Chip label="未開立" color="error" size="small" variant="filled" />;
 					} else if (getValue() === 'NO_INVOICE_NEEDED') {
-						return <Chip label="無須開發票" color="warning" size="small" variant="filled" />;
+						component = <Chip label="無須開發票" color="warning" size="small" variant="filled" />;
 					} else if (getValue() === 'INVOICED') {
-						return <Chip label="已開立" color="success" size="small" variant="filled" />;
+						component = <Chip label="已開立" color="success" size="small" variant="filled" />;
+					} else {
+						component = <Chip label="無狀態" color="info" size="small" variant="filled" />;
 					}
-					return <Chip label="無狀態" color="info" size="small" variant="filled" />;
+					return component;
 				},
 			}),
 			columnHelper.accessor(
@@ -119,7 +122,7 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 				},
 			},
 		],
-		[],
+		[onDelete, onSelect, onView],
 	);
 
 	const [grouping, setGrouping] = useState<GroupingState>([]);

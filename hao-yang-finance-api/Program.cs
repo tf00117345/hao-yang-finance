@@ -57,10 +57,16 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Add JWT Authentication
-var jwtKey = builder.Configuration["JWT:Key"] ?? throw new InvalidOperationException("JWT Key is not configured");
-var jwtIssuer = builder.Configuration["JWT:Issuer"] ??
+var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ??
+             builder.Configuration["JWT:Key"] ??
+             throw new InvalidOperationException("JWT Key is not configured");
+
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ??
+                builder.Configuration["JWT:Issuer"] ??
                 throw new InvalidOperationException("JWT Issuer is not configured");
-var jwtAudience = builder.Configuration["JWT:Audience"] ??
+
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ??
+                  builder.Configuration["JWT:Audience"] ??
                   throw new InvalidOperationException("JWT Audience is not configured");
 
 builder.Services.AddAuthentication(options =>

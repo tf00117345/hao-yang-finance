@@ -406,7 +406,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 								<Table size="small">
 									<TableHead>
 										<TableRow>
-											<TableCell>託運單號</TableCell>
+											<TableCell>公司名稱</TableCell>
 											<TableCell>日期</TableCell>
 											<TableCell>品項</TableCell>
 											<TableCell>司機</TableCell>
@@ -416,7 +416,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 									<TableBody>
 										{waybillList.map((waybill) => (
 											<TableRow key={waybill.id}>
-												<TableCell>{waybill.waybillNumber}</TableCell>
+												<TableCell>{waybill.companyName}</TableCell>
 												<TableCell>{waybill.date}</TableCell>
 												<TableCell>{waybill.item}</TableCell>
 												<TableCell>{waybill.driverName}</TableCell>
@@ -439,7 +439,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 										waybill.extraExpenses && waybill.extraExpenses.length > 0 ? (
 											<Box key={waybill.id}>
 												<Typography variant="body2" fontWeight="medium" gutterBottom>
-													{waybill.waybillNumber} 的額外費用:
+													{waybill.companyName} {waybill.item} 的額外費用:
 												</Typography>
 												<Stack direction="row" flexWrap="wrap" gap={1}>
 													{waybill.extraExpenses.map((expense) => (

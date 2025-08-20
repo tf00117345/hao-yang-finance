@@ -2,7 +2,7 @@ import { WaybillStatus } from './waybill-status.types';
 
 export interface Waybill {
 	id: string;
-	waybillNumber: string;
+	// waybillNumber: string;
 	date: string;
 	item: string;
 	plateNumber: string;

@@ -7,7 +7,7 @@ import MonthPicker from '../../../../component/MonthPicker/MonthPicker';
 import { DateRange } from '../../../../types/date-range';
 import { driversData } from '../../../Settings/constant/drivers-data';
 import { Driver } from '../../../Settings/types/driver';
-import { useWaybillsQuery } from '../../../Waybill/api/query';
+import { useWaybillsQuery, useWaybillsByIdsQuery } from '../../../Waybill/api/query';
 import { useInvoicesQuery } from '../../api/query';
 import { Invoice } from '../../types/invoice.type';
 import { InvoiceDialog } from '../InvoiceDialog/InvoiceDialog';
@@ -68,14 +68,9 @@ export default function FinancePage() {
 		handleEditDialogClose();
 	};
 
-	// 獲取編輯發票時的 waybill 列表
-	const getEditingWaybills = () => {
-		if (!editingInvoice) return [];
-
-		// 從發票的 waybills 中獲取 waybillId，然後從 allWaybills 中找到完整的 waybill 數據
-		const waybillIds = editingInvoice.waybills.map((iw) => iw.waybillId);
-		return allWaybills.filter((w) => waybillIds.includes(w.id));
-	};
+	// 依發票中的 waybillId 直接取得完整託運單資料（不受目前日期/司機篩選影響）
+	const editingWaybillIds = editingInvoice ? editingInvoice.waybills.map((iw) => iw.waybillId) : [];
+	const { data: editingWaybills = [] } = useWaybillsByIdsQuery(editingWaybillIds);
 
 	return (
 		<Stack direction="column" spacing={1} sx={{ height: '100%', width: '100%', overflow: 'hidden' }}>
@@ -123,7 +118,7 @@ export default function FinancePage() {
 				<InvoiceDialog
 					open={editDialogOpen}
 					onClose={handleEditDialogClose}
-					waybillList={getEditingWaybills()}
+					waybillList={editingWaybills}
 					editingInvoice={editingInvoice}
 					onSuccess={handleEditSuccess}
 				/>

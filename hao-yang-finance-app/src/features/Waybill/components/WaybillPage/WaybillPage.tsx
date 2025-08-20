@@ -17,7 +17,7 @@ import { WaybillGrid } from '../WaybillGrid/WaybillGrid';
 
 const defaultWaybill: Waybill = {
 	id: '',
-	waybillNumber: '',
+	// waybillNumber: '',
 	date: new Date().toISOString().split('T')[0],
 	item: '',
 	companyName: '',

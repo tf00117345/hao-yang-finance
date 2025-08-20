@@ -24,7 +24,7 @@ export interface Invoice {
 // 發票託運單關聯
 export interface InvoiceWaybill {
 	waybillId: string;
-	waybillNumber: string;
+	// waybillNumber: string;
 	date: string;
 	item: string;
 	fee: number;
@@ -39,7 +39,7 @@ export interface InvoiceExtraExpense {
 	item: string;
 	fee: number;
 	notes?: string;
-	waybillNumber: string;
+	// waybillNumber: string;
 	isSelected: boolean; // 標示此額外費用是否被選中
 }
 

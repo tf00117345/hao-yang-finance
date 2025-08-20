@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 
+import { ArrowDownward, ArrowUpward, UnfoldMore } from '@mui/icons-material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { ArrowUpward, ArrowDownward, UnfoldMore, FilterList, Clear } from '@mui/icons-material';
 import {
 	Box,
 	Button,

@@ -23,13 +23,13 @@ export function useWaybillSubTable(data: InvoiceWaybill[], invoiceId: string) {
 			// 	header: '貨運單ID',
 			// 	cell: (info) => info.getValue(),
 			// }),
-			columnHelper.accessor('waybillNumber', {
-				header: '貨運單編號',
-				cell: (info) => info.getValue(),
-				enableSorting: true,
-				enableColumnFilter: true,
-				filterFn: 'includesString',
-			}),
+			// columnHelper.accessor('waybillNumber', {
+			// 	header: '貨運單編號',
+			// 	cell: (info) => info.getValue(),
+			// 	enableSorting: true,
+			// 	enableColumnFilter: true,
+			// 	filterFn: 'includesString',
+			// }),
 			columnHelper.accessor('date', {
 				header: '日期',
 				cell: (info) => info.getValue(),

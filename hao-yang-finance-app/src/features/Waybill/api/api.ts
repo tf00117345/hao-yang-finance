@@ -19,7 +19,7 @@ export const getWaybills = async (dateRange: DateRange, driverId?: string): Prom
 const transformWaybillFromApi = (apiWaybill: any): Waybill => {
 	return {
 		id: apiWaybill.id,
-		waybillNumber: apiWaybill.waybillNumber,
+		// waybillNumber: apiWaybill.waybillNumber,
 		date: apiWaybill.date,
 		item: apiWaybill.item,
 		tonnage: apiWaybill.tonnage,
@@ -46,10 +46,16 @@ const transformWaybillFromApi = (apiWaybill: any): Waybill => {
 	};
 };
 
+// 新增：依多個 ID 取得託運單（不受日期/司機篩選）
+export const getWaybillsByIds = async (waybillIds: string[]): Promise<Waybill[]> => {
+	const response = await axiosInstance.post('/waybill/by-ids', waybillIds);
+	return response.data.map(transformWaybillFromApi);
+};
+
 // 轉換前端格式為 API 格式
 const transformWaybillToApi = (waybill: WaybillFormData): any => {
 	return {
-		waybillNumber: waybill.waybillNumber,
+		// waybillNumber: waybill.waybillNumber,
 		date: waybill.date,
 		item: waybill.item,
 		tonnage: waybill.tonnage,

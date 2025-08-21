@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 
 import { ArrowDownward, ArrowUpward, UnfoldMore } from '@mui/icons-material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -31,6 +31,7 @@ import {
 import { flexRender } from '@tanstack/react-table';
 import { Controller, useForm } from 'react-hook-form';
 
+import ConfirmDialog from '../../../../component/ConfirmDialog/ConfirmDialog';
 import {
 	useVoidInvoiceMutation,
 	useMarkInvoicePaidMutation,
@@ -58,6 +59,14 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 	const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 	const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
+	// 通用確認對話框狀態
+	type ConfirmAction = 'void' | 'restore' | 'delete';
+	const [confirmState, setConfirmState] = useState<{
+		open: boolean;
+		action: ConfirmAction | null;
+		invoice: Invoice | null;
+	}>({ open: false, action: null, invoice: null });
+
 	// 收款表單
 	const {
 		control: paymentControl,
@@ -71,29 +80,20 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 		},
 	});
 
-	// 操作處理函數
-	const handleVoidInvoice = useCallback(
-		(invoice: Invoice) => {
-			voidMutation.mutate(invoice.id);
-		},
-		[voidMutation],
-	);
+	// 操作處理函數（改為先確認再執行）
+	const handleVoidInvoice = useCallback((invoice: Invoice) => {
+		setConfirmState({ open: true, action: 'void', invoice });
+	}, []);
 
 	// 恢復發票到已開立
-	const handleRestoreInvoice = useCallback(
-		(invoice: Invoice) => {
-			restoreMutation.mutate(invoice.id);
-		},
-		[restoreMutation],
-	);
+	const handleRestoreInvoice = useCallback((invoice: Invoice) => {
+		setConfirmState({ open: true, action: 'restore', invoice });
+	}, []);
 
 	// 刪除發票
-	const handleDeleteInvoice = useCallback(
-		(invoice: Invoice) => {
-			deleteMutation.mutate(invoice.id);
-		},
-		[deleteMutation],
-	);
+	const handleDeleteInvoice = useCallback((invoice: Invoice) => {
+		setConfirmState({ open: true, action: 'delete', invoice });
+	}, []);
 
 	const handleMarkPaid = useCallback((invoice: Invoice) => {
 		setSelectedInvoice(invoice);
@@ -127,6 +127,35 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 		},
 		[selectedInvoice, markPaidMutation, resetPayment],
 	);
+
+	// 確認對話框：確認執行
+	const confirmDialogConfirm = useCallback(() => {
+		if (!confirmState.open || !confirmState.action || !confirmState.invoice) return;
+		const { id } = confirmState.invoice;
+		switch (confirmState.action) {
+			case 'void':
+				voidMutation.mutate(id, {
+					onSettled: () => setConfirmState({ open: false, action: null, invoice: null }),
+				});
+				break;
+			case 'restore':
+				restoreMutation.mutate(id, {
+					onSettled: () => setConfirmState({ open: false, action: null, invoice: null }),
+				});
+				break;
+			case 'delete':
+				deleteMutation.mutate(id, {
+					onSettled: () => setConfirmState({ open: false, action: null, invoice: null }),
+				});
+				break;
+			default:
+		}
+	}, [confirmState, voidMutation, restoreMutation, deleteMutation]);
+
+	const confirmDialogClose = useCallback(() => {
+		if (voidMutation.isPending || restoreMutation.isPending || deleteMutation.isPending) return;
+		setConfirmState({ open: false, action: null, invoice: null });
+	}, [voidMutation.isPending, restoreMutation.isPending, deleteMutation.isPending]);
 
 	// 狀態 Chip 組件
 	const getStatusChip = useCallback((status: string) => {
@@ -179,39 +208,16 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 				);
 			}
 
-			if (invoice.status === 'paid') {
+			if (invoice.status === 'paid' || invoice.status === 'void') {
 				return (
 					<Button
 						size="small"
 						variant="contained"
-						color="success"
+						color={invoice.status === 'void' ? 'warning' : 'success'}
 						onClick={() => handleRestoreInvoice(invoice)}
 					>
-						恢復
+						恢復發票到已開立
 					</Button>
-				);
-			}
-
-			if (invoice.status === 'void') {
-				return (
-					<Stack direction="row" spacing={1}>
-						{/* <Button
-							size="small"
-							variant="contained"
-							color="success"
-							onClick={() => handleRestoreInvoice(invoice)}
-						>
-							恢復
-						</Button> */}
-						<Button
-							size="small"
-							variant="contained"
-							color="error"
-							onClick={() => handleDeleteInvoice(invoice)}
-						>
-							刪除
-						</Button>
-					</Stack>
 				);
 			}
 
@@ -293,6 +299,61 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 	const getFilterValue = (columnId: string) => {
 		return table.getColumn(columnId)?.getFilterValue() || '';
 	};
+
+	// 供 ConfirmDialog 顯示的文案與樣式（使用 useMemo 提升可讀性並避免巢狀三元）
+	const isConfirming = useMemo(() => {
+		switch (confirmState.action) {
+			case 'void':
+				return voidMutation.isPending;
+			case 'restore':
+				return restoreMutation.isPending;
+			case 'delete':
+				return deleteMutation.isPending;
+			default:
+				return false;
+		}
+	}, [confirmState.action, voidMutation.isPending, restoreMutation.isPending, deleteMutation.isPending]);
+
+	const confirmConfig = useMemo(() => {
+		if (!confirmState.action || !confirmState.invoice) {
+			return {
+				title: '',
+				description: '',
+				confirmText: '確認',
+				confirmColor: 'primary' as const,
+			};
+		}
+		switch (confirmState.action) {
+			case 'void':
+				return {
+					title: '確認作廢發票？',
+					description: `發票號碼：${confirmState.invoice.invoiceNumber}。作廢後將無法使用。仍要作廢嗎？`,
+					confirmText: '作廢',
+					confirmColor: 'warning' as const,
+				};
+			case 'restore':
+				return {
+					title: '確認恢復發票？',
+					description: `發票號碼：${confirmState.invoice.invoiceNumber}。將恢復為已開立狀態。仍要恢復嗎？`,
+					confirmText: '恢復',
+					confirmColor: 'success' as const,
+				};
+			case 'delete':
+				return {
+					title: '確認刪除發票？',
+					description: `發票號碼：${confirmState.invoice.invoiceNumber}。刪除後將無法復原。仍要刪除嗎？`,
+					confirmText: '刪除',
+					confirmColor: 'error' as const,
+				};
+			default:
+				return {
+					title: '',
+					description: '',
+					confirmText: '確認',
+					confirmColor: 'primary' as const,
+				};
+		}
+	}, [confirmState]);
 
 	return (
 		<Stack direction="column" sx={{ flex: 1, minHeight: 0 }}>
@@ -507,6 +568,18 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 					</DialogActions>
 				</form>
 			</Dialog>
+
+			{/* 通用確認對話框（作廢／恢復／刪除） */}
+			<ConfirmDialog
+				open={confirmState.open}
+				title={confirmConfig.title}
+				description={confirmConfig.description}
+				confirmText={confirmConfig.confirmText}
+				confirmColor={confirmConfig.confirmColor}
+				isConfirming={isConfirming}
+				onClose={confirmDialogClose}
+				onConfirm={confirmDialogConfirm}
+			/>
 		</Stack>
 	);
 }

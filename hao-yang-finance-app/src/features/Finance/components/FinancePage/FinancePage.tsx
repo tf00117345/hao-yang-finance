@@ -5,7 +5,7 @@ import { endOfMonth, startOfMonth } from 'date-fns';
 
 import MonthPicker from '../../../../component/MonthPicker/MonthPicker';
 import { DateRange } from '../../../../types/date-range';
-import { driversData } from '../../../Settings/constant/drivers-data';
+import { useDriversQuery } from '../../../Settings/api/query';
 import { Driver } from '../../../Settings/types/driver';
 import { useWaybillsQuery, useWaybillsByIdsQuery } from '../../../Waybill/api/query';
 import { useInvoicesQuery } from '../../api/query';
@@ -21,6 +21,8 @@ export default function FinancePage() {
 		start: startOfMonth(new Date()),
 		end: endOfMonth(new Date()),
 	});
+
+	const { data: drivers = [] } = useDriversQuery();
 
 	// 狀態：分頁、發票、waybill
 	const [tab, setTab] = useState(0);
@@ -83,12 +85,14 @@ export default function FinancePage() {
 				>
 					全部
 				</Button>
-				{driversData.map((driver) => (
+				{drivers.map((driver) => (
 					<Button
 						key={driver.id}
 						variant={selectedDriver?.id === driver.id ? 'contained' : 'outlined'}
 						color="primary"
-						onClick={() => setSelectedDriver(driver)}
+						onClick={() => {
+							setSelectedDriver(driver);
+						}}
 					>
 						{driver.name}
 					</Button>

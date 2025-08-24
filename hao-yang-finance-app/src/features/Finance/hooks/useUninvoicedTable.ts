@@ -270,6 +270,15 @@ export function useUninvoicedTable(data: Waybill[]) {
 				minSize: 100,
 				maxSize: 150,
 			}),
+			columnHelper.accessor('notes', {
+				header: '備註',
+				cell: (info) => info.getValue(),
+				enableSorting: true,
+				enableGrouping: false,
+				enableColumnFilter: true,
+				enableResizing: true,
+				filterFn: 'includesString',
+			}),
 			// columnHelper.accessor('plateNumber', {
 			// 	header: '車牌號碼',
 			// 	cell: (info) => info.getValue(),

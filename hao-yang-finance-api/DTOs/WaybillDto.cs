@@ -37,6 +37,7 @@ namespace hao_yang_finance_api.DTOs
         public string DriverId { get; set; } = string.Empty;
         public string PlateNumber { get; set; } = string.Empty;
         public string? Notes { get; set; }
+        public bool MarkAsNoInvoiceNeeded { get; set; } = false;
         public List<LoadingLocationDto> LoadingLocations { get; set; } = new List<LoadingLocationDto>();
         public List<ExtraExpenseDto> ExtraExpenses { get; set; } = new List<ExtraExpenseDto>();
     }

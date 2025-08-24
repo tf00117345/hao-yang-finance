@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import AddIcon from '@mui/icons-material/Add';
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Skeleton, Stack } from '@mui/material';
 import { endOfMonth, startOfMonth } from 'date-fns';
+import * as R from 'ramda';
 
 import MonthPicker from '../../../../component/MonthPicker/MonthPicker';
 import { useInsertCompanyMutation } from '../../../Settings/api/mutation';
@@ -15,23 +16,24 @@ import { Waybill, WaybillFormData } from '../../types/waybill.types';
 import WaybillForm from '../WaybillForm/WaybillForm';
 import { WaybillGrid } from '../WaybillGrid/WaybillGrid';
 
-const defaultWaybill: Waybill = {
+const defaultWaybill: WaybillFormData = {
 	id: '',
 	// waybillNumber: '',
 	date: new Date().toISOString().split('T')[0],
-	item: '',
+	item: '鑽機組',
 	companyName: '',
 	companyId: '',
-	loadingLocations: [{ from: '車廠', to: '' }],
+	loadingLocations: [{ from: '空白', to: '空白' }],
 	workingTime: { start: '', end: '' },
-	fee: 5000,
+	fee: 3000,
 	driverName: '黃天賜',
 	driverId: '32dde0f7-9274-4813-be36-adab21c415f3',
-	plateNumber: '11',
+	plateNumber: '',
 	notes: '',
 	extraExpenses: [],
 	status: 'PENDING',
-	tonnage: 11,
+	tonnage: 10.4,
+	markAsNoInvoiceNeeded: false,
 };
 
 export default function WaybillPage() {
@@ -43,13 +45,18 @@ export default function WaybillPage() {
 		end: endOfMonth(new Date()),
 	});
 
-	const [selectedWaybill, setSelectedWaybill] = useState<Waybill | null>(null);
+	const [selectedWaybill, setSelectedWaybill] = useState<WaybillFormData | null>(null);
 	const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
 	const { data: waybills = [], isPending } = useWaybillsQuery(dateRange, selectedDriver?.id);
-	const { mutate: insertWaybill } = useInsertWaybillMutation();
+	const { mutateAsync: insertWaybill } = useInsertWaybillMutation(() => {
+		// 新增完成，馬上重置
+		setTimeout(() => {
+			setSelectedWaybill(R.clone(defaultWaybill));
+		});
+	});
 	const { mutate: deleteWaybill } = useDeleteWaybillMutation();
-	const { mutate: updateWaybill } = useUpdateWaybillMutation();
+	const { mutateAsync: updateWaybill } = useUpdateWaybillMutation();
 
 	const { data: companies = [] } = useCompaniesQuery();
 	const { data: drivers = [] } = useDriversQuery();
@@ -80,15 +87,15 @@ export default function WaybillPage() {
 		}
 	};
 
-	const handleSave = (formData: WaybillFormData) => {
+	const handleSave = async (formData: WaybillFormData) => {
 		if (formData.id) {
-			updateWaybill({ waybillId: formData.id, waybill: formData });
+			await updateWaybill({ waybillId: formData.id, waybill: formData });
 		} else {
 			const newWaybill = {
 				...formData,
 				id: crypto.randomUUID(),
 			};
-			insertWaybill(newWaybill);
+			await insertWaybill(newWaybill as any);
 		}
 	};
 
@@ -103,6 +110,10 @@ export default function WaybillPage() {
 	const handleAddCompany = (company: Company) => {
 		insertCompany(company);
 	};
+
+	useEffect(() => {
+		setSelectedWaybill(R.clone(defaultWaybill));
+	}, []);
 
 	return (
 		<>

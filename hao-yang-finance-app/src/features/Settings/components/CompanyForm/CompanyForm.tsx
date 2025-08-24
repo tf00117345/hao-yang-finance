@@ -60,9 +60,10 @@ function CompanyForm({ open, onClose, onSubmit, initialData, isEditing = false, 
 	}, [open, initialData, defaultName, reset]);
 
 	// 處理表單提交
-	const handleFormSubmit = (data: Company) => {
+	const handleFormSubmit = (addCompany: Company) => {
+		const data = { ...addCompany };
 		// 如果是新增且沒有 id，生成一個唯一的 id
-		if (!isEditing && !data.id) {
+		if (!isEditing && !addCompany.id) {
 			data.id = crypto.randomUUID();
 		}
 		onSubmit(data);

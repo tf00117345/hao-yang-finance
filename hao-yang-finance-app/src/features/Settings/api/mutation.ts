@@ -16,7 +16,11 @@ export const useDeleteCompanyMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['companies'] });
 		},
 		onError: (error: any) => {
-			const message = error?.response?.data?.message || '刪除公司失敗';
+			const errors = error?.response?.data?.errors;
+			let message = error?.response?.data?.message || '刪除公司失敗';
+			if (errors) {
+				message += `：${errors.join(', ')}`;
+			}
 			showErrorMessage(message);
 		},
 	});
@@ -33,7 +37,11 @@ export const useInsertCompanyMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['companies'] });
 		},
 		onError: (error: any) => {
-			const message = error?.response?.data?.message || '新增公司失敗';
+			const errors = error?.response?.data?.errors;
+			let message = error?.response?.data?.message || '新增公司失敗';
+			if (errors) {
+				message += `：${errors.join(', ')}`;
+			}
 			showErrorMessage(message);
 		},
 	});
@@ -50,7 +58,11 @@ export const useUpdateCompanyMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['companies'] });
 		},
 		onError: (error: any) => {
-			const message = error?.response?.data?.message || '更新公司失敗';
+			const errors = error?.response?.data?.errors;
+			let message = error?.response?.data?.message || '更新公司失敗';
+			if (errors) {
+				message += `：${errors.join(', ')}`;
+			}
 			showErrorMessage(message);
 		},
 	});
@@ -67,7 +79,7 @@ export const useInsertDriverMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['drivers'] });
 		},
 		onError: (error: any) => {
-			const message = error?.response?.data?.message || '新增司機失敗';
+			const message = error?.response?.data || '新增司機失敗';
 			showErrorMessage(message);
 		},
 	});
@@ -84,7 +96,11 @@ export const useUpdateDriverMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['drivers'] });
 		},
 		onError: (error: any) => {
-			const message = error?.response?.data?.message || '更新司機失敗';
+			const errors = error?.response?.data?.errors;
+			let message = error?.response?.data?.message || '更新司機失敗';
+			if (errors) {
+				message += `：${errors.join(', ')}`;
+			}
 			showErrorMessage(message);
 		},
 	});
@@ -101,7 +117,11 @@ export const useDeleteDriverMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['drivers'] });
 		},
 		onError: (error: any) => {
-			const message = error?.response?.data?.message || '刪除司機失敗';
+			const errors = error?.response?.data?.errors;
+			let message = error?.response?.data?.message || '刪除司機失敗';
+			if (errors) {
+				message += `：${errors.join(', ')}`;
+			}
 			showErrorMessage(message);
 		},
 	});

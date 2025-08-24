@@ -28,6 +28,7 @@ export interface Waybill {
 export interface WaybillFormData extends Omit<Waybill, 'id' | 'companyId'> {
 	id?: string;
 	companyId?: string;
+	markAsNoInvoiceNeeded?: boolean;
 }
 
 export interface LoadingLocation {

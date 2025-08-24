@@ -98,6 +98,7 @@ namespace hao_yang_finance_api.Controllers
 
             var company = new Company
             {
+                Id = createCompanyDto.Id,
                 Name = createCompanyDto.Name.Trim(),
                 TaxId = createCompanyDto.TaxId?.Trim(),
                 ContactPerson = createCompanyDto.ContactPerson?.Trim(),

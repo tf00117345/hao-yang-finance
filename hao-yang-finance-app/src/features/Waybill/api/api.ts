@@ -71,6 +71,7 @@ const transformWaybillToApi = (waybill: WaybillFormData): any => {
 			to: location.to,
 		})),
 		extraExpenses: waybill.extraExpenses,
+		markAsNoInvoiceNeeded: waybill.markAsNoInvoiceNeeded,
 	};
 };
 

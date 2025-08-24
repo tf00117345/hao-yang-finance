@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { Chip, IconButton } from '@mui/material';
+import { Chip, IconButton, Typography } from '@mui/material';
 import {
 	ColumnDef,
 	ColumnFiltersState,
@@ -95,6 +95,13 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 					enableGrouping: false,
 				},
 			),
+			columnHelper.accessor('notes', {
+				header: '備註',
+				enableGrouping: false,
+				cell: ({ getValue }) => {
+					return <Typography>{getValue()}</Typography>;
+				},
+			}),
 			{
 				id: 'actions',
 				header: '操作',

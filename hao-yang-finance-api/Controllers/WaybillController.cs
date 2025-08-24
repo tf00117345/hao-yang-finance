@@ -191,7 +191,7 @@ namespace hao_yang_finance_api.Controllers
                 DriverId = createWaybillDto.DriverId,
                 PlateNumber = createWaybillDto.PlateNumber,
                 Notes = createWaybillDto.Notes,
-                Status = "PENDING"
+                Status = createWaybillDto.MarkAsNoInvoiceNeeded ? "NO_INVOICE_NEEDED" : "PENDING"
             };
 
             _context.Waybills.Add(waybill);

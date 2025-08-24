@@ -16,6 +16,7 @@ namespace hao_yang_finance_api.DTOs
 
     public class CreateCompanyDto
     {
+        public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string? TaxId { get; set; }
         public string? ContactPerson { get; set; }

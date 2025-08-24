@@ -29,7 +29,7 @@ export const useUpdateWaybillMutation = () => {
 };
 
 // 新增託運單
-export const useInsertWaybillMutation = () => {
+export const useInsertWaybillMutation = (onSuccessCallback: () => void) => {
 	const { notifySuccess, notifyError } = useNotifications();
 
 	return useMutation({
@@ -37,6 +37,7 @@ export const useInsertWaybillMutation = () => {
 		onSuccess: () => {
 			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
 			notifySuccess('託運單建立成功');
+			onSuccessCallback();
 		},
 		onError: (error) => {
 			notifyError(error);

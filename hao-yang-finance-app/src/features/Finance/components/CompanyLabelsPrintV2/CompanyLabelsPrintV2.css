@@ -1,0 +1,113 @@
+@page {
+	size: A4 landscape;
+	margin: 0mm;
+}
+
+/* 僅列印指定區塊 */
+@media print {
+	body * {
+		visibility: hidden;
+	}
+	#company-labels-print,
+	#company-labels-print * {
+		visibility: visible;
+	}
+	#company-labels-print {
+		position: absolute;
+		inset: 0;
+		margin: 0;
+	}
+
+	.labels-page > div {
+		border: 0;
+	}
+}
+
+/* 頁面容器：橫向 A4 一頁對應一個 .labels-page */
+.labels-page {
+	width: 287mm; /* A4 landscape 全幅寬 */
+	height: 200mm; /* A4 landscape 全幅高 */
+	margin: 5mm; /* 不置中，緊貼頁面 */
+	box-sizing: border-box;
+
+	display: grid;
+	grid-template-columns: repeat(7, 1fr); /* 7 等分 */
+	grid-template-rows: repeat(2, 1fr); /* 2 等分 */
+	gap: 0mm;
+
+	/* 讓子項填滿各自的網格區塊，不因內容改變軌道尺寸 */
+	justify-items: stretch;
+	align-items: stretch;
+	overflow: hidden; /* 防止容器被內容撐開 */
+}
+
+.labels-page > div {
+	border: 1px solid #000; /* 可視化每格 */
+	word-wrap: break-word; /* 舊屬性，兼容性高 */
+	word-break: break-all; /* 強制長字斷行 */
+	white-space: normal; /* 允許自動換行 */
+	overflow: hidden; /* 超出格子就裁掉 */
+}
+
+/* 單一貼紙格：固定在網格區塊內，內容超出則裁切 */
+.label {
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	min-width: 0; /* 允許文字縮回，不讓格子被撐開 */
+	min-height: 0;
+	overflow: hidden; /* 內容過長時裁切，由子層負責換行 */
+}
+
+/* 內容區：保持在格子內，集中排版 */
+.label-content {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	min-width: 0;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.company-name {
+	font-size: 18pt !important;
+	font-weight: 700 !important;
+	writing-mode: vertical-rl;
+	text-orientation: mixed; /* 英文橫排，中文直排 */
+	/* 自動換行，不撐開格子 */
+	white-space: normal;
+	overflow-wrap: anywhere;
+	word-break: break-word; /* 舊瀏覽器相容 */
+	max-height: 100%;
+	max-width: 100%;
+	letter-spacing: 1.5mm;
+}
+
+.company-address {
+	font-size: 18pt !important;
+	writing-mode: vertical-rl;
+	text-orientation: mixed; /* 英文橫排，中文直排 */
+	white-space: normal;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+	max-height: 100%;
+	max-width: 100%;
+	letter-spacing: 1.5mm;
+}
+
+/* 每頁上排(第 1~7 個)與下排(第 8~14 個)的分別留白，只在列印時生效 */
+@media print {
+	.labels-page .label:nth-child(-n + 7) {
+		padding-bottom: 10mm;
+	}
+	.labels-page .label:nth-child(n + 8):nth-child(-n + 14) {
+		padding-top: 10mm;
+	}
+}

@@ -20,7 +20,11 @@ export const useCreateInvoiceMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['invoice-stats'] });
 		},
 		onError: (error: any) => {
-			const message = error?.response?.data?.message || '建立發票失敗';
+			const errors = error?.response?.data?.errors;
+			let message = error?.response?.data?.message || '建立發票失敗';
+			if (errors) {
+				message += `：${errors.join(', ')}`;
+			}
 			showErrorMessage(message);
 		},
 	});
@@ -43,7 +47,11 @@ export const useUpdateInvoiceMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['invoice-stats'] });
 		},
 		onError: (error: any) => {
-			const message = error?.response?.data?.message || '更新發票失敗';
+			const errors = error?.response?.data?.errors;
+			let message = error?.response?.data?.message || '更新發票失敗';
+			if (errors) {
+				message += `：${errors.join(', ')}`;
+			}
 			showErrorMessage(message);
 		},
 	});
@@ -68,7 +76,11 @@ export const useDeleteInvoiceMutation = () => {
 			queryClient.removeQueries({ queryKey: ['invoice', variables] });
 		},
 		onError: (error: any) => {
-			const message = error?.response?.data?.message || '刪除發票失敗';
+			const errors = error?.response?.data?.errors;
+			let message = error?.response?.data?.message || '刪除發票失敗';
+			if (errors) {
+				message += `：${errors.join(', ')}`;
+			}
 			showErrorMessage(message);
 		},
 	});
@@ -90,7 +102,11 @@ export const useMarkInvoicePaidMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['invoice-stats'] });
 		},
 		onError: (error: any) => {
-			const message = error?.response?.data?.message || '標記收款失敗';
+			const errors = error?.response?.data?.errors;
+			let message = error?.response?.data?.message || '標記收款失敗';
+			if (errors) {
+				message += `：${errors.join(', ')}`;
+			}
 			showErrorMessage(message);
 		},
 	});
@@ -113,7 +129,11 @@ export const useVoidInvoiceMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['invoice-stats'] });
 		},
 		onError: (error: any) => {
-			const message = error?.response?.data?.message || '作廢發票失敗';
+			const errors = error?.response?.data?.errors;
+			let message = error?.response?.data?.message || '作廢發票失敗';
+			if (errors) {
+				message += `：${errors.join(', ')}`;
+			}
 			showErrorMessage(message);
 		},
 	});
@@ -136,7 +156,11 @@ export const useRestoreInvoiceMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['invoice-stats'] });
 		},
 		onError: (error: any) => {
-			const message = error?.response?.data?.message || '恢復發票失敗';
+			const errors = error?.response?.data?.errors;
+			let message = error?.response?.data?.message || '恢復發票失敗';
+			if (errors) {
+				message += `：${errors.join(', ')}`;
+			}
 			showErrorMessage(message);
 		},
 	});

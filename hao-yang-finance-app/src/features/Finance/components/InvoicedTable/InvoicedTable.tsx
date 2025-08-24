@@ -3,6 +3,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { ArrowDownward, ArrowUpward, UnfoldMore } from '@mui/icons-material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import LocalPrintshopIcon from '@mui/icons-material/LocalPrintshop';
 import {
 	Box,
 	Button,
@@ -40,6 +41,7 @@ import {
 } from '../../api/mutation';
 import { useInvoiceTable } from '../../hooks/useInvoiceTable';
 import { Invoice, MarkInvoicePaidRequest } from '../../types/invoice.type';
+import CompanyLabelsPrint from '../CompanyLabelsPrint/CompanyLabelsPrint';
 import InvoicedWaybillSubTable from '../InvoiceWaybillSubTable/InvoiceWaybillSubTable';
 import { SmartFilterInput } from '../shared/SmartFilterInput';
 import { StyledTableCell, StyledTableRow } from '../styles/styles';
@@ -58,6 +60,13 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 	// 對話框狀態管理
 	const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 	const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+
+	// 列印貼紙對話框
+	const [printDialogOpen, setPrintDialogOpen] = useState(false);
+	const companyIdsForPrint = useMemo(() => {
+		const ids = invoices.map((i) => i.companyId);
+		return Array.from(new Set(ids));
+	}, [invoices]);
 
 	// 通用確認對話框狀態
 	type ConfirmAction = 'void' | 'restore' | 'delete';
@@ -357,9 +366,23 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 
 	return (
 		<Stack direction="column" sx={{ flex: 1, minHeight: 0 }}>
-			<Typography sx={{ px: 2, mb: 2 }} variant="h6">
-				已開立發票清單
-			</Typography>
+			<Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+				<Stack direction="row" spacing={1}>
+					<Typography sx={{ flex: '1 1 100%', px: 2 }} variant="h6" component="div">
+						已開立發票清單
+					</Typography>
+				</Stack>
+				<Stack direction="row" spacing={1}>
+					<Button
+						size="small"
+						variant="contained"
+						startIcon={<LocalPrintshopIcon />}
+						onClick={() => setPrintDialogOpen(true)}
+					>
+						列印發票清單貼紙
+					</Button>
+				</Stack>
+			</Stack>
 			<TableContainer
 				component={Paper}
 				sx={{
@@ -579,6 +602,13 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 				isConfirming={isConfirming}
 				onClose={confirmDialogClose}
 				onConfirm={confirmDialogConfirm}
+			/>
+
+			{/* 列印貼紙對話框 */}
+			<CompanyLabelsPrint
+				open={printDialogOpen}
+				onClose={() => setPrintDialogOpen(false)}
+				companyIds={companyIdsForPrint}
 			/>
 		</Stack>
 	);

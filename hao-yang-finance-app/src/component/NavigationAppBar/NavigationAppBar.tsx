@@ -4,18 +4,18 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { 
-  Box, 
-  List, 
-  ListItem, 
-  ListItemButton, 
-  ListItemIcon, 
-  ListItemText,
-  IconButton,
-  Menu,
-  MenuItem,
-  Avatar,
-  Chip,
+import {
+	Box,
+	List,
+	ListItem,
+	ListItemButton,
+	ListItemIcon,
+	ListItemText,
+	IconButton,
+	Menu,
+	MenuItem,
+	Avatar,
+	Chip,
 } from '@mui/material';
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import Divider from '@mui/material/Divider';
@@ -149,19 +149,19 @@ function NavigationAppBar() {
 
 	return (
 		<Box sx={{ display: 'flex', backgroundColor: '#F9F9F9' }}>
-			<AppBar position="fixed">
+			<AppBar position="fixed" id="navigation-app-bar">
 				<Toolbar>
 					<Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
 						皓揚財務管理系統
 					</Typography>
-					
+
 					{/* User Menu */}
 					<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
 						{user && (
 							<>
-								<Chip 
-									label={user.role === 'Admin' ? '管理員' : '用戶'} 
-									size="small" 
+								<Chip
+									label={user.role === 'Admin' ? '管理員' : '用戶'}
+									size="small"
 									color={user.role === 'Admin' ? 'secondary' : 'default'}
 								/>
 								<IconButton
@@ -187,7 +187,9 @@ function NavigationAppBar() {
 								>
 									<MenuItem disabled>
 										<Box sx={{ textAlign: 'center' }}>
-											<Typography variant="subtitle2">{user.fullName || user.username}</Typography>
+											<Typography variant="subtitle2">
+												{user.fullName || user.username}
+											</Typography>
 											<Typography variant="caption" color="text.secondary">
 												{user.email}
 											</Typography>
@@ -207,6 +209,7 @@ function NavigationAppBar() {
 				</Toolbar>
 			</AppBar>
 			<Drawer
+				id="navigation-app-bar-drawer"
 				variant="permanent"
 				sx={{
 					width: drawerWidth,

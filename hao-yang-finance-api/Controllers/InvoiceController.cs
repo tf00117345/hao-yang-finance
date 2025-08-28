@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using hao_yang_finance_api.Data;
 using hao_yang_finance_api.Models;
 using hao_yang_finance_api.DTOs;
+using hao_yang_finance_api.Attributes;
 
 namespace hao_yang_finance_api.Controllers
 {
@@ -22,6 +23,7 @@ namespace hao_yang_finance_api.Controllers
 
         // GET: api/Invoice
         [HttpGet]
+        [RequirePermission(Permission.InvoiceRead)]
         public async Task<ActionResult<IEnumerable<InvoiceDto>>> GetInvoices(
             [FromQuery] string? startDate,
             [FromQuery] string? endDate,
@@ -134,6 +136,7 @@ namespace hao_yang_finance_api.Controllers
 
         // GET: api/Invoice/5
         [HttpGet("{id}")]
+        [RequirePermission(Permission.InvoiceRead)]
         public async Task<ActionResult<InvoiceDto>> GetInvoice(string id)
         {
             var invoice = await _context.Invoices
@@ -206,6 +209,7 @@ namespace hao_yang_finance_api.Controllers
 
         // POST: api/Invoice
         [HttpPost]
+        [RequirePermission(Permission.InvoiceCreate)]
         public async Task<ActionResult<InvoiceDto>> CreateInvoice(CreateInvoiceDto createInvoiceDto)
         {
             // 驗證發票號碼唯一性
@@ -393,6 +397,7 @@ namespace hao_yang_finance_api.Controllers
 
         // PUT: api/Invoice/5
         [HttpPut("{id}")]
+        [RequirePermission(Permission.InvoiceUpdate)]
         public async Task<IActionResult> UpdateInvoice(string id, UpdateInvoiceDto updateInvoiceDto)
         {
             var invoice = await _context.Invoices
@@ -537,6 +542,7 @@ namespace hao_yang_finance_api.Controllers
 
         // DELETE: api/Invoice/5
         [HttpDelete("{id}")]
+        [RequirePermission(Permission.InvoiceDelete)]
         public async Task<IActionResult> DeleteInvoice(string id)
         {
             var invoice = await _context.Invoices
@@ -577,6 +583,7 @@ namespace hao_yang_finance_api.Controllers
 
         // POST: api/Invoice/5/mark-paid
         [HttpPost("{id}/mark-paid")]
+        [RequirePermission(Permission.InvoiceMarkPaid)]
         public async Task<IActionResult> MarkInvoicePaid(string id, MarkInvoicePaidDto markPaidDto)
         {
             var invoice = await _context.Invoices.FindAsync(id);
@@ -605,6 +612,7 @@ namespace hao_yang_finance_api.Controllers
 
         // POST: api/Invoice/5/void
         [HttpPost("{id}/void")]
+        [RequirePermission(Permission.InvoiceVoid)]
         public async Task<IActionResult> VoidInvoice(string id)
         {
             var invoice = await _context.Invoices.FindAsync(id);
@@ -642,6 +650,7 @@ namespace hao_yang_finance_api.Controllers
 
         // POST: api/Invoice/5/restore
         [HttpPost("{id}/restore")]
+        [RequirePermission(Permission.InvoiceUpdate)]
         public async Task<IActionResult> RestoreInvoice(string id)
         {
             var invoice = await _context.Invoices.FindAsync(id);
@@ -676,6 +685,7 @@ namespace hao_yang_finance_api.Controllers
 
         // GET: api/Invoice/stats
         [HttpGet("stats")]
+        [RequirePermission(Permission.StatisticsRead)]
         public async Task<ActionResult<InvoiceStatsDto>> GetInvoiceStats(
             [FromQuery] string? startDate,
             [FromQuery] string? endDate)

@@ -56,6 +56,10 @@ else
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+// Add Permission and User Management Services
+builder.Services.AddScoped<IPermissionService, PermissionService>();
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+
 // Add JWT Authentication
 var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ??
              builder.Configuration["JWT:Key"] ??

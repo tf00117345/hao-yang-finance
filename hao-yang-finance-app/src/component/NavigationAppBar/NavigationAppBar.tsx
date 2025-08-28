@@ -1,21 +1,23 @@
+import { useState } from 'react';
+
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import LogoutIcon from '@mui/icons-material/Logout';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
+import PersonIcon from '@mui/icons-material/Person';
 import ReceiptLong from '@mui/icons-material/ReceiptLong';
 import SettingsIcon from '@mui/icons-material/Settings';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import LogoutIcon from '@mui/icons-material/Logout';
 import {
 	Box,
+	Chip,
+	IconButton,
 	List,
 	ListItem,
 	ListItemButton,
 	ListItemIcon,
 	ListItemText,
-	IconButton,
 	Menu,
 	MenuItem,
-	Avatar,
-	Chip,
 } from '@mui/material';
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import Divider from '@mui/material/Divider';
@@ -24,7 +26,7 @@ import { CSSObject, styled, Theme } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+
 import { useAuth } from '../../features/Auth/context/AuthContext';
 
 const routeConfig = [
@@ -47,6 +49,11 @@ const routeConfig = [
 		name: '業績統計',
 		path: 'statistics',
 		icon: <TrendingUpIcon />,
+	},
+	{
+		name: '使用者管理',
+		path: 'user-management',
+		icon: <PersonIcon />,
 	},
 ];
 

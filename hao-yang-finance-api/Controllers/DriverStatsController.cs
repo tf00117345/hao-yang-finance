@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using hao_yang_finance_api.Data;
 using hao_yang_finance_api.DTOs;
+using hao_yang_finance_api.Attributes;
+using hao_yang_finance_api.Models;
 
 namespace hao_yang_finance_api.Controllers
 {
@@ -20,6 +22,7 @@ namespace hao_yang_finance_api.Controllers
 
         // GET: api/DriverStats
         [HttpGet]
+        [RequirePermission(Permission.StatisticsRead)]
         public async Task<ActionResult<DriverStatsSummaryDto>> GetDriverStats(
             [FromQuery] string? startDate,
             [FromQuery] string? endDate,
@@ -134,6 +137,7 @@ namespace hao_yang_finance_api.Controllers
 
         // GET: api/DriverStats/{driverId}
         [HttpGet("{driverId}")]
+        [RequirePermission(Permission.StatisticsRead)]
         public async Task<ActionResult<DriverStatsDto>> GetDriverStatsById(
             string driverId,
             [FromQuery] string? startDate,
@@ -208,6 +212,7 @@ namespace hao_yang_finance_api.Controllers
 
         // GET: api/DriverStats/summary
         [HttpGet("summary")]
+        [RequirePermission(Permission.StatisticsRead)]
         public async Task<ActionResult<object>> GetDriverStatsSummary(
             [FromQuery] string? startDate,
             [FromQuery] string? endDate)

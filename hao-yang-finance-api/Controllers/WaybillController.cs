@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using hao_yang_finance_api.Data;
 using hao_yang_finance_api.Models;
 using hao_yang_finance_api.DTOs;
+using hao_yang_finance_api.Attributes;
 
 namespace hao_yang_finance_api.Controllers
 {
@@ -21,6 +22,7 @@ namespace hao_yang_finance_api.Controllers
 
         // GET: api/Waybill?startDate=2024-01-01&endDate=2024-01-31&driverId=xxx
         [HttpGet]
+        [RequirePermission(Permission.WaybillRead)]
         public async Task<ActionResult<IEnumerable<WaybillDto>>> GetWaybills(
             [FromQuery] string? startDate = null,
             [FromQuery] string? endDate = null,
@@ -98,6 +100,7 @@ namespace hao_yang_finance_api.Controllers
 
         // GET: api/Waybill/5
         [HttpGet("{id}")]
+        [RequirePermission(Permission.WaybillRead)]
         public async Task<ActionResult<WaybillDto>> GetWaybill(string id)
         {
             var waybill = await _context.Waybills
@@ -152,6 +155,7 @@ namespace hao_yang_finance_api.Controllers
 
         // POST: api/Waybill
         [HttpPost]
+        [RequirePermission(Permission.WaybillCreate)]
         public async Task<ActionResult<WaybillDto>> CreateWaybill(CreateWaybillDto createWaybillDto)
         {
             // 驗證公司和司機存在
@@ -282,6 +286,7 @@ namespace hao_yang_finance_api.Controllers
 
         // PUT: api/Waybill/5
         [HttpPut("{id}")]
+        [RequirePermission(Permission.WaybillUpdate)]
         public async Task<ActionResult<WaybillDto>> UpdateWaybill(string id, UpdateWaybillDto updateWaybillDto)
         {
             var waybill = await _context.Waybills
@@ -427,6 +432,7 @@ namespace hao_yang_finance_api.Controllers
 
         // DELETE: api/Waybill/5
         [HttpDelete("{id}")]
+        [RequirePermission(Permission.WaybillDelete)]
         public async Task<IActionResult> DeleteWaybill(string id)
         {
             var waybill = await _context.Waybills
@@ -459,6 +465,7 @@ namespace hao_yang_finance_api.Controllers
 
         // PUT: api/Waybill/5/no-invoice
         [HttpPut("{id}/no-invoice")]
+        [RequirePermission(Permission.WaybillUpdate)]
         public async Task<IActionResult> MarkAsNoInvoiceNeeded(string id)
         {
             var waybill = await _context.Waybills.FindAsync(id);
@@ -484,6 +491,7 @@ namespace hao_yang_finance_api.Controllers
 
         // PUT: api/Waybill/no-invoice-batch
         [HttpPut("no-invoice-batch")]
+        [RequirePermission(Permission.WaybillUpdate)]
         public async Task<IActionResult> MarkAsNoInvoiceNeededBatch([FromBody] List<string> waybillIds)
         {
             if (waybillIds == null || !waybillIds.Any())
@@ -589,6 +597,7 @@ namespace hao_yang_finance_api.Controllers
 
         // PUT: api/Waybill/5/restore
         [HttpPut("{id}/restore")]
+        [RequirePermission(Permission.WaybillUpdate)]
         public async Task<IActionResult> RestoreWaybill(string id)
         {
             var waybill = await _context.Waybills.FindAsync(id);
@@ -614,6 +623,7 @@ namespace hao_yang_finance_api.Controllers
 
         // PUT: api/Waybill/restore-batch
         [HttpPut("restore-batch")]
+        [RequirePermission(Permission.WaybillUpdate)]
         public async Task<IActionResult> RestoreWaybillsBatch([FromBody] List<string> waybillIds)
         {
             if (waybillIds == null || !waybillIds.Any())
@@ -719,6 +729,7 @@ namespace hao_yang_finance_api.Controllers
 
         // POST: api/Waybill/by-ids
         [HttpPost("by-ids")]
+        [RequirePermission(Permission.WaybillRead)]
         public async Task<ActionResult<IEnumerable<WaybillDto>>> GetWaybillsByIds([FromBody] List<string> waybillIds)
         {
             if (waybillIds == null || !waybillIds.Any())

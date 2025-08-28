@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using hao_yang_finance_api.Data;
 using hao_yang_finance_api.Models;
 using hao_yang_finance_api.DTOs;
+using hao_yang_finance_api.Attributes;
 using hao_yang_finance_api.Services;
 
 namespace hao_yang_finance_api.Controllers
@@ -22,6 +23,7 @@ namespace hao_yang_finance_api.Controllers
 
         // GET: api/Driver
         [HttpGet]
+        [RequirePermission(Permission.DriverRead)]
         public async Task<ActionResult<IEnumerable<DriverDto>>> GetDrivers()
         {
             var drivers = await _context.Drivers
@@ -43,6 +45,7 @@ namespace hao_yang_finance_api.Controllers
 
         // GET: api/Driver/5
         [HttpGet("{id}")]
+        [RequirePermission(Permission.DriverRead)]
         public async Task<ActionResult<DriverDto>> GetDriver(string id)
         {
             var driver = await _context.Drivers.FindAsync(id);
@@ -67,6 +70,7 @@ namespace hao_yang_finance_api.Controllers
 
         // POST: api/Driver
         [HttpPost]
+        [RequirePermission(Permission.DriverCreate)]
         public async Task<ActionResult<DriverDto>> CreateDriver(CreateDriverDto createDriverDto)
         {
             // Validate input
@@ -109,6 +113,7 @@ namespace hao_yang_finance_api.Controllers
 
         // PUT: api/Driver/5
         [HttpPut("{id}")]
+        [RequirePermission(Permission.DriverUpdate)]
         public async Task<IActionResult> UpdateDriver(string id, UpdateDriverDto updateDriverDto)
         {
             var driver = await _context.Drivers.FindAsync(id);
@@ -146,6 +151,7 @@ namespace hao_yang_finance_api.Controllers
 
         // DELETE: api/Driver/5
         [HttpDelete("{id}")]
+        [RequirePermission(Permission.DriverDelete)]
         public async Task<IActionResult> DeleteDriver(string id)
         {
             var driver = await _context.Drivers.FindAsync(id);

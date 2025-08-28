@@ -21,8 +21,6 @@ interface CompanyLabelsPrintProps {
  * - Grid：7 欄 x 2 列，共 14 張
  */
 export function CompanyLabelsPrint({ open, onClose, companyIds }: CompanyLabelsPrintProps) {
-	console.log('companyIds', companyIds);
-
 	const { data: companies = [] } = useCompaniesQuery();
 
 	// 過濾與排序要列印的公司資料

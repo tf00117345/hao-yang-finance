@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using hao_yang_finance_api.Data;
 using hao_yang_finance_api.Models;
 using hao_yang_finance_api.DTOs;
+using hao_yang_finance_api.Attributes;
 using hao_yang_finance_api.Services;
 
 namespace hao_yang_finance_api.Controllers
@@ -22,6 +23,7 @@ namespace hao_yang_finance_api.Controllers
 
         // GET: api/Company
         [HttpGet]
+        [RequirePermission(Permission.CompanyRead)]
         public async Task<ActionResult<IEnumerable<CompanyDto>>> GetCompanies()
         {
             var companies = await _context.Companies
@@ -48,6 +50,7 @@ namespace hao_yang_finance_api.Controllers
 
         // GET: api/Company/5
         [HttpGet("{id}")]
+        [RequirePermission(Permission.CompanyRead)]
         public async Task<ActionResult<CompanyDto>> GetCompany(string id)
         {
             var company = await _context.Companies
@@ -78,6 +81,7 @@ namespace hao_yang_finance_api.Controllers
 
         // POST: api/Company
         [HttpPost]
+        [RequirePermission(Permission.CompanyCreate)]
         public async Task<ActionResult<CompanyDto>> CreateCompany(CreateCompanyDto createCompanyDto)
         {
             // Validate input
@@ -148,6 +152,7 @@ namespace hao_yang_finance_api.Controllers
 
         // PUT: api/Company/5
         [HttpPut("{id}")]
+        [RequirePermission(Permission.CompanyUpdate)]
         public async Task<IActionResult> UpdateCompany(string id, UpdateCompanyDto updateCompanyDto)
         {
             var company = await _context.Companies
@@ -208,6 +213,7 @@ namespace hao_yang_finance_api.Controllers
 
         // DELETE: api/Company/5
         [HttpDelete("{id}")]
+        [RequirePermission(Permission.CompanyDelete)]
         public async Task<IActionResult> DeleteCompany(string id)
         {
             var company = await _context.Companies.FindAsync(id);

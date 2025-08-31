@@ -1,15 +1,25 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { ArrowDownward, ArrowUpward, UnfoldMore } from '@mui/icons-material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import LocalPrintshopIcon from '@mui/icons-material/LocalPrintshop';
+import StickyNote2Icon from '@mui/icons-material/StickyNote2';
+import ViewListIcon from '@mui/icons-material/ViewList';
 import {
 	Box,
 	Button,
+	Chip,
 	Collapse,
+	Dialog,
+	DialogActions,
+	DialogContent,
+	DialogTitle,
+	FormControl,
 	IconButton,
+	InputLabel,
+	MenuItem,
 	Paper,
+	Select,
 	Stack,
 	Table,
 	TableBody,
@@ -17,27 +27,18 @@ import {
 	TableContainer,
 	TableHead,
 	TableRow,
-	Typography,
-	Chip,
-	Dialog,
-	DialogTitle,
-	DialogContent,
-	DialogActions,
 	TextField,
-	FormControl,
-	InputLabel,
-	Select,
-	MenuItem,
+	Typography,
 } from '@mui/material';
 import { flexRender } from '@tanstack/react-table';
 import { Controller, useForm } from 'react-hook-form';
 
 import ConfirmDialog from '../../../../component/ConfirmDialog/ConfirmDialog';
 import {
-	useVoidInvoiceMutation,
-	useMarkInvoicePaidMutation,
 	useDeleteInvoiceMutation,
+	useMarkInvoicePaidMutation,
 	useRestoreInvoiceMutation,
+	useVoidInvoiceMutation,
 } from '../../api/mutation';
 import { useInvoiceTable } from '../../hooks/useInvoiceTable';
 import { Invoice, MarkInvoicePaidRequest } from '../../types/invoice.type';
@@ -64,7 +65,7 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 	// 列印貼紙對話框
 	const [printDialogOpen, setPrintDialogOpen] = useState(false);
 	const companyIdsForPrint = useMemo(() => {
-		const ids = invoices.map((i) => i.companyId);
+		const ids = invoices.filter((i) => i.status === 'issued').map((i) => i.companyId);
 		return Array.from(new Set(ids));
 	}, [invoices]);
 
@@ -376,21 +377,22 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 					<Button
 						size="small"
 						variant="contained"
-						startIcon={<LocalPrintshopIcon />}
-						onClick={() => setPrintDialogOpen(true)}
+						startIcon={!printDialogOpen ? <StickyNote2Icon /> : <ViewListIcon />}
+						onClick={() => setPrintDialogOpen((prev) => !prev)}
 					>
-						列印發票清單貼紙
+						{!printDialogOpen ? '顯示貼紙' : '顯示發票清單'}
 					</Button>
 				</Stack>
 			</Stack>
 			<TableContainer
 				component={Paper}
+				id="invoiced-table-container"
 				sx={{
 					flex: 1,
 					overflow: 'auto',
 					border: '1px solid #E0E0E0',
-					display: 'flex',
 					flexDirection: 'column',
+					display: printDialogOpen ? 'none' : 'flex',
 				}}
 			>
 				<Table stickyHeader sx={{ tableLayout: 'fixed' }}>
@@ -605,11 +607,7 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 			/>
 
 			{/* 列印貼紙對話框 */}
-			<CompanyLabelsPrint
-				open={printDialogOpen}
-				onClose={() => setPrintDialogOpen(false)}
-				companyIds={companyIdsForPrint}
-			/>
+			{printDialogOpen && <CompanyLabelsPrint companyIds={companyIdsForPrint} />}
 		</Stack>
 	);
 }

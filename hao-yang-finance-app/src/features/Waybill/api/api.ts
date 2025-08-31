@@ -1,3 +1,5 @@
+import { format } from 'date-fns';
+
 import { QueryClientInstance } from '../../../cache/queryClient';
 import { DateRange } from '../../../types/date-range';
 import { axiosInstance } from '../../../utils/axios-instance';
@@ -5,8 +7,8 @@ import { Waybill, WaybillFormData } from '../types/waybill.types';
 
 export const getWaybills = async (dateRange: DateRange, driverId?: string): Promise<Waybill[]> => {
 	const params = new URLSearchParams();
-	params.append('startDate', dateRange.start.toISOString().split('T')[0]);
-	params.append('endDate', dateRange.end.toISOString().split('T')[0]);
+	params.append('startDate', format(dateRange.start, 'yyyy-MM-dd'));
+	params.append('endDate', format(dateRange.end, 'yyyy-MM-dd'));
 	if (driverId) {
 		params.append('driverId', driverId);
 	}

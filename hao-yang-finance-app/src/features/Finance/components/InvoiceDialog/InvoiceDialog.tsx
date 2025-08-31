@@ -1,17 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
 	Box,
 	Button,
+	Checkbox,
 	Dialog,
 	DialogActions,
 	DialogContent,
 	DialogTitle,
+	Divider,
 	FormControl,
+	FormControlLabel,
 	InputLabel,
 	MenuItem,
 	Select,
 	Stack,
+	Switch,
 	Table,
 	TableBody,
 	TableCell,
@@ -20,11 +24,8 @@ import {
 	TableRow,
 	TextField,
 	Typography,
-	Checkbox,
-	Switch,
-	FormControlLabel,
-	Divider,
 } from '@mui/material';
+import { format } from 'date-fns';
 import { Controller, useForm } from 'react-hook-form';
 
 import { useCompaniesQuery } from '../../../Settings/api/query';
@@ -57,7 +58,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 	} = useForm<CreateInvoiceRequest>({
 		defaultValues: {
 			invoiceNumber: '',
-			date: new Date().toISOString().split('T')[0],
+			date: format(new Date(), 'yyyy-MM-dd'),
 			companyId: '',
 			taxRate: 0.05,
 			extraExpensesIncludeTax: false,
@@ -111,7 +112,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 
 				reset({
 					invoiceNumber: '',
-					date: new Date().toISOString().split('T')[0],
+					date: format(new Date(), 'yyyy-MM-dd'),
 					companyId: defaultCompanyId,
 					taxRate: 0.05,
 					extraExpensesIncludeTax: false,
@@ -125,7 +126,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 			// 重置表單
 			reset({
 				invoiceNumber: '',
-				date: new Date().toISOString().split('T')[0],
+				date: format(new Date(), 'yyyy-MM-dd'),
 				companyId: '',
 				taxRate: 0.05,
 				extraExpensesIncludeTax: false,

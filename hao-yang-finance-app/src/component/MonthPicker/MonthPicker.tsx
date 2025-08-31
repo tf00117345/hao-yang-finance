@@ -97,8 +97,8 @@ function MonthPicker({ dateRange, onDateChange }: MonthPickerProps) {
 	// 處理月份變更
 	const handleMonthChange = (_: React.MouseEvent<HTMLElement>, newMonth: string | null) => {
 		if (!newMonth) return;
-
 		const monthData = months.find((m) => m.label === newMonth);
+
 		if (monthData) {
 			onDateChange(startOfDay(monthData.start(currentYear)), endOfDay(monthData.end(currentYear)));
 		}

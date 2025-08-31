@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, TextField } from '@mui/material';
+import { format } from 'date-fns';
 import { useFieldArray, useForm } from 'react-hook-form';
 
 import { Company } from '../../types/company';
@@ -15,8 +16,8 @@ const initialFormData: Company = {
 	address: '',
 	phone: [],
 	isActive: true,
-	createdAt: new Date().toISOString(),
-	updatedAt: new Date().toISOString(),
+	createdAt: format(new Date(), 'yyyy-MM-dd'),
+	updatedAt: format(new Date(), 'yyyy-MM-dd'),
 };
 
 interface CompanyFormProps {

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 
 import { Box, Button, Stack, Tab, Tabs } from '@mui/material';
-import { endOfMonth, startOfMonth } from 'date-fns';
+import { endOfMonth, format, startOfMonth } from 'date-fns';
 
 import MonthPicker from '../../../../component/MonthPicker/MonthPicker';
 import { DateRange } from '../../../../types/date-range';
 import { useDriversQuery } from '../../../Settings/api/query';
 import { Driver } from '../../../Settings/types/driver';
-import { useWaybillsQuery, useWaybillsByIdsQuery } from '../../../Waybill/api/query';
+import { useWaybillsByIdsQuery, useWaybillsQuery } from '../../../Waybill/api/query';
 import { useInvoicesQuery } from '../../api/query';
 import { Invoice } from '../../types/invoice.type';
 import { InvoiceDialog } from '../InvoiceDialog/InvoiceDialog';
@@ -30,8 +30,8 @@ export default function FinancePage() {
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 
 	// 獲取所有waybills，然後篩選未開立發票的
-	const startDate = dateRange.start.toISOString().split('T')[0];
-	const endDate = dateRange.end.toISOString().split('T')[0];
+	const startDate = format(dateRange.start, 'yyyy-MM-dd');
+	const endDate = format(dateRange.end, 'yyyy-MM-dd');
 	const { data: allWaybills = [], isPending: isWaybillsPending } = useWaybillsQuery(dateRange, selectedDriver?.id);
 
 	// 篩選未開立發票的waybills (PENDING狀態)

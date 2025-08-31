@@ -22,6 +22,8 @@ import {
 // import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 // import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
+import { format } from 'date-fns';
+
 import { useDriverStats, useStatsSummary } from '../hooks/useDriverStats';
 
 export function StatisticsPage() {
@@ -29,11 +31,11 @@ export function StatisticsPage() {
 	const getThreeMonthsAgo = () => {
 		const date = new Date();
 		date.setMonth(date.getMonth() - 3);
-		return date.toISOString().split('T')[0];
+		return format(date, 'yyyy-MM-dd');
 	};
 
 	const getCurrentDate = () => {
-		return new Date().toISOString().split('T')[0];
+		return format(new Date(), 'yyyy-MM-dd');
 	};
 
 	// 以本地時間格式化日期避免時區造成的偏移

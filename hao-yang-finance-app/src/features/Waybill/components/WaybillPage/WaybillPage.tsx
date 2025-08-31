@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import AddIcon from '@mui/icons-material/Add';
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Skeleton, Stack } from '@mui/material';
-import { endOfMonth, startOfMonth } from 'date-fns';
+import { endOfMonth, format, startOfMonth } from 'date-fns';
 import * as R from 'ramda';
 
 import MonthPicker from '../../../../component/MonthPicker/MonthPicker';
@@ -19,7 +19,7 @@ import { WaybillGrid } from '../WaybillGrid/WaybillGrid';
 const defaultWaybill: WaybillFormData = {
 	id: '',
 	// waybillNumber: '',
-	date: new Date().toISOString().split('T')[0],
+	date: format(new Date(), 'yyyy-MM-dd'),
 	item: '鑽機組',
 	companyName: '',
 	companyId: '',

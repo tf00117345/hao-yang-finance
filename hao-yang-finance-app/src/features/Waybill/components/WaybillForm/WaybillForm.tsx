@@ -198,7 +198,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 	} = useForm<WaybillFormData>({
 		defaultValues: initialData || {
 			id: '',
-			date: new Date().toISOString().split('T')[0],
+			date: format(new Date(), 'yyyy-MM-dd'),
 			item: '',
 			companyName: '',
 			companyId: undefined,

@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Autocomplete, Box, Button, Checkbox, IconButton, Stack, TextField, Typography } from '@mui/material';
-import { styled, keyframes } from '@mui/material/styles';
+import { keyframes, styled } from '@mui/material/styles';
+import { LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
+import { format, parse } from 'date-fns';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
@@ -56,7 +59,6 @@ const StyledTextField = styled(TextField, {
 	shouldForwardProp: (prop) => prop !== 'height',
 })<StyledTextFieldProps>(({ theme, height }) => ({
 	'& .MuiOutlinedInput-root': {
-		padding: '0',
 		height: height || '35px', // 使用傳入的 height 或預設值
 		'& fieldset': {
 			borderColor: 'black',
@@ -87,6 +89,15 @@ const StyledTextField = styled(TextField, {
 	},
 	'& .MuiInputBase-input': {
 		padding: '8px',
+	},
+	// 移除 Chrome, Safari, Edge 的上下箭頭
+	'& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
+		'-webkit-appearance': 'none',
+		margin: 0,
+	},
+	// 移除 Firefox 的上下箭頭
+	'& input[type=number]': {
+		'-moz-appearance': 'textfield',
 	},
 }));
 
@@ -613,49 +624,95 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 						<FormRow>
 							<Typography>用車時間</Typography>
 							<Box sx={{ display: 'flex', gap: 1, alignItems: 'center', p: 1 }}>
-								<Controller
-									name="workingTime.start"
-									control={control}
-									// rules={{ required: '請輸入開始時間' }}
-									render={({ field }) => (
-										<StyledTextField
-											{...field}
-											fullWidth
-											size="small"
-											type="time"
-											error={!!errors.workingTime?.start}
-											helperText={errors.workingTime?.start?.message}
-											placeholder="請輸入開始時間"
-											slotProps={{
-												htmlInput: {
-													tabIndex: -1,
-												},
-											}}
-										/>
-									)}
-								/>
-								<Typography>至</Typography>
-								<Controller
-									name="workingTime.end"
-									control={control}
-									// rules={{ required: '請輸入結束時間' }}
-									render={({ field }) => (
-										<StyledTextField
-											{...field}
-											fullWidth
-											size="small"
-											type="time"
-											error={!!errors.workingTime?.end}
-											helperText={errors.workingTime?.end?.message}
-											placeholder="請輸入結束時間"
-											slotProps={{
-												htmlInput: {
-													tabIndex: -1,
-												},
-											}}
-										/>
-									)}
-								/>
+								<LocalizationProvider dateAdapter={AdapterDateFns}>
+									<Controller
+										name="workingTime.start"
+										control={control}
+										// rules={{ required: '請輸入開始時間' }}
+										render={({ field }) => {
+											const toDate = (val?: string) => {
+												if (!val) return null;
+												const d = parse(val, 'HH:mm', new Date());
+												return Number.isNaN(d.getTime()) ? null : d;
+											};
+											return (
+												<TimePicker
+													value={toDate(field.value)}
+													onChange={(newValue) =>
+														field.onChange(
+															newValue ? format(newValue as Date, 'HH:mm') : '',
+														)
+													}
+													ampm={false}
+													views={['hours', 'minutes']}
+													format="HH:mm"
+													shouldDisableTime={(v, view) =>
+														view === 'minutes' && Number(v) % 30 !== 0
+													}
+													timeSteps={{ minutes: 30 }}
+													slots={{ textField: StyledTextField as any }}
+													slotProps={{
+														textField: {
+															fullWidth: true,
+															size: 'small',
+															error: !!errors.workingTime?.start,
+															helperText: errors.workingTime?.start?.message,
+															placeholder: '請輸入開始時間',
+															inputProps: { tabIndex: -1 },
+														},
+														openPickerButton: {
+															tabIndex: -1,
+														},
+													}}
+												/>
+											);
+										}}
+									/>
+									<Typography>至</Typography>
+									<Controller
+										name="workingTime.end"
+										control={control}
+										// rules={{ required: '請輸入結束時間' }}
+										render={({ field }) => {
+											const toDate = (val?: string) => {
+												if (!val) return null;
+												const d = parse(val, 'HH:mm', new Date());
+												return Number.isNaN(d.getTime()) ? null : d;
+											};
+											return (
+												<TimePicker
+													value={toDate(field.value)}
+													onChange={(newValue) =>
+														field.onChange(
+															newValue ? format(newValue as Date, 'HH:mm') : '',
+														)
+													}
+													ampm={false}
+													views={['hours', 'minutes']}
+													format="HH:mm"
+													shouldDisableTime={(v, view) =>
+														view === 'minutes' && Number(v) % 30 !== 0
+													}
+													timeSteps={{ minutes: 30 }}
+													slots={{ textField: StyledTextField as any }}
+													slotProps={{
+														textField: {
+															fullWidth: true,
+															size: 'small',
+															error: !!errors.workingTime?.end,
+															helperText: errors.workingTime?.end?.message,
+															placeholder: '請輸入結束時間',
+															inputProps: { tabIndex: -1 },
+														},
+														openPickerButton: {
+															tabIndex: -1,
+														},
+													}}
+												/>
+											);
+										}}
+									/>
+								</LocalizationProvider>
 							</Box>
 						</FormRow>
 
@@ -683,6 +740,13 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 											error={!!errors.fee}
 											helperText={errors.fee?.message}
 											placeholder="請輸入運費"
+											onFocus={(e) => e.target.select()}
+											onWheel={(e) => (e.target as HTMLInputElement).blur()}
+											onKeyDown={(e) => {
+												if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+													e.preventDefault(); // 阻止上下鍵改變數字
+												}
+											}}
 										/>
 									)}
 								/>
@@ -781,7 +845,11 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 										<StyledTextField
 											{...field}
 											height="fit-content"
-											sx={{ width: '100%', fieldSizing: 'content' }}
+											sx={{
+												width: '100%',
+												fieldSizing: 'content',
+												'& .MuiOutlinedInput-root': { p: 0 },
+											}}
 											fullWidth
 											size="small"
 											multiline

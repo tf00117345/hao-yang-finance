@@ -1,13 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
+
+import { Assignment, AttachMoney, DateRange, Person, Refresh, TrendingUp } from '@mui/icons-material';
 import {
 	Box,
-	Paper,
-	Typography,
-	Grid,
+	Button,
 	Card,
 	CardContent,
-	TextField,
-	Button,
+	Chip,
+	Grid,
+	LinearProgress,
 	Stack,
 	Table,
 	TableBody,
@@ -15,16 +16,13 @@ import {
 	TableContainer,
 	TableHead,
 	TableRow,
-	Chip,
-	LinearProgress,
-	Divider,
+	TextField,
+	Typography,
 } from '@mui/material';
-import { TrendingUp, Person, Assignment, AttachMoney, DateRange, Refresh } from '@mui/icons-material';
 // import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 // import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 import { useDriverStats, useStatsSummary } from '../hooks/useDriverStats';
-import type { DriverStatsDto } from '../api/api';
 
 export function StatisticsPage() {
 	// 日期範圍狀態 - 預設為過去3個月
@@ -36,6 +34,14 @@ export function StatisticsPage() {
 
 	const getCurrentDate = () => {
 		return new Date().toISOString().split('T')[0];
+	};
+
+	// 以本地時間格式化日期避免時區造成的偏移
+	const formatDateLocal = (date: Date) => {
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, '0');
+		const day = String(date.getDate()).padStart(2, '0');
+		return `${year}-${month}-${day}`;
 	};
 
 	const [startDate, setStartDate] = useState<string>(getThreeMonthsAgo());
@@ -62,10 +68,13 @@ export function StatisticsPage() {
 
 	// 重置日期範圍
 	const handleResetDateRange = (months: number) => {
-		const date = new Date();
-		date.setMonth(date.getMonth() - months);
-		setStartDate(date.toISOString().split('T')[0]);
-		setEndDate(getCurrentDate());
+		const now = new Date();
+		// 開始：當月第一天往前推 (months - 1) 個月
+		const start = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+		// 結束：當月最後一天
+		const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+		setStartDate(formatDateLocal(start));
+		setEndDate(formatDateLocal(end));
 	};
 
 	// 格式化金額

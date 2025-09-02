@@ -6,6 +6,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupIcon from '@mui/icons-material/Group';
 import {
 	IconButton,
+	Paper,
 	Stack,
 	Table,
 	TableBody,
@@ -13,9 +14,8 @@ import {
 	TableContainer,
 	TableHead,
 	TableRow,
-	Paper,
 } from '@mui/material';
-import { flexRender, Column } from '@tanstack/react-table';
+import { Column, flexRender } from '@tanstack/react-table';
 
 import { StyledTableCell, StyledTableRow } from '../../../Finance/components/styles/styles';
 import { useWaybillTable } from '../../hooks/useWaybillTable';
@@ -94,7 +94,12 @@ export function WaybillGrid({ waybills, onDelete, onSelect, onView }: WaybillGri
 										key={header.id}
 										colSpan={header.colSpan}
 										onClick={(e) => header.column.getCanSort() && handleSorting(e, header.column)}
-										sx={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }}
+										sx={{
+											cursor: header.column.getCanSort() ? 'pointer' : 'default',
+											minWidth: header.column.getSize() + (header.column.getIsGrouped() ? 60 : 0),
+											position: header.column.getCanPin() ? 'sticky' : 'static',
+											right: header.column.getCanPin() ? 0 : undefined,
+										}}
 									>
 										{header.isPlaceholder ? null : (
 											<Stack direction="row" alignItems="center" spacing={1}>
@@ -129,7 +134,15 @@ export function WaybillGrid({ waybills, onDelete, onSelect, onView }: WaybillGri
 						{table.getRowModel().rows.map((row) => (
 							<StyledTableRow key={row.id}>
 								{row.getVisibleCells().map((cell) => (
-									<TableCell size="small" key={cell.id}>
+									<TableCell
+										size="small"
+										key={cell.id}
+										sx={{
+											position: cell.column.getCanPin() ? 'sticky' : 'static',
+											right: cell.column.getCanPin() ? 0 : undefined,
+											backgroundColor: cell.column.getCanPin() ? 'white' : undefined,
+										}}
+									>
 										{renderCellContent(cell, row)}
 									</TableCell>
 								))}

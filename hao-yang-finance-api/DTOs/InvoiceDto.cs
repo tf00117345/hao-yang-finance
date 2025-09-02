@@ -32,7 +32,8 @@ namespace hao_yang_finance_api.DTOs
     public class CreateInvoiceDto
     {
         [Required(ErrorMessage = "發票號碼為必填")]
-        [MaxLength(50, ErrorMessage = "發票號碼不可超過50字元")]
+        [StringLength(10, MinimumLength = 10, ErrorMessage = "發票號碼長度必須為10字元")]
+        [RegularExpression(@"^[A-Z]{2}\d{8}$", ErrorMessage = "發票號碼格式需為兩個英文字母加八位數字，例如 AB12345678")]
         public string InvoiceNumber { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "發票日期為必填")] public string Date { get; set; } = string.Empty;
@@ -58,7 +59,8 @@ namespace hao_yang_finance_api.DTOs
     public class UpdateInvoiceDto
     {
         [Required(ErrorMessage = "發票號碼為必填")]
-        [MaxLength(50, ErrorMessage = "發票號碼不可超過50字元")]
+        [StringLength(10, MinimumLength = 10, ErrorMessage = "發票號碼長度必須為10字元")]
+        [RegularExpression(@"^[A-Z]{2}\d{8}$", ErrorMessage = "發票號碼格式需為兩個英文字母加八位數字，例如 AB12345678")]
         public string InvoiceNumber { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "發票日期為必填")] public string Date { get; set; } = string.Empty;

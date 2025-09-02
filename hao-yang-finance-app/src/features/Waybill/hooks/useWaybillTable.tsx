@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { Chip, IconButton, Typography } from '@mui/material';
+import { Chip, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import {
 	ColumnDef,
 	ColumnFiltersState,
@@ -19,7 +19,7 @@ import {
 	useReactTable,
 } from '@tanstack/react-table';
 
-import { Waybill, ExtraExpense } from '../types/waybill.types';
+import { ExtraExpense, Waybill } from '../types/waybill.types';
 
 const columnHelper = createColumnHelper<Waybill>();
 
@@ -46,16 +46,66 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 					const [start, end] = filterValue;
 					return rowDate >= start && rowDate <= end;
 				},
+				size: 110,
 			}),
 			columnHelper.accessor('companyName', {
 				header: '貨主',
+				size: 220,
 			}),
-			columnHelper.accessor('item', {
-				header: '貨品',
+			// columnHelper.accessor('item', {
+			// 	header: '貨品',
+			// 	enableGrouping: false,
+			// }),
+			columnHelper.accessor('loadingLocations', {
+				header: '地點',
 				enableGrouping: false,
+				size: 160,
+				cell: ({ getValue }) => {
+					const locations = (getValue() as Array<{ id?: string; from: string; to: string }>).filter(
+						(loc) => loc.from !== '空白' && loc.to !== '空白',
+					);
+
+					const MAX_VISIBLE = 2;
+					const visible = locations.slice(0, MAX_VISIBLE);
+					const remaining = locations.length - visible.length;
+
+					return (
+						<Stack direction="row" flexWrap="wrap" gap={0.5}>
+							{visible.map((loc, idx) => (
+								<Chip
+									key={loc.id ?? `${loc.from}-${loc.to}-${idx}`}
+									label={`${loc.from} → ${loc.to}`}
+									size="small"
+									variant="outlined"
+								/>
+							))}
+							{remaining > 0 && (
+								<Tooltip
+									title={
+										<Stack sx={{ maxWidth: 360, p: 0.5 }}>
+											{locations.map((loc, idx) => (
+												<Typography
+													key={`full-${loc.id ?? `${loc.from}-${loc.to}-${idx}`}`}
+													variant="body2"
+												>
+													{loc.from} → {loc.to}
+												</Typography>
+											))}
+										</Stack>
+									}
+									arrow
+									placement="top"
+								>
+									<Chip label={`+${remaining}`} size="small" color="primary" />
+								</Tooltip>
+							)}
+						</Stack>
+					);
+				},
 			}),
 			columnHelper.accessor('driverName', {
 				header: '司機',
+				size: 100,
 			}),
 			// columnHelper.accessor('driverId', {
 			// 	header: '司機ID',
@@ -69,6 +119,7 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 			columnHelper.accessor('fee', {
 				header: '運費',
 				enableGrouping: false,
+				size: 80,
 			}),
 			columnHelper.accessor('status', {
 				header: '狀態',
@@ -86,6 +137,7 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 					}
 					return component;
 				},
+				size: 115,
 			}),
 			columnHelper.accessor(
 				(row) => row.extraExpenses?.reduce((acc: number, expense: ExtraExpense) => +acc + +expense.fee, 0),
@@ -93,11 +145,13 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 					id: 'extraExpenses',
 					header: '額外費用',
 					enableGrouping: false,
+					size: 100,
 				},
 			),
 			columnHelper.accessor('notes', {
 				header: '備註',
 				enableGrouping: false,
+				enablePinning: false,
 				cell: ({ getValue }) => {
 					return <Typography>{getValue()}</Typography>;
 				},
@@ -108,6 +162,9 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 				// 不在這裡定義 cell 渲染器，而是在 WaybillGrid 組件中處理
 				enableGrouping: false,
 				enableSorting: false,
+				size: 100,
+				enablePinning: true,
+				pin: 'right',
 				cell: ({ row }) => {
 					if (row.original.status === 'PENDING') {
 						return (
@@ -150,6 +207,7 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 		columnResizeMode,
 		columnResizeDirection,
 		enableRowSelection: false,
+		enablePinning: true, // 在整個 table 啟用 pinning
 		getExpandedRowModel: getExpandedRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		getGroupedRowModel: getGroupedRowModel(),

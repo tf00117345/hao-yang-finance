@@ -119,7 +119,11 @@ export default function WaybillPage() {
 		<>
 			{/* 主頁面 */}
 			<Stack direction="row" spacing={1} sx={{ height: '100%', width: '100%', overflow: 'hidden' }}>
-				<Stack direction="column" spacing={1} sx={{ flex: '1 1 auto', width: '100%', height: '100%' }}>
+				<Stack
+					direction="column"
+					spacing={1}
+					sx={{ flex: '1 1 auto', width: '100%', height: '100%', maxWidth: 'calc(100% - 600px)' }}
+				>
 					<Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
 						<Button
 							variant="contained"

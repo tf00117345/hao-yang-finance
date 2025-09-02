@@ -92,12 +92,12 @@ const StyledTextField = styled(TextField, {
 	},
 	// 移除 Chrome, Safari, Edge 的上下箭頭
 	'& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
-		'-webkit-appearance': 'none',
+		WebkitAppearance: 'none',
 		margin: 0,
 	},
 	// 移除 Firefox 的上下箭頭
 	'& input[type=number]': {
-		'-moz-appearance': 'textfield',
+		MozAppearance: 'textfield',
 	},
 }));
 
@@ -785,7 +785,6 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 											control={control}
 											rules={{
 												required: '請輸入費用',
-												min: { value: 0, message: '費用不能小於0' },
 											}}
 											render={({ field }) => (
 												<StyledTextField

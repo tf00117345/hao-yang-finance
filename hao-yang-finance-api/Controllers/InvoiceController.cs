@@ -213,8 +213,9 @@ namespace hao_yang_finance_api.Controllers
         public async Task<ActionResult<InvoiceDto>> CreateInvoice(CreateInvoiceDto createInvoiceDto)
         {
             // 驗證發票號碼唯一性
+            var normalizedInvoiceNumber = createInvoiceDto.InvoiceNumber.Trim().ToUpperInvariant();
             var existingInvoice = await _context.Invoices
-                .FirstOrDefaultAsync(i => i.InvoiceNumber == createInvoiceDto.InvoiceNumber.Trim());
+                .FirstOrDefaultAsync(i => i.InvoiceNumber == normalizedInvoiceNumber);
 
             if (existingInvoice != null)
             {
@@ -284,7 +285,7 @@ namespace hao_yang_finance_api.Controllers
             // 建立發票
             var invoice = new Invoice
             {
-                InvoiceNumber = createInvoiceDto.InvoiceNumber.Trim(),
+                InvoiceNumber = normalizedInvoiceNumber,
                 Date = createInvoiceDto.Date,
                 CompanyId = createInvoiceDto.CompanyId,
                 Subtotal = subtotal,
@@ -417,8 +418,9 @@ namespace hao_yang_finance_api.Controllers
             }
 
             // 驗證發票號碼唯一性（排除當前發票）
+            var normalizedInvoiceNumber = updateInvoiceDto.InvoiceNumber.Trim().ToUpperInvariant();
             var existingInvoice = await _context.Invoices
-                .FirstOrDefaultAsync(i => i.InvoiceNumber == updateInvoiceDto.InvoiceNumber.Trim() && i.Id != id);
+                .FirstOrDefaultAsync(i => i.InvoiceNumber == normalizedInvoiceNumber && i.Id != id);
 
             if (existingInvoice != null)
             {
@@ -496,7 +498,7 @@ namespace hao_yang_finance_api.Controllers
             }
 
             // 更新發票資料
-            invoice.InvoiceNumber = updateInvoiceDto.InvoiceNumber.Trim();
+            invoice.InvoiceNumber = normalizedInvoiceNumber;
             invoice.Date = updateInvoiceDto.Date;
             invoice.TaxRate = updateInvoiceDto.TaxRate;
             invoice.ExtraExpensesIncludeTax = updateInvoiceDto.ExtraExpensesIncludeTax;

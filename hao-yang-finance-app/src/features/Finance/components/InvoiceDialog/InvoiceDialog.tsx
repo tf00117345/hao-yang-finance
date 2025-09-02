@@ -112,7 +112,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 
 				reset({
 					invoiceNumber: '',
-					date: format(new Date(), 'yyyy-MM-dd'),
+					date: waybillList[0].date,
 					companyId: defaultCompanyId,
 					taxRate: 0.05,
 					extraExpensesIncludeTax: false,
@@ -191,36 +191,31 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 	// 計算金額
 	const calculateAmounts = () => {
 		const waybillAmount = waybillList.reduce((sum, waybill) => sum + (waybill.fee || 0), 0);
-		const extraExpenseAmount = waybillList.reduce((sum, waybill) => {
-			if (!waybill.extraExpenses) return sum;
-			return (
-				sum +
-				waybill.extraExpenses
-					.filter((expense) => selectedExtraExpenses.includes(expense.id || ''))
-					.reduce((expenseSum, expense) => expenseSum + expense.fee, 0)
-			);
-		}, 0);
 
-		let subtotal: number;
-		let tax: number;
-		let total: number;
+		// if (watchedValues.extraExpensesIncludeTax) {
+		// 	// 額外費用包含稅率：稅額 = (託運單金額 + 額外費用) × 稅率
+		// 	subtotal = waybillAmount;
+		// 	tax = subtotal * watchedValues.taxRate;
+		// 	total = subtotal + tax;
+		// } else {
+		// 額外費用不包含稅率：稅額 = 託運單金額 × 稅率
+		const subtotal = waybillAmount;
+		const tax = waybillAmount * watchedValues.taxRate;
+		const total = subtotal + tax;
+		// }
 
-		if (watchedValues.extraExpensesIncludeTax) {
-			// 額外費用包含稅率：稅額 = (託運單金額 + 額外費用) × 稅率
-			subtotal = waybillAmount + extraExpenseAmount;
-			tax = subtotal * watchedValues.taxRate;
-			total = subtotal + tax;
-		} else {
-			// 額外費用不包含稅率：稅額 = 託運單金額 × 稅率
-			subtotal = waybillAmount + extraExpenseAmount;
-			tax = waybillAmount * watchedValues.taxRate;
-			total = subtotal + tax;
-		}
-
-		return { waybillAmount, extraExpenseAmount, subtotal, tax, total };
+		return { waybillAmount, subtotal, tax, total };
 	};
 
-	const { waybillAmount, extraExpenseAmount, subtotal, tax, total } = calculateAmounts();
+	const calculateExtraExpenseAmount = () => {
+		return waybillList.reduce((sum, waybill) => {
+			if (!waybill.extraExpenses) return sum;
+			return sum + waybill.extraExpenses.reduce((expenseSum, expense) => expenseSum + expense.fee, 0);
+		}, 0);
+	};
+
+	const { waybillAmount, subtotal, tax, total } = calculateAmounts();
+	const extraExpenseAmount = calculateExtraExpenseAmount();
 
 	// 處理額外費用選擇變更
 	const handleExtraExpenseToggle = (expenseId: string, checked: boolean) => {
@@ -243,14 +238,28 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 							<Controller
 								name="invoiceNumber"
 								control={control}
-								rules={{ required: '發票號碼為必填' }}
+								rules={{
+									required: '發票號碼為必填',
+									pattern: {
+										value: /^[A-Z]{2}\d{8}$/,
+										message: '格式需為兩個英文字母加八位數字，例如 AB12345678',
+									},
+								}}
 								render={({ field }) => (
 									<TextField
 										{...field}
 										label="發票號碼"
 										fullWidth
+										inputProps={{ maxLength: 10 }}
+										onChange={(e) => {
+											const upper = e.target.value.toUpperCase();
+											field.onChange(upper);
+										}}
 										error={!!errors.invoiceNumber}
-										helperText={errors.invoiceNumber?.message}
+										helperText={
+											errors.invoiceNumber?.message ||
+											'格式：兩個英文字後面八個數字，例如 AB12345678'
+										}
 									/>
 								)}
 							/>
@@ -375,14 +384,6 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 									<Typography variant="body2">${waybillAmount.toLocaleString()}</Typography>
 								</Stack>
 								<Stack direction="row" justifyContent="space-between">
-									<Typography variant="body2">額外費用:</Typography>
-									<Typography variant="body2">${extraExpenseAmount.toLocaleString()}</Typography>
-								</Stack>
-								<Stack direction="row" justifyContent="space-between">
-									<Typography variant="body2">小計:</Typography>
-									<Typography variant="body2">${subtotal.toLocaleString()}</Typography>
-								</Stack>
-								<Stack direction="row" justifyContent="space-between">
 									<Typography variant="body2">
 										稅額 ({(watchedValues.taxRate * 100).toFixed(1)}%):
 									</Typography>
@@ -393,6 +394,41 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 									<Typography variant="h6">總計:</Typography>
 									<Typography variant="h6" color="primary">
 										${total.toLocaleString()}
+									</Typography>
+								</Stack>
+							</Stack>
+						</Box>
+
+						{/* 額外費用顯示 */}
+						<Box sx={{ border: '1px solid #e0e0e0', p: 2, borderRadius: 1, bgcolor: '#f5f5f5' }}>
+							<Typography variant="subtitle2" gutterBottom>
+								額外費用計算
+							</Typography>
+							<Stack spacing={1}>
+								{waybillList.map((waybill) =>
+									waybill.extraExpenses && waybill.extraExpenses.length > 0 ? (
+										<Stack spacing={0.5} key={waybill.id}>
+											{waybill.extraExpenses.map((expense) => (
+												<>
+													<Stack direction="row" justifyContent="space-between">
+														<Typography variant="body2">{expense.item}:</Typography>
+														<Typography
+															variant="body2"
+															color={expense.fee > 0 ? 'success' : 'error'}
+														>
+															${expense.fee.toLocaleString()}
+														</Typography>
+													</Stack>
+												</>
+											))}
+										</Stack>
+									) : null,
+								)}
+								<Divider />
+								<Stack direction="row" justifyContent="space-between">
+									<Typography variant="h6">總計:</Typography>
+									<Typography variant="h6" color="primary">
+										${extraExpenseAmount.toLocaleString()}
 									</Typography>
 								</Stack>
 							</Stack>

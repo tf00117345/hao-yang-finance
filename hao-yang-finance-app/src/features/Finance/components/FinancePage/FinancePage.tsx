@@ -11,6 +11,7 @@ import { useWaybillsByIdsQuery, useWaybillsQuery } from '../../../Waybill/api/qu
 import { useInvoicesQuery } from '../../api/query';
 import { Invoice } from '../../types/invoice.type';
 import { InvoiceDialog } from '../InvoiceDialog/InvoiceDialog';
+import { InvoicedNote } from '../InvoicedNote/InvoicedNote';
 import { InvoicedTable } from '../InvoicedTable/InvoicedTable';
 import { NoInvoicedNeededTable } from '../NoInvoicedTable/NoInvoicedTable';
 import { UninvoicedTable } from '../UninvoicedTable/UninvoicedTable';
@@ -111,10 +112,12 @@ export default function FinancePage() {
 					<Tab label="未開立發票之貨運單" />
 					<Tab label="無須開發票之貨運單" />
 					<Tab label="已開立發票" />
+					<Tab label="已開立發票-記事本" />
 				</Tabs>
 				{tab === 0 && <UninvoicedTable waybills={uninvoicedWaybills} />}
 				{tab === 1 && <NoInvoicedNeededTable waybills={noInvoicedNeededWaybills} />}
 				{tab === 2 && <InvoicedTable invoices={invoices} onEdit={handleEditInvoice} />}
+				{tab === 3 && <InvoicedNote invoices={invoices} onEdit={handleEditInvoice} />}
 			</Box>
 
 			{/* 編輯發票對話框 */}

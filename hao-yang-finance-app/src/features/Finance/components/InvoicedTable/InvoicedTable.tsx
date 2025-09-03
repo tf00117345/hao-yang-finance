@@ -384,6 +384,7 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 					</Button>
 				</Stack>
 			</Stack>
+
 			<TableContainer
 				component={Paper}
 				id="invoiced-table-container"

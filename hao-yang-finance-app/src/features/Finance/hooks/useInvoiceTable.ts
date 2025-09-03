@@ -37,17 +37,17 @@ export function useInvoiceTable({
 }: UseInvoiceTableProps) {
 	const columns = useMemo(
 		() => [
-			{
+			invoiceColumnHelper.accessor('invoiceNumber', {
 				id: 'expander',
 				header: '發票號碼',
-				cell: ({ row }: { row: any }) => row.original.invoiceNumber,
+				cell: (info) => info.getValue(),
 				enableSorting: true,
 				enableGrouping: false,
 				enableResizing: true,
 				size: 150,
 				minSize: 120,
 				maxSize: 200,
-			},
+			}),
 			invoiceColumnHelper.accessor('companyName', {
 				header: '客戶名稱',
 				cell: (info) => info.getValue(),

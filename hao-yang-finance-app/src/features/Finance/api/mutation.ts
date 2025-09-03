@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useSnackbar } from '../../../contexts/SnackbarContext';
-import { CreateInvoiceRequest, UpdateInvoiceRequest, MarkInvoicePaidRequest } from '../types/invoice.type';
-import { createInvoice, updateInvoice, deleteInvoice, markInvoicePaid, voidInvoice, restoreInvoice } from './api';
+import { CreateInvoiceRequest, MarkInvoicePaidRequest, UpdateInvoiceRequest } from '../types/invoice.type';
+import { createInvoice, deleteInvoice, markInvoicePaid, restoreInvoice, updateInvoice, voidInvoice } from './api';
 
 // 建立發票 mutation
 export const useCreateInvoiceMutation = () => {
@@ -18,6 +18,7 @@ export const useCreateInvoiceMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['invoices'] });
 			queryClient.invalidateQueries({ queryKey: ['waybills'] });
 			queryClient.invalidateQueries({ queryKey: ['invoice-stats'] });
+			queryClient.invalidateQueries({ queryKey: ['last-invoice-number'] });
 		},
 		onError: (error: any) => {
 			const errors = error?.response?.data?.errors;
@@ -71,6 +72,7 @@ export const useDeleteInvoiceMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['invoices'] });
 			queryClient.invalidateQueries({ queryKey: ['waybills'] });
 			queryClient.invalidateQueries({ queryKey: ['invoice-stats'] });
+			queryClient.invalidateQueries({ queryKey: ['last-invoice-number'] });
 
 			// 移除特定發票的查詢快取
 			queryClient.removeQueries({ queryKey: ['invoice', variables] });

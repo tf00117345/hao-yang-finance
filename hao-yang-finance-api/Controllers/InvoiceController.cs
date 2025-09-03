@@ -36,6 +36,9 @@ namespace hao_yang_finance_api.Controllers
                 .Include(i => i.InvoiceWaybills)
                 .ThenInclude(iw => iw.Waybill)
                 .ThenInclude(w => w.Driver)
+                .Include(i => i.InvoiceWaybills)
+                .ThenInclude(iw => iw.Waybill)
+                .ThenInclude(w => w.Company)
                 .Include(i => i.InvoiceExtraExpenses)
                 .ThenInclude(iee => iee.ExtraExpense)
                 .ThenInclude(ee => ee.Waybill)
@@ -105,6 +108,8 @@ namespace hao_yang_finance_api.Controllers
                         Item = iw.Waybill.Item,
                         Fee = iw.Waybill.Fee,
                         DriverName = iw.Waybill.Driver?.Name ?? "",
+                        WaybillCompanyId = iw.Waybill.CompanyId,
+                        WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
                         ExtraExpensesIncludeTax = i.ExtraExpensesIncludeTax,
                         ExtraExpenses = i.InvoiceExtraExpenses
                             .Where(iee => iee.ExtraExpense.WaybillId == iw.WaybillId)
@@ -181,6 +186,8 @@ namespace hao_yang_finance_api.Controllers
                     Item = iw.Waybill.Item,
                     Fee = iw.Waybill.Fee,
                     DriverName = iw.Waybill.Driver?.Name ?? "",
+                    WaybillCompanyId = iw.Waybill.CompanyId,
+                    WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
                     ExtraExpensesIncludeTax = invoice.ExtraExpensesIncludeTax,
                     ExtraExpenses = invoice.InvoiceExtraExpenses
                         .Where(iee => iee.ExtraExpense.WaybillId == iw.WaybillId)
@@ -371,6 +378,8 @@ namespace hao_yang_finance_api.Controllers
                     Item = iw.Waybill.Item,
                     Fee = iw.Waybill.Fee,
                     DriverName = iw.Waybill.Driver?.Name ?? "",
+                    WaybillCompanyId = iw.Waybill.CompanyId,
+                    WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
                     ExtraExpensesIncludeTax = createdInvoice.ExtraExpensesIncludeTax,
                     ExtraExpenses = createdInvoice.InvoiceExtraExpenses
                         .Where(iee => iee.ExtraExpense.WaybillId == iw.WaybillId)
@@ -721,6 +730,58 @@ namespace hao_yang_finance_api.Controllers
             };
 
             return Ok(stats);
+        }
+        
+        
+        // GET: api/Invoice/last-invoice-number
+        [HttpGet("last-invoice-number")]
+        [RequirePermission(Permission.InvoiceRead)]
+        public async Task<ActionResult<string>> GetLastInvoiceNumber()
+        {
+            var lastInvoiceNumber = await _context.Invoices
+                .OrderByDescending(i => i.InvoiceNumber)
+                .Select(i => i.InvoiceNumber)
+                .FirstOrDefaultAsync();
+
+            if (string.IsNullOrEmpty(lastInvoiceNumber))
+            {
+                return "AA00000001";
+            }
+
+            if (lastInvoiceNumber.Length != 10 || !char.IsLetter(lastInvoiceNumber[0]) || !char.IsLetter(lastInvoiceNumber[1]))
+            {
+                throw new InvalidOperationException("Invalid invoice number format");
+            }
+
+            string prefix = lastInvoiceNumber[..2];
+            string numberPart = lastInvoiceNumber[2..];
+
+            if (!long.TryParse(numberPart, out long number))
+            {
+                throw new InvalidOperationException("Invalid invoice number format");
+            }
+
+            number++;
+            
+            if (number > 99999999)
+            {
+                char lastChar = prefix[1];
+                char nextChar = (char)(lastChar + 1);
+                
+                if (nextChar > 'Z')
+                {
+                    char firstChar = prefix[0];
+                    prefix = ((char)(firstChar + 1)).ToString() + 'A';
+                }
+                else
+                {
+                    prefix = prefix[0] + nextChar.ToString();
+                }
+                
+                number = 1;
+            }
+
+            return $"{prefix}{number:D8}";
         }
     }
 }

@@ -29,6 +29,8 @@ export interface InvoiceWaybill {
 	item: string;
 	fee: number;
 	driverName: string;
+	waybillCompanyId: string;
+	waybillCompanyName: string;
 	extraExpensesIncludeTax: boolean;
 	extraExpenses: InvoiceExtraExpense[];
 }

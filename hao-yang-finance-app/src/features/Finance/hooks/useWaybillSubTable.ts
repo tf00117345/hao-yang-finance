@@ -2,11 +2,11 @@ import { useMemo, useState } from 'react';
 
 import {
 	ColumnFiltersState,
+	ColumnResizeDirection,
+	ColumnResizeMode,
 	createColumnHelper,
 	getCoreRowModel,
 	getFilteredRowModel,
-	ColumnResizeDirection,
-	ColumnResizeMode,
 	getSortedRowModel,
 	SortingState,
 	useReactTable,
@@ -37,8 +37,8 @@ export function useWaybillSubTable(data: InvoiceWaybill[], invoiceId: string) {
 				enableColumnFilter: true,
 				sortingFn: 'datetime',
 			}),
-			columnHelper.accessor('item', {
-				header: '貨物',
+			columnHelper.accessor('waybillCompanyName', {
+				header: '客戶',
 				cell: (info) => info.getValue(),
 				enableSorting: true,
 				enableColumnFilter: true,
@@ -52,13 +52,13 @@ export function useWaybillSubTable(data: InvoiceWaybill[], invoiceId: string) {
 				sortingFn: 'basic',
 				filterFn: 'inNumberRange',
 			}),
-			columnHelper.accessor('extraExpensesIncludeTax', {
-				header: '額外費用是否含稅',
-				enableSorting: true,
-				enableColumnFilter: true,
-				cell: (info) => (info.getValue() ? '是' : '否'),
-				filterFn: 'equals',
-			}),
+			// columnHelper.accessor('extraExpensesIncludeTax', {
+			// 	header: '額外費用是否含稅',
+			// 	enableSorting: true,
+			// 	enableColumnFilter: true,
+			// 	cell: (info) => (info.getValue() ? '是' : '否'),
+			// 	filterFn: 'equals',
+			// }),
 			columnHelper.accessor('extraExpenses', {
 				header: '額外費用',
 				cell: (info) => {

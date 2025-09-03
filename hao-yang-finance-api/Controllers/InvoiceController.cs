@@ -36,6 +36,9 @@ namespace hao_yang_finance_api.Controllers
                 .Include(i => i.InvoiceWaybills)
                 .ThenInclude(iw => iw.Waybill)
                 .ThenInclude(w => w.Driver)
+                .Include(i => i.InvoiceWaybills)
+                .ThenInclude(iw => iw.Waybill)
+                .ThenInclude(w => w.Company)
                 .Include(i => i.InvoiceExtraExpenses)
                 .ThenInclude(iee => iee.ExtraExpense)
                 .ThenInclude(ee => ee.Waybill)
@@ -105,6 +108,8 @@ namespace hao_yang_finance_api.Controllers
                         Item = iw.Waybill.Item,
                         Fee = iw.Waybill.Fee,
                         DriverName = iw.Waybill.Driver?.Name ?? "",
+                        WaybillCompanyId = iw.Waybill.CompanyId,
+                        WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
                         ExtraExpensesIncludeTax = i.ExtraExpensesIncludeTax,
                         ExtraExpenses = i.InvoiceExtraExpenses
                             .Where(iee => iee.ExtraExpense.WaybillId == iw.WaybillId)
@@ -181,6 +186,8 @@ namespace hao_yang_finance_api.Controllers
                     Item = iw.Waybill.Item,
                     Fee = iw.Waybill.Fee,
                     DriverName = iw.Waybill.Driver?.Name ?? "",
+                    WaybillCompanyId = iw.Waybill.CompanyId,
+                    WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
                     ExtraExpensesIncludeTax = invoice.ExtraExpensesIncludeTax,
                     ExtraExpenses = invoice.InvoiceExtraExpenses
                         .Where(iee => iee.ExtraExpense.WaybillId == iw.WaybillId)
@@ -371,6 +378,8 @@ namespace hao_yang_finance_api.Controllers
                     Item = iw.Waybill.Item,
                     Fee = iw.Waybill.Fee,
                     DriverName = iw.Waybill.Driver?.Name ?? "",
+                    WaybillCompanyId = iw.Waybill.CompanyId,
+                    WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
                     ExtraExpensesIncludeTax = createdInvoice.ExtraExpensesIncludeTax,
                     ExtraExpenses = createdInvoice.InvoiceExtraExpenses
                         .Where(iee => iee.ExtraExpense.WaybillId == iw.WaybillId)

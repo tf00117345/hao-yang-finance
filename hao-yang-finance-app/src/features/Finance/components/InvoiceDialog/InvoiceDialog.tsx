@@ -32,6 +32,7 @@ import { useCompaniesQuery } from '../../../Settings/api/query';
 import { Company } from '../../../Settings/types/company';
 import { Waybill } from '../../../Waybill/types/waybill.types';
 import { useCreateInvoiceMutation, useUpdateInvoiceMutation } from '../../api/mutation';
+import { useLastInvoiceNumberQuery } from '../../api/query';
 import { CreateInvoiceRequest, Invoice } from '../../types/invoice.type';
 
 interface InvoiceDialogProps {
@@ -46,6 +47,14 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 	const createMutation = useCreateInvoiceMutation();
 	const updateMutation = useUpdateInvoiceMutation();
 	const { data: companies = [] } = useCompaniesQuery();
+	const { data: lastInvoiceNumber = '', refetch: refetchLastInvoiceNumber } = useLastInvoiceNumberQuery();
+
+	// 每次開啟 Dialog 時重新獲取最後一個發票號碼
+	useEffect(() => {
+		if (open && !editingInvoice) {
+			refetchLastInvoiceNumber();
+		}
+	}, [open, editingInvoice, refetchLastInvoiceNumber]);
 
 	const [selectedExtraExpenses, setSelectedExtraExpenses] = useState<string[]>([]);
 
@@ -111,7 +120,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 				});
 
 				reset({
-					invoiceNumber: '',
+					invoiceNumber: lastInvoiceNumber as string,
 					date: waybillList[0].date,
 					companyId: defaultCompanyId,
 					taxRate: 0.05,
@@ -125,7 +134,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 		} else {
 			// 重置表單
 			reset({
-				invoiceNumber: '',
+				invoiceNumber: lastInvoiceNumber as string,
 				date: format(new Date(), 'yyyy-MM-dd'),
 				companyId: '',
 				taxRate: 0.05,
@@ -136,7 +145,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 			});
 			setSelectedExtraExpenses([]);
 		}
-	}, [open, editingInvoice, waybillList, companies, reset]);
+	}, [open, editingInvoice, waybillList, companies, reset, lastInvoiceNumber]);
 
 	// 處理對話框關閉
 	const handleClose = () => {
@@ -228,7 +237,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 	};
 
 	return (
-		<Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth>
+		<Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth keepMounted={false}>
 			<form onSubmit={handleSubmit(onSubmit)}>
 				<DialogTitle>{editingInvoice ? '編輯發票' : '開立發票'}</DialogTitle>
 				<DialogContent dividers>

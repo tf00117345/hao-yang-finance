@@ -1,11 +1,11 @@
 import { axiosInstance } from '../../../utils/axios-instance';
 import {
-	Invoice,
 	CreateInvoiceRequest,
-	UpdateInvoiceRequest,
-	MarkInvoicePaidRequest,
+	Invoice,
 	InvoiceQueryParams,
 	InvoiceStats,
+	MarkInvoicePaidRequest,
+	UpdateInvoiceRequest,
 } from '../types/invoice.type';
 
 // 獲取發票列表
@@ -19,6 +19,12 @@ export const getInvoices = async (params?: InvoiceQueryParams): Promise<Invoice[
 	if (params?.invoiceNumber) queryParams.append('invoiceNumber', params.invoiceNumber);
 
 	const response = await axiosInstance.get('/invoice', { params: queryParams });
+	return response.data;
+};
+
+// 獲取最後一個發票號碼
+export const getLastInvoiceNumber = async (): Promise<string> => {
+	const response = await axiosInstance.get('/invoice/last-invoice-number');
 	return response.data;
 };
 

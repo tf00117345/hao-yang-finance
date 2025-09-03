@@ -298,7 +298,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 									</Select>
 									{editingInvoice && (
 										<Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1.5 }}>
-											編輯模式下無法修改公司
+											編輯模式下無法修改公司，若開錯公司，請刪除後重新開立
 										</Typography>
 									)}
 									{errors.companyId && (

@@ -1,19 +1,19 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
 	ColumnFiltersState,
 	ColumnResizeDirection,
 	ColumnResizeMode,
 	createColumnHelper,
+	ExpandedState,
 	getCoreRowModel,
 	getExpandedRowModel,
 	getFilteredRowModel,
 	getGroupedRowModel,
 	getSortedRowModel,
 	GroupingState,
-	useReactTable,
-	ExpandedState,
 	SortingState,
+	useReactTable,
 } from '@tanstack/react-table';
 
 import { Invoice } from '../types/invoice.type';
@@ -74,32 +74,64 @@ export function useInvoiceTable({
 				minSize: 100,
 				maxSize: 150,
 			}),
-			invoiceColumnHelper.accessor('subtotal', {
-				header: '小計',
-				cell: (info) => `$${info.getValue().toLocaleString()}`,
+			// invoiceColumnHelper.accessor('subtotal', {
+			// 	header: '小計',
+			// 	cell: (info) => `$${info.getValue().toLocaleString()}`,
+			// 	enableSorting: true,
+			// 	enableGrouping: false,
+			// 	enableResizing: true,
+			// 	enableColumnFilter: true,
+			// 	filterFn: 'inNumberRange',
+			// 	size: 100,
+			// 	minSize: 80,
+			// 	maxSize: 120,
+			// }),
+			// invoiceColumnHelper.accessor('tax', {
+			// 	header: '稅額',
+			// 	cell: (info) => `$${info.getValue().toLocaleString()}`,
+			// 	enableSorting: true,
+			// 	enableGrouping: false,
+			// 	enableResizing: true,
+			// 	enableColumnFilter: true,
+			// 	filterFn: 'inNumberRange',
+			// 	size: 100,
+			// 	minSize: 80,
+			// 	maxSize: 120,
+			// }),
+			invoiceColumnHelper.accessor('extraExpenses', {
+				header: '額外費用總額',
+				cell: (info) =>
+					`$${info
+						.getValue()
+						?.reduce((sum, expense) => sum + expense.fee, 0)
+						.toLocaleString()}`,
 				enableSorting: true,
 				enableGrouping: false,
 				enableResizing: true,
 				enableColumnFilter: true,
 				filterFn: 'inNumberRange',
-				size: 100,
-				minSize: 80,
-				maxSize: 120,
+				size: 120,
+				minSize: 100,
+				maxSize: 150,
 			}),
-			invoiceColumnHelper.accessor('tax', {
-				header: '稅額',
-				cell: (info) => `$${info.getValue().toLocaleString()}`,
+			invoiceColumnHelper.accessor('waybills', {
+				header: '發票金額',
+				cell: (info) => {
+					const waybillAmount = info.getValue()?.reduce((sum, waybill) => sum + (waybill.fee || 0), 0);
+					const total = waybillAmount + info.row.original.tax;
+					return `$${total.toLocaleString()}`;
+				},
 				enableSorting: true,
 				enableGrouping: false,
 				enableResizing: true,
 				enableColumnFilter: true,
 				filterFn: 'inNumberRange',
-				size: 100,
-				minSize: 80,
-				maxSize: 120,
+				size: 120,
+				minSize: 100,
+				maxSize: 150,
 			}),
 			invoiceColumnHelper.accessor('total', {
-				header: '總計',
+				header: '應收帳款',
 				cell: (info) => `$${info.getValue().toLocaleString()}`,
 				enableSorting: true,
 				enableGrouping: false,

@@ -41,6 +41,7 @@ import {
 	useVoidInvoiceMutation,
 } from '../../api/mutation';
 import { useInvoiceTable } from '../../hooks/useInvoiceTable';
+import { useStickyFilterTop } from '../../hooks/useStickyFilterTop';
 import { Invoice, MarkInvoicePaidRequest } from '../../types/invoice.type';
 import CompanyLabelsPrint from '../CompanyLabelsPrint/CompanyLabelsPrint';
 import InvoicedWaybillSubTable from '../InvoiceWaybillSubTable/InvoiceWaybillSubTable';
@@ -57,6 +58,7 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 	const markPaidMutation = useMarkInvoicePaidMutation();
 	const deleteMutation = useDeleteInvoiceMutation();
 	const restoreMutation = useRestoreInvoiceMutation();
+	const { tableHeadRef, filterRowRef, filterTop } = useStickyFilterTop();
 
 	// 對話框狀態管理
 	const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
@@ -391,12 +393,11 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 					flex: 1,
 					overflow: 'auto',
 					border: '1px solid #E0E0E0',
-					flexDirection: 'column',
-					display: printDialogOpen ? 'none' : 'flex',
+					display: printDialogOpen ? 'none' : 'block',
 				}}
 			>
 				<Table stickyHeader sx={{ tableLayout: 'fixed' }}>
-					<TableHead>
+					<TableHead ref={tableHeadRef}>
 						{/* 表頭行 */}
 						{table.getHeaderGroups().map((headerGroup) => (
 							<TableRow key={headerGroup.id}>
@@ -406,7 +407,6 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 										size="small"
 										onClick={header.column.getToggleSortingHandler()}
 										sx={{
-											position: 'relative',
 											width: header.getSize(),
 											minWidth: header.column.columnDef.minSize || 120,
 											cursor: header.column.getCanSort() ? 'pointer' : 'default',
@@ -421,6 +421,7 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 												display: 'flex',
 												alignItems: 'center',
 												justifyContent: 'space-between',
+												position: 'relative',
 											}}
 										>
 											<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -478,9 +479,20 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 						))}
 
 						{/* 篩選行 */}
-						<TableRow>
+						<TableRow ref={filterRowRef}>
 							{table.getHeaderGroups()[0].headers.map((header) => (
-								<TableCell key={`filter-${header.id}`} sx={{ py: 1, px: 1 }}>
+								<TableCell
+									key={`filter-${header.id}`}
+									size="small"
+									sx={{
+										py: 1,
+										px: 1,
+										position: 'sticky',
+										top: filterTop,
+										zIndex: 1,
+										backgroundColor: '#FAFAFB',
+									}}
+								>
 									{header.column.getCanFilter() && (
 										<SmartFilterInput
 											columnId={header.id}

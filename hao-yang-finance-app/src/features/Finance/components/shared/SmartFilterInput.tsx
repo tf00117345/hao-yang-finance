@@ -1,6 +1,7 @@
-import { useState, useCallback, useMemo } from 'react';
-import { TextField, InputAdornment, IconButton, Box, Tooltip, Stack } from '@mui/material';
-import { FilterList, Clear, CalendarToday, AttachMoney, Info, Receipt, Assignment, Flag } from '@mui/icons-material';
+import { useCallback, useMemo, useState } from 'react';
+
+import { Assignment, AttachMoney, CalendarToday, Clear, FilterList, Flag, Info, Receipt } from '@mui/icons-material';
+import { Box, IconButton, InputAdornment, Stack, TextField, Tooltip } from '@mui/material';
 
 interface SmartFilterInputProps {
 	columnId: string;
@@ -85,7 +86,7 @@ export function SmartFilterInput({ columnId, columnHeader, value, onChange, onCl
 			default:
 				return '輸入關鍵字進行篩選';
 		}
-	}, [filterType, columnHeader]);
+	}, [filterType]);
 
 	// 獲取圖示
 	const getIcon = useCallback(() => {

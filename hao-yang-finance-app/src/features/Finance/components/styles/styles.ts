@@ -9,6 +9,9 @@ export const StyledTableCell = styled(TableCell)(({ theme }) => ({
 	'&.MuiTableCell-body': {
 		fontSize: 16,
 	},
+	'&.MuiTableCell-stickyHeader': {
+		zIndex: 2,
+	},
 }));
 
 export const StyledTableRow = styled(TableRow)(({ theme }) => ({

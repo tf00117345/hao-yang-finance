@@ -1,14 +1,22 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { ArrowDownward, ArrowUpward, UnfoldMore } from '@mui/icons-material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupIcon from '@mui/icons-material/Group';
 import ReceiptIcon from '@mui/icons-material/Receipt';
-import { ArrowUpward, ArrowDownward, UnfoldMore } from '@mui/icons-material';
 import {
+	Box,
 	Button,
 	Checkbox,
+	CircularProgress,
+	Dialog,
+	DialogActions,
+	DialogContent,
+	DialogContentText,
+	DialogTitle,
+	IconButton,
 	Paper,
 	Stack,
 	Table,
@@ -18,19 +26,12 @@ import {
 	TableHead,
 	TableRow,
 	Typography,
-	IconButton,
-	Dialog,
-	DialogTitle,
-	DialogContent,
-	DialogContentText,
-	DialogActions,
-	CircularProgress,
-	Box,
 } from '@mui/material';
 import { flexRender } from '@tanstack/react-table';
 
 import { useRestoreWaybillsBatchMutation } from '../../../Waybill/api/mutation';
 import { Waybill } from '../../../Waybill/types/waybill.types';
+import { useStickyFilterTop } from '../../hooks/useStickyFilterTop';
 import { useUninvoicedTable } from '../../hooks/useUninvoicedTable';
 import { SmartFilterInput } from '../shared/SmartFilterInput';
 import { StyledTableCell, StyledTableRow } from '../styles/styles';
@@ -44,6 +45,7 @@ export function NoInvoicedNeededTable({ waybills }: NoInvoicedNeededTableProps) 
 	const [selectedWaybills, setSelectedWaybills] = useState<Waybill[]>([]);
 	const [confirmNoInvoiceDialogOpen, setConfirmNoInvoiceDialogOpen] = useState(false);
 	const [processingNoInvoice, setProcessingNoInvoice] = useState(false);
+	const { tableHeadRef, filterRowRef, filterTop } = useStickyFilterTop();
 
 	const { table, columnFilters, setColumnFilters } = useUninvoicedTable(waybills);
 	const restoreWaybillsBatchMutation = useRestoreWaybillsBatchMutation();
@@ -223,7 +225,7 @@ export function NoInvoicedNeededTable({ waybills }: NoInvoicedNeededTableProps) 
 						size="small"
 						variant="contained"
 						startIcon={<ReceiptIcon />}
-						onClick={handleOpenNoInvoiceDialog}
+						onClick={() => handleOpenNoInvoiceDialog()}
 						disabled={table.getSelectedRowModel().rows.length === 0}
 					>
 						還原貨運單
@@ -236,12 +238,11 @@ export function NoInvoicedNeededTable({ waybills }: NoInvoicedNeededTableProps) 
 					flex: 1,
 					overflow: 'auto',
 					border: '1px solid #E0E0E0',
-					display: 'flex',
-					flexDirection: 'column',
+					display: 'block',
 				}}
 			>
 				<Table stickyHeader sx={{ tableLayout: 'fixed' }}>
-					<TableHead>
+					<TableHead ref={tableHeadRef}>
 						{/* 表頭行 */}
 						{table.getHeaderGroups().map((headerGroup) => (
 							<TableRow key={headerGroup.id}>
@@ -255,7 +256,6 @@ export function NoInvoicedNeededTable({ waybills }: NoInvoicedNeededTableProps) 
 										}
 										sx={{
 											cursor: header.column.getCanSort() ? 'pointer' : 'default',
-											position: 'relative',
 											width: header.getSize(),
 											minWidth: header.column.columnDef.minSize || 120,
 											userSelect: 'none',
@@ -269,6 +269,7 @@ export function NoInvoicedNeededTable({ waybills }: NoInvoicedNeededTableProps) 
 												display: 'flex',
 												alignItems: 'center',
 												justifyContent: 'space-between',
+												position: 'relative',
 											}}
 										>
 											<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -341,9 +342,20 @@ export function NoInvoicedNeededTable({ waybills }: NoInvoicedNeededTableProps) 
 						))}
 
 						{/* 篩選行 */}
-						<TableRow>
+						<TableRow ref={filterRowRef}>
 							{table.getHeaderGroups()[0].headers.map((header) => (
-								<TableCell key={`filter-${header.id}`} sx={{ py: 1, px: 1 }}>
+								<TableCell
+									key={`filter-${header.id}`}
+									size="small"
+									sx={{
+										py: 1,
+										px: 1,
+										position: 'sticky',
+										top: filterTop,
+										zIndex: 1,
+										backgroundColor: '#FAFAFB',
+									}}
+								>
 									{header.column.getCanFilter() && (
 										<SmartFilterInput
 											columnId={header.id}

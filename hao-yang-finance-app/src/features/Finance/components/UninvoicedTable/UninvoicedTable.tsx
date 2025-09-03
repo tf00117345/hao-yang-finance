@@ -1,14 +1,22 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { ArrowUpward, ArrowDownward, UnfoldMore } from '@mui/icons-material';
+import { ArrowDownward, ArrowUpward, UnfoldMore } from '@mui/icons-material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupIcon from '@mui/icons-material/Group';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import {
+	Box,
 	Button,
 	Checkbox,
+	CircularProgress,
+	Dialog,
+	DialogActions,
+	DialogContent,
+	DialogContentText,
+	DialogTitle,
+	IconButton,
 	Paper,
 	Stack,
 	Table,
@@ -18,19 +26,12 @@ import {
 	TableHead,
 	TableRow,
 	Typography,
-	IconButton,
-	Dialog,
-	DialogTitle,
-	DialogContent,
-	DialogContentText,
-	DialogActions,
-	CircularProgress,
-	Box,
 } from '@mui/material';
 import { flexRender } from '@tanstack/react-table';
 
 import { useMarkWaybillsAsNoInvoiceNeededBatchMutation } from '../../../Waybill/api/mutation';
 import { Waybill } from '../../../Waybill/types/waybill.types';
+import { useStickyFilterTop } from '../../hooks/useStickyFilterTop';
 import { useUninvoicedTable } from '../../hooks/useUninvoicedTable';
 import { InvoiceDialog } from '../InvoiceDialog/InvoiceDialog';
 import { SmartFilterInput } from '../shared/SmartFilterInput';
@@ -46,6 +47,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 	const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
 	const [confirmNoInvoiceDialogOpen, setConfirmNoInvoiceDialogOpen] = useState(false);
 	const [processingNoInvoice, setProcessingNoInvoice] = useState(false);
+	const { tableHeadRef, filterRowRef, filterTop } = useStickyFilterTop();
 
 	const { table, columnFilters, setColumnFilters } = useUninvoicedTable(waybills);
 	const markAsNoInvoiceNeededBatchMutation = useMarkWaybillsAsNoInvoiceNeededBatchMutation();
@@ -279,7 +281,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 				}}
 			>
 				<Table stickyHeader sx={{ tableLayout: 'fixed' }}>
-					<TableHead>
+					<TableHead ref={tableHeadRef}>
 						{/* 表頭行 */}
 						{table.getHeaderGroups().map((headerGroup) => (
 							<TableRow key={headerGroup.id}>
@@ -293,7 +295,6 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 										}
 										sx={{
 											cursor: header.column.getCanSort() ? 'pointer' : 'default',
-											position: 'relative',
 											width: header.getSize(),
 											minWidth: header.column.columnDef.minSize || 120,
 											userSelect: 'none',
@@ -307,6 +308,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 												display: 'flex',
 												alignItems: 'center',
 												justifyContent: 'space-between',
+												position: 'relative',
 											}}
 										>
 											<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -379,9 +381,19 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 						))}
 
 						{/* 篩選行 */}
-						<TableRow>
+						<TableRow ref={filterRowRef}>
 							{table.getHeaderGroups()[0].headers.map((header) => (
-								<TableCell key={`filter-${header.id}`} sx={{ py: 1, px: 1 }}>
+								<TableCell
+									key={`filter-${header.id}`}
+									sx={{
+										py: 1,
+										px: 1,
+										position: 'sticky',
+										top: filterTop,
+										zIndex: 1,
+										backgroundColor: '#FAFAFB',
+									}}
+								>
 									{header.column.getCanFilter() && (
 										<SmartFilterInput
 											columnId={header.id}

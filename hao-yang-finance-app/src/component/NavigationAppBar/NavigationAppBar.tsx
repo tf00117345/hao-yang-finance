@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
+import MenuIcon from '@mui/icons-material/Menu';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import PersonIcon from '@mui/icons-material/Person';
 import ReceiptLong from '@mui/icons-material/ReceiptLong';
@@ -10,6 +11,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import {
 	Box,
 	Chip,
+	Drawer,
 	IconButton,
 	List,
 	ListItem,
@@ -18,6 +20,7 @@ import {
 	ListItemText,
 	Menu,
 	MenuItem,
+	useMediaQuery,
 } from '@mui/material';
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import Divider from '@mui/material/Divider';
@@ -110,7 +113,7 @@ const AppBar = styled(MuiAppBar, {
 	}),
 }));
 
-const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(({ theme, open }) => ({
+const DesktopDrawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(({ theme, open }) => ({
 	width: drawerWidth,
 	height: '100%',
 	flexShrink: 0,
@@ -133,8 +136,10 @@ function NavigationAppBar() {
 	const location = useLocation();
 	const { user, logout } = useAuth();
 	const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
-
+	const [mobileOpen, setMobileOpen] = useState(false);
 	const currentPath = location.pathname;
+
+	const useDesktop = useMediaQuery('(min-width:1200px)');
 
 	const navigateToPage = (path: string) => {
 		navigate(path);
@@ -154,10 +159,68 @@ function NavigationAppBar() {
 		navigate('/login');
 	};
 
+	const handleDrawerToggle = () => {
+		setMobileOpen(!mobileOpen);
+	};
+
+	const handleDrawerTransitionEnd = () => {
+		if (!mobileOpen) {
+			setMobileOpen(false);
+		}
+	};
+
+	const handleDrawerClose = () => {
+		setMobileOpen(false);
+	};
+
+	const drawerContent = (
+		<>
+			<Toolbar />
+			<Box sx={{ overflow: 'auto' }}>
+				<List>
+					{routeConfig.map((route) => {
+						return (
+							<ListItem key={route.name} disablePadding>
+								<ListItemButton
+									selected={currentPath.includes(route.path)}
+									onClick={() => navigateToPage(route.path)}
+								>
+									<ListItemIcon>{route.icon}</ListItemIcon>
+									<ListItemText primary={route.name} />
+								</ListItemButton>
+							</ListItem>
+						);
+					})}
+				</List>
+				<Divider />
+				<List>
+					<ListItem disablePadding>
+						<ListItemButton onClick={() => navigateToPage('/settings')}>
+							<ListItemIcon>
+								<SettingsIcon />
+							</ListItemIcon>
+							<ListItemText primary="設定" />
+						</ListItemButton>
+					</ListItem>
+				</List>
+			</Box>
+		</>
+	);
+
 	return (
 		<Box sx={{ display: 'flex', backgroundColor: '#F9F9F9' }}>
 			<AppBar position="fixed" id="navigation-app-bar">
 				<Toolbar>
+					<IconButton
+						color="inherit"
+						aria-label="open drawer"
+						edge="start"
+						onClick={handleDrawerToggle}
+						sx={{ mr: 2, display: useDesktop ? 'none' : 'block' }}
+					>
+						<MenuIcon />
+					</IconButton>
+
 					<Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
 						皓揚財務管理系統
 					</Typography>
@@ -215,45 +278,33 @@ function NavigationAppBar() {
 					</Box>
 				</Toolbar>
 			</AppBar>
-			<Drawer
+			<DesktopDrawer
 				id="navigation-app-bar-drawer"
 				variant="permanent"
 				sx={{
 					width: drawerWidth,
 					flexShrink: 0,
 					[`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
+					display: useDesktop ? 'block' : 'none',
 				}}
 			>
-				<Toolbar />
-				<Box sx={{ overflow: 'auto' }}>
-					<List>
-						{routeConfig.map((route) => {
-							return (
-								<ListItem key={route.name} disablePadding>
-									<ListItemButton
-										selected={currentPath.includes(route.path)}
-										onClick={() => navigateToPage(route.path)}
-									>
-										<ListItemIcon>{route.icon}</ListItemIcon>
-										<ListItemText primary={route.name} />
-									</ListItemButton>
-								</ListItem>
-							);
-						})}
-					</List>
-					<Divider />
-					<List>
-						<ListItem disablePadding>
-							<ListItemButton onClick={() => navigateToPage('/settings')}>
-								<ListItemIcon>
-									<SettingsIcon />
-								</ListItemIcon>
-								<ListItemText primary="設定" />
-							</ListItemButton>
-						</ListItem>
-					</List>
-				</Box>
+				{drawerContent}
+			</DesktopDrawer>
+
+			<Drawer
+				variant="temporary"
+				open={mobileOpen}
+				onTransitionEnd={handleDrawerTransitionEnd}
+				onClose={handleDrawerClose}
+				keepMounted
+				sx={{
+					display: useDesktop ? 'none' : 'block',
+					'& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+				}}
+			>
+				{drawerContent}
 			</Drawer>
+
 			<Box
 				component="main"
 				sx={{ width: '100%', height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}

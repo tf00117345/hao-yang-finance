@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { Assignment, AttachMoney, CalendarToday, Clear, FilterList, Flag, Info, Receipt } from '@mui/icons-material';
-import { Box, IconButton, InputAdornment, Stack, TextField, Tooltip } from '@mui/material';
+import { Box, Chip, IconButton, InputAdornment, Stack, TextField, Tooltip } from '@mui/material';
 
 interface SmartFilterInputProps {
 	columnId: string;
@@ -37,6 +37,20 @@ const getFilterType = (columnId: string) => {
 export function SmartFilterInput({ columnId, columnHeader, value, onChange, onClear }: SmartFilterInputProps) {
 	const [showTips, setShowTips] = useState(false);
 	const filterType = useMemo(() => getFilterType(columnId), [columnId]);
+
+	// 獲取快速篩選選項
+	const quickFilters = useMemo(() => {
+		switch (filterType) {
+			case 'status':
+				return [
+					{ label: '已開立', value: 'issued' },
+					{ label: '已收款', value: 'paid' },
+					{ label: '已作廢', value: 'void' },
+				];
+			default:
+				return [];
+		}
+	}, [filterType]);
 
 	// 獲取提示文字
 	const getTipText = useCallback(() => {
@@ -126,54 +140,9 @@ export function SmartFilterInput({ columnId, columnHeader, value, onChange, onCl
 
 	return (
 		<Box sx={{ position: 'relative' }}>
-			<TextField
-				size="small"
-				placeholder={getPlaceholder()}
-				value={value}
-				onChange={(e) => onChange(e.target.value)}
-				InputProps={{
-					startAdornment: <InputAdornment position="start">{getIcon()}</InputAdornment>,
-					endAdornment: (
-						<InputAdornment position="end">
-							<Stack direction="row" spacing={0.5} alignItems="center">
-								{/* 提示按鈕 */}
-								<Tooltip
-									title={getTipText()}
-									arrow
-									placement="top"
-									open={showTips}
-									onClose={() => setShowTips(false)}
-									onOpen={() => setShowTips(true)}
-									disableFocusListener
-									disableHoverListener
-									disableTouchListener
-								>
-									<IconButton size="small" onClick={() => setShowTips(!showTips)} sx={{ p: 0.25 }}>
-										<Info sx={{ fontSize: '0.75rem', color: 'text.disabled' }} />
-									</IconButton>
-								</Tooltip>
-
-								{/* 清除按鈕 */}
-								{value && (
-									<IconButton size="small" onClick={onClear} sx={{ p: 0.25 }}>
-										<Clear sx={{ fontSize: '0.875rem' }} />
-									</IconButton>
-								)}
-							</Stack>
-						</InputAdornment>
-					),
-				}}
-				sx={{
-					width: '100%',
-					'& .MuiInputBase-root': {
-						fontSize: '0.75rem',
-					},
-				}}
-			/>
-
-			{/* 快速篩選選項 */}
-			{/* {quickFilters.length > 0 && (
-				<Box sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+			{/* 狀態篩選：只顯示選擇式 Chip */}
+			{filterType === 'status' ? (
+				<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
 					{quickFilters.map((filter) => (
 						<Chip
 							key={filter.value}
@@ -190,7 +159,7 @@ export function SmartFilterInput({ columnId, columnHeader, value, onChange, onCl
 							}}
 							sx={{
 								fontSize: '0.7rem',
-								height: '20px',
+								height: '24px',
 								cursor: 'pointer',
 								'&:hover': {
 									backgroundColor: value === filter.value ? 'primary.dark' : 'action.hover',
@@ -199,7 +168,88 @@ export function SmartFilterInput({ columnId, columnHeader, value, onChange, onCl
 						/>
 					))}
 				</Box>
-			)} */}
+			) : (
+				<>
+					<TextField
+						size="small"
+						placeholder={getPlaceholder()}
+						value={value}
+						onChange={(e) => onChange(e.target.value)}
+						InputProps={{
+							startAdornment: <InputAdornment position="start">{getIcon()}</InputAdornment>,
+							endAdornment: (
+								<InputAdornment position="end">
+									<Stack direction="row" spacing={0.5} alignItems="center">
+										{/* 提示按鈕 */}
+										<Tooltip
+											title={getTipText()}
+											arrow
+											placement="top"
+											open={showTips}
+											onClose={() => setShowTips(false)}
+											onOpen={() => setShowTips(true)}
+											disableFocusListener
+											disableHoverListener
+											disableTouchListener
+										>
+											<IconButton
+												size="small"
+												onClick={() => setShowTips(!showTips)}
+												sx={{ p: 0.25 }}
+											>
+												<Info sx={{ fontSize: '0.75rem', color: 'text.disabled' }} />
+											</IconButton>
+										</Tooltip>
+
+										{/* 清除按鈕 */}
+										{value && (
+											<IconButton size="small" onClick={onClear} sx={{ p: 0.25 }}>
+												<Clear sx={{ fontSize: '0.875rem' }} />
+											</IconButton>
+										)}
+									</Stack>
+								</InputAdornment>
+							),
+						}}
+						sx={{
+							width: '100%',
+							'& .MuiInputBase-root': {
+								fontSize: '0.75rem',
+							},
+						}}
+					/>
+
+					{/* 快速篩選選項（非狀態欄位） */}
+					{quickFilters.length > 0 && (
+						<Box sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+							{quickFilters.map((filter) => (
+								<Chip
+									key={filter.value}
+									label={filter.label}
+									size="small"
+									variant={value === filter.value ? 'filled' : 'outlined'}
+									color={value === filter.value ? 'primary' : 'default'}
+									onClick={() => {
+										if (value === filter.value) {
+											onClear();
+										} else {
+											onChange(filter.value);
+										}
+									}}
+									sx={{
+										fontSize: '0.7rem',
+										height: '20px',
+										cursor: 'pointer',
+										'&:hover': {
+											backgroundColor: value === filter.value ? 'primary.dark' : 'action.hover',
+										},
+									}}
+								/>
+							))}
+						</Box>
+					)}
+				</>
+			)}
 		</Box>
 	);
 }

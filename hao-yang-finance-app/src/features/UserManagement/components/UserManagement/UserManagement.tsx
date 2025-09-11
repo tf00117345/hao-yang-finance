@@ -19,6 +19,7 @@ import { useSnackbar } from '../../../../contexts/SnackbarContext';
 import { UserListItem } from '../../../../types/user-management.types';
 import { useChangeUserStatus, useDeleteUser } from '../../api/mutation';
 import { useUsers } from '../../api/query';
+import ResetPasswordDialog from '../ResetPasswordDialog/ResetPasswordDialog';
 import UserForm from '../UserForm/UserForm';
 import UserRoleCell from '../UserGrid/Cells/UserRoleCell';
 import UserRowActionCell from '../UserGrid/Cells/UserRowActionCell';
@@ -29,6 +30,7 @@ function UserManagement() {
 	const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null);
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+	const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
 
 	// API hooks
 	const { data: usersData, isLoading, error, refetch } = useUsers();
@@ -48,6 +50,11 @@ function UserManagement() {
 	const handleDeleteUser = (user: UserListItem) => {
 		setSelectedUser(user);
 		setIsDeleteDialogOpen(true);
+	};
+
+	const handleResetPassword = (user: UserListItem) => {
+		setSelectedUser(user);
+		setIsResetPasswordDialogOpen(true);
 	};
 
 	const confirmDeleteUser = async () => {
@@ -178,6 +185,7 @@ function UserManagement() {
 						handleEditUser,
 						handleDeleteUser,
 						handleToggleUserStatus,
+						handleResetPassword,
 					}}
 				/>
 			</Box>
@@ -194,6 +202,16 @@ function UserManagement() {
 					setIsFormOpen(false);
 					setSelectedUser(null);
 					refetch();
+				}}
+			/>
+
+			{/* Reset Password Dialog */}
+			<ResetPasswordDialog
+				open={isResetPasswordDialogOpen}
+				user={selectedUser}
+				onClose={() => {
+					setIsResetPasswordDialogOpen(false);
+					setSelectedUser(null);
 				}}
 			/>
 

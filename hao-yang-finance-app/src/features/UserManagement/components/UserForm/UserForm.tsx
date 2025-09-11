@@ -57,7 +57,7 @@ const validationRules = {
 	},
 	role: {
 		required: '角色不能為空',
-		validate: (value: string) => ['Admin', 'Manager', 'Accountant', 'User'].includes(value) || '請選擇有效的角色',
+		validate: (value: string) => ['Admin', 'Accountant', 'Driver'].includes(value) || '請選擇有效的角色',
 	},
 };
 
@@ -98,7 +98,7 @@ function UserForm({ open, user, onClose, onSuccess }: UserFormProps) {
 		role: isEdit
 			? {
 					validate: (value: string) =>
-						['Admin', 'Manager', 'Accountant', 'User'].includes(value) || '請選擇有效的角色',
+						['Admin', 'Accountant', 'Driver'].includes(value) || '請選擇有效的角色',
 				}
 			: validationRules.role,
 	});
@@ -115,7 +115,7 @@ function UserForm({ open, user, onClose, onSuccess }: UserFormProps) {
 			email: '',
 			password: '',
 			fullName: '',
-			role: 'User',
+			role: 'Admin',
 			isActive: true,
 		},
 	});
@@ -194,9 +194,8 @@ function UserForm({ open, user, onClose, onSuccess }: UserFormProps) {
 	const isLoading = createUserMutation.isPending || updateUserMutation.isPending;
 
 	const roleOptions: { value: UserRole; label: string }[] = [
-		{ value: 'User', label: getRoleDescription('User') },
 		{ value: 'Accountant', label: getRoleDescription('Accountant') },
-		{ value: 'Manager', label: getRoleDescription('Manager') },
+		{ value: 'Driver', label: getRoleDescription('Driver') },
 		{ value: 'Admin', label: getRoleDescription('Admin') },
 	];
 

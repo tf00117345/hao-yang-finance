@@ -21,7 +21,7 @@ namespace hao_yang_finance_api.DTOs
         public string? FullName { get; set; }
 
         [Required(ErrorMessage = "角色不能為空")]
-        [RegularExpression("^(Admin|Manager|Accountant|User)$", ErrorMessage = "角色必須是 Admin、Manager、Accountant 或 User 之一")]
+        [RegularExpression("^(Admin|Accountant|Driver)$", ErrorMessage = "角色必須是 Admin、Accountant、Driver 之一")]
         public string Role { get; set; } = "User";
 
         public bool IsActive { get; set; } = true;
@@ -39,7 +39,7 @@ namespace hao_yang_finance_api.DTOs
         [StringLength(100, ErrorMessage = "全名長度不能超過100個字元")]
         public string? FullName { get; set; }
 
-        [RegularExpression("^(Admin|Manager|Accountant|User)$", ErrorMessage = "角色必須是 Admin、Manager、Accountant 或 User 之一")]
+        [RegularExpression("^(Admin|Accountant|Driver)$", ErrorMessage = "角色必須是 Admin、Accountant 或 Driver 之一")]
         public string? Role { get; set; }
 
         public bool? IsActive { get; set; }
@@ -48,7 +48,7 @@ namespace hao_yang_finance_api.DTOs
     public class ChangeUserRoleDto
     {
         [Required(ErrorMessage = "角色不能為空")]
-        [RegularExpression("^(Admin|Manager|Accountant|User)$", ErrorMessage = "角色必須是 Admin、Manager、Accountant 或 User 之一")]
+        [RegularExpression("^(Admin|Accountant|Driver)$", ErrorMessage = "角色必須是 Admin、Accountant 或 Driver 之一")]
         public string Role { get; set; } = string.Empty;
     }
 

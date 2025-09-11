@@ -19,7 +19,7 @@ namespace hao_yang_finance_api.Attributes
         {
             // Get permission service from DI container
             var permissionService = context.HttpContext.RequestServices.GetService<IPermissionService>();
-            
+
             if (permissionService == null)
             {
                 context.Result = new StatusCodeResult(500);
@@ -52,7 +52,7 @@ namespace hao_yang_finance_api.Attributes
         public new void OnAuthorization(AuthorizationFilterContext context)
         {
             var permissionService = context.HttpContext.RequestServices.GetService<IPermissionService>();
-            
+
             if (permissionService == null)
             {
                 context.Result = new StatusCodeResult(500);
@@ -66,68 +66,6 @@ namespace hao_yang_finance_api.Attributes
             }
 
             if (!permissionService.IsAdmin(context.HttpContext.User))
-            {
-                context.Result = new ForbidResult();
-                return;
-            }
-        }
-    }
-
-    // Helper attribute for Manager+ level operations
-    public class ManagerOrAboveAttribute : RequirePermissionAttribute
-    {
-        public ManagerOrAboveAttribute() : base(Permission.StatisticsRead) // Using StatisticsRead as a proxy for manager check
-        {
-        }
-
-        public new void OnAuthorization(AuthorizationFilterContext context)
-        {
-            var permissionService = context.HttpContext.RequestServices.GetService<IPermissionService>();
-            
-            if (permissionService == null)
-            {
-                context.Result = new StatusCodeResult(500);
-                return;
-            }
-
-            if (!context.HttpContext.User.Identity?.IsAuthenticated ?? true)
-            {
-                context.Result = new UnauthorizedResult();
-                return;
-            }
-
-            if (!permissionService.IsManager(context.HttpContext.User))
-            {
-                context.Result = new ForbidResult();
-                return;
-            }
-        }
-    }
-
-    // Helper attribute for Accountant+ level operations
-    public class AccountantOrAboveAttribute : RequirePermissionAttribute
-    {
-        public AccountantOrAboveAttribute() : base(Permission.InvoiceCreate) // Using InvoiceCreate as a proxy for accountant check
-        {
-        }
-
-        public new void OnAuthorization(AuthorizationFilterContext context)
-        {
-            var permissionService = context.HttpContext.RequestServices.GetService<IPermissionService>();
-            
-            if (permissionService == null)
-            {
-                context.Result = new StatusCodeResult(500);
-                return;
-            }
-
-            if (!context.HttpContext.User.Identity?.IsAuthenticated ?? true)
-            {
-                context.Result = new UnauthorizedResult();
-                return;
-            }
-
-            if (!permissionService.IsAccountant(context.HttpContext.User))
             {
                 context.Result = new ForbidResult();
                 return;

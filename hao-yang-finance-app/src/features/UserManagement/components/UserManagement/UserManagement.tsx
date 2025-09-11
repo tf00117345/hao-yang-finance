@@ -15,7 +15,10 @@ import {
 import { ColDef } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 
+import PermissionGuard from '../../../../components/PermissionGuard/PermissionGuard';
+import { usePermission } from '../../../../contexts/PermissionContext';
 import { useSnackbar } from '../../../../contexts/SnackbarContext';
+import { Permission } from '../../../../types/permission.types';
 import { UserListItem } from '../../../../types/user-management.types';
 import { useChangeUserStatus, useDeleteUser } from '../../api/mutation';
 import { useUsers } from '../../api/query';
@@ -27,6 +30,7 @@ import UserStatusCell from '../UserGrid/Cells/UserStatusCell';
 
 function UserManagement() {
 	const { showSnackbar } = useSnackbar();
+	const { isAdmin } = usePermission();
 	const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null);
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -149,8 +153,21 @@ function UserManagement() {
 		},
 	];
 
+	// 權限檢查 - 只有 Admin 可以管理使用者
+	if (!isAdmin()) {
+		return (
+			<Alert sx={{ width: '100%' }} severity="error">
+				您沒有權限訪問使用者管理功能。請聯繫系統管理員。
+			</Alert>
+		);
+	}
+
 	if (error) {
-		return <Alert severity="error">載入使用者列表時發生錯誤: {(error as any)?.message}</Alert>;
+		return (
+			<Alert sx={{ width: '100%' }} severity="error">
+				載入使用者列表時發生錯誤: {(error as any)?.message}
+			</Alert>
+		);
 	}
 
 	return (
@@ -158,9 +175,11 @@ function UserManagement() {
 			{/* Header */}
 			<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 				<Typography variant="h5">使用者管理</Typography>
-				<Button variant="contained" startIcon={<AddIcon />} onClick={handleCreateUser}>
-					新增使用者
-				</Button>
+				<PermissionGuard permission={Permission.UserCreate} hideWhenNoPermission>
+					<Button variant="contained" startIcon={<AddIcon />} onClick={handleCreateUser}>
+						新增使用者
+					</Button>
+				</PermissionGuard>
 			</Box>
 
 			{/* Users Grid */}

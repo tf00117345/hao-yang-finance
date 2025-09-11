@@ -9,7 +9,7 @@ import {
 	getPermissionsForRole,
 	isAccountant,
 	isAdmin,
-	isManager,
+	isDriver,
 	roleHasAllPermissions,
 	roleHasAnyPermission,
 	roleHasPermission,
@@ -23,8 +23,8 @@ export interface UsePermissionsReturn {
 
 	// Role checking functions
 	isAdmin: () => boolean;
-	isManager: () => boolean;
 	isAccountant: () => boolean;
+	isDriver: () => boolean;
 
 	// Action checking functions
 	canEdit: () => boolean;
@@ -71,8 +71,8 @@ export const usePermissions = (): UsePermissionsReturn => {
 
 		// Role checking
 		isAdmin: () => isAdmin(userRole),
-		isManager: () => isManager(userRole),
 		isAccountant: () => isAccountant(userRole),
+		isDriver: () => isDriver(userRole),
 
 		// Action checking
 		canEdit: () => canEdit(userRole),

@@ -11,7 +11,7 @@ interface PermissionGuardProps {
 	permissions?: Permission[];
 	requireAll?: boolean; // Whether to require ALL permissions or just ANY
 	adminOnly?: boolean;
-	managerOnly?: boolean;
+	driverOnly?: boolean;
 	accountantOnly?: boolean;
 	fallback?: React.ReactNode;
 	showDeniedMessage?: boolean;
@@ -27,13 +27,13 @@ export function PermissionGuard({
 	permissions = [],
 	requireAll = false,
 	adminOnly = false,
-	managerOnly = false,
+	driverOnly = false,
 	accountantOnly = false,
 	fallback = null,
 	showDeniedMessage = false,
 	deniedMessage = '您沒有權限執行此操作',
 }: PermissionGuardProps) {
-	const { hasPermission, hasAnyPermission, hasAllPermissions, isAdmin, isManager, isAccountant, isAuthenticated } =
+	const { hasPermission, hasAnyPermission, hasAllPermissions, isAdmin, isAccountant, isDriver, isAuthenticated } =
 		usePermissions();
 
 	// Check if user is authenticated
@@ -52,16 +52,16 @@ export function PermissionGuard({
 		return <>{fallback}</>;
 	}
 
-	if (managerOnly && !isManager()) {
+	if (accountantOnly && !isAccountant()) {
 		if (showDeniedMessage) {
-			return <Alert severity="error">此功能僅限經理以上層級使用</Alert>;
+			return <Alert severity="error">此功能僅限會計使用</Alert>;
 		}
 		return <>{fallback}</>;
 	}
 
-	if (accountantOnly && !isAccountant()) {
+	if (driverOnly && !isDriver()) {
 		if (showDeniedMessage) {
-			return <Alert severity="error">此功能僅限會計以上層級使用</Alert>;
+			return <Alert severity="error">此功能僅限司機使用</Alert>;
 		}
 		return <>{fallback}</>;
 	}
@@ -111,14 +111,13 @@ export function withPermissionGuard<P extends object>(
  */
 interface PermissionSwitchProps {
 	admin?: React.ReactNode;
-	manager?: React.ReactNode;
+	driver?: React.ReactNode;
 	accountant?: React.ReactNode;
-	user?: React.ReactNode;
 	fallback?: React.ReactNode;
 }
 
-export function PermissionSwitch({ admin, manager, accountant, user, fallback = null }: PermissionSwitchProps) {
-	const { isAdmin, isManager, isAccountant, isAuthenticated } = usePermissions();
+export function PermissionSwitch({ admin, accountant, driver, fallback = null }: PermissionSwitchProps) {
+	const { isAdmin, isAccountant, isDriver, isAuthenticated } = usePermissions();
 
 	if (!isAuthenticated) {
 		return <>{fallback}</>;
@@ -128,16 +127,12 @@ export function PermissionSwitch({ admin, manager, accountant, user, fallback = 
 		return <>{admin}</>;
 	}
 
-	if (isManager() && manager) {
-		return <>{manager}</>;
+	if (isDriver() && driver) {
+		return <>{driver}</>;
 	}
 
 	if (isAccountant() && accountant) {
 		return <>{accountant}</>;
-	}
-
-	if (user) {
-		return <>{user}</>;
 	}
 
 	return <>{fallback}</>;

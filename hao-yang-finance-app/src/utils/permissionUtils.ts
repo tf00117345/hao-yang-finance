@@ -39,17 +39,17 @@ export const isAdmin = (role?: string): boolean => {
 };
 
 /**
- * Check if a role is manager or above (Manager or Admin)
- */
-export const isManager = (role?: string): boolean => {
-	return role === 'Manager' || role === 'Admin';
-};
-
-/**
  * Check if a role is accountant or above (Accountant, Manager, or Admin)
  */
 export const isAccountant = (role?: string): boolean => {
-	return role === 'Accountant' || role === 'Manager' || role === 'Admin';
+	return role === 'Accountant';
+};
+
+/**
+ * Check if a role is driver
+ */
+export const isDriver = (role?: string): boolean => {
+	return role === 'Driver';
 };
 
 /**
@@ -129,9 +129,8 @@ export const getPermissionDescription = (permission: Permission): string => {
 export const getRoleDescription = (role: UserRole): string => {
 	const descriptions: Record<UserRole, string> = {
 		Admin: '系統管理員',
-		Manager: '經理',
 		Accountant: '會計',
-		User: '一般使用者',
+		Driver: '司機',
 	};
 
 	return descriptions[role] || role;

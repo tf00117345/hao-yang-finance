@@ -6,6 +6,8 @@ import LockResetIcon from '@mui/icons-material/LockReset';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import type { CustomCellRendererProps } from 'ag-grid-react';
 
+import PermissionGuard from '../../../../../components/PermissionGuard/PermissionGuard';
+import { Permission } from '../../../../../types/permission.types';
 import { UserListItem } from '../../../../../types/user-management.types';
 
 export default function UserRowActionCell(params: CustomCellRendererProps) {
@@ -29,33 +31,41 @@ export default function UserRowActionCell(params: CustomCellRendererProps) {
 
 	return (
 		<Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', height: '100%' }}>
-			<Tooltip title="編輯">
-				<IconButton size="small" onClick={() => handleEditUser(user)} color="primary">
-					<EditIcon fontSize="small" />
-				</IconButton>
-			</Tooltip>
+			<PermissionGuard permission={Permission.UserUpdate} hideWhenNoPermission>
+				<Tooltip title="編輯">
+					<IconButton size="small" onClick={() => handleEditUser(user)} color="primary">
+						<EditIcon fontSize="small" />
+					</IconButton>
+				</Tooltip>
+			</PermissionGuard>
 
-			<Tooltip title="重設密碼">
-				<IconButton size="small" onClick={() => handleResetPassword(user)} color="secondary">
-					<LockResetIcon fontSize="small" />
-				</IconButton>
-			</Tooltip>
+			<PermissionGuard permission={Permission.UserUpdate} hideWhenNoPermission>
+				<Tooltip title="重設密碼">
+					<IconButton size="small" onClick={() => handleResetPassword(user)} color="secondary">
+						<LockResetIcon fontSize="small" />
+					</IconButton>
+				</Tooltip>
+			</PermissionGuard>
 
-			<Tooltip title={user.isActive ? '停用' : '啟用'}>
-				<IconButton
-					size="small"
-					onClick={() => handleToggleUserStatus(user)}
-					color={user.isActive ? 'warning' : 'success'}
-				>
-					{user.isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
-				</IconButton>
-			</Tooltip>
+			<PermissionGuard permission={Permission.UserChangeStatus} hideWhenNoPermission>
+				<Tooltip title={user.isActive ? '停用' : '啟用'}>
+					<IconButton
+						size="small"
+						onClick={() => handleToggleUserStatus(user)}
+						color={user.isActive ? 'warning' : 'success'}
+					>
+						{user.isActive ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+					</IconButton>
+				</Tooltip>
+			</PermissionGuard>
 
-			<Tooltip title="刪除">
-				<IconButton size="small" onClick={() => handleDeleteUser(user)} color="error">
-					<DeleteIcon fontSize="small" />
-				</IconButton>
-			</Tooltip>
+			<PermissionGuard permission={Permission.UserDelete} hideWhenNoPermission>
+				<Tooltip title="刪除">
+					<IconButton size="small" onClick={() => handleDeleteUser(user)} color="error">
+						<DeleteIcon fontSize="small" />
+					</IconButton>
+				</Tooltip>
+			</PermissionGuard>
 		</Box>
 	);
 }

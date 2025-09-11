@@ -38,7 +38,7 @@ export enum Permission {
 	UserChangeStatus = 'UserChangeStatus',
 }
 
-export type UserRole = 'Admin' | 'Manager' | 'Accountant' | 'User';
+export type UserRole = 'Admin' | 'Accountant' | 'Driver';
 
 export interface RolePermissions {
 	[key: string]: Permission[];
@@ -74,50 +74,17 @@ export const ROLE_PERMISSIONS: RolePermissions = {
 		Permission.UserChangeRole,
 		Permission.UserChangeStatus,
 	],
-	Manager: [
-		Permission.WaybillRead,
-		Permission.WaybillCreate,
-		Permission.WaybillUpdate,
-		Permission.WaybillDelete,
-		Permission.InvoiceRead,
-		Permission.InvoiceCreate,
-		Permission.InvoiceUpdate,
-		Permission.InvoiceDelete,
-		Permission.InvoiceVoid,
-		Permission.InvoiceMarkPaid,
-		Permission.CompanyRead,
-		Permission.CompanyCreate,
-		Permission.CompanyUpdate,
-		Permission.CompanyDelete,
-		Permission.DriverRead,
-		Permission.DriverCreate,
-		Permission.DriverUpdate,
-		Permission.DriverDelete,
-		Permission.StatisticsRead,
-		Permission.StatisticsExport,
-	],
 	Accountant: [
 		Permission.WaybillRead,
-		Permission.WaybillCreate,
-		Permission.WaybillUpdate,
-		Permission.WaybillDelete,
 		Permission.InvoiceRead,
 		Permission.InvoiceCreate,
 		Permission.InvoiceUpdate,
 		Permission.InvoiceDelete,
 		Permission.InvoiceVoid,
 		Permission.InvoiceMarkPaid,
-		Permission.CompanyRead,
-		Permission.CompanyCreate,
-		Permission.CompanyUpdate,
-		Permission.CompanyDelete,
-		Permission.DriverRead,
-		Permission.DriverCreate,
-		Permission.DriverUpdate,
-		Permission.DriverDelete,
 		Permission.StatisticsRead,
 	],
-	User: [Permission.WaybillRead, Permission.InvoiceRead, Permission.CompanyRead, Permission.DriverRead],
+	Driver: [Permission.WaybillRead],
 };
 
 export interface PermissionContextType {

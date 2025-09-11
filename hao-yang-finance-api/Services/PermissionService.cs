@@ -10,8 +10,8 @@ namespace hao_yang_finance_api.Services
         Permission[] GetUserPermissions(ClaimsPrincipal user);
         Permission[] GetRolePermissions(string role);
         bool IsAdmin(ClaimsPrincipal user);
-        bool IsManager(ClaimsPrincipal user);
         bool IsAccountant(ClaimsPrincipal user);
+        bool IsDriver(ClaimsPrincipal user);
         string GetUserRole(ClaimsPrincipal user);
     }
 
@@ -76,17 +76,15 @@ namespace hao_yang_finance_api.Services
         {
             return GetUserRole(user) == "Admin";
         }
-
-        public bool IsManager(ClaimsPrincipal user)
-        {
-            var role = GetUserRole(user);
-            return role == "Manager" || role == "Admin";
-        }
-
+        
         public bool IsAccountant(ClaimsPrincipal user)
         {
-            var role = GetUserRole(user);
-            return role == "Accountant" || role == "Manager" || role == "Admin";
+            return GetUserRole(user) == "Accountant";
+        }
+        
+        public bool IsDriver(ClaimsPrincipal user)
+        {
+            return GetUserRole(user) == "Driver";
         }
 
         public string GetUserRole(ClaimsPrincipal user)

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { Assignment, AttachMoney, DateRange, Person, Refresh, TrendingUp } from '@mui/icons-material';
 import {
+	Alert,
 	Box,
 	Button,
 	Card,
@@ -19,14 +20,15 @@ import {
 	TextField,
 	Typography,
 } from '@mui/material';
-// import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
-// import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-
 import { format } from 'date-fns';
 
+import { usePermission } from '../../../contexts/PermissionContext';
+import { Permission } from '../../../types/permission.types';
 import { useDriverStats, useStatsSummary } from '../hooks/useDriverStats';
 
 export function StatisticsPage() {
+	const { hasPermission } = usePermission();
+
 	// 日期範圍狀態 - 預設為過去3個月
 	const getThreeMonthsAgo = () => {
 		const date = new Date();
@@ -88,6 +90,15 @@ export function StatisticsPage() {
 	const calculatePercentage = (value: number, total: number) => {
 		return total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
 	};
+
+	// 權限檢查 - 只有 Admin 可以管理使用者
+	if (!hasPermission(Permission.StatisticsRead)) {
+		return (
+			<Alert sx={{ width: '100%' }} severity="error">
+				您沒有權限訪問業績統計功能。請聯繫系統管理員。
+			</Alert>
+		);
+	}
 
 	return (
 		<Box sx={{ p: 3, overflow: 'auto', width: '100%' }}>

@@ -98,6 +98,7 @@ module.exports = {
 		'react-hooks/rules-of-hooks': 'error',
 		'react-hooks/exhaustive-deps': 'error',
 		'import/extensions': 'off',
+		'no-nested-ternary': 'off',
 		// "import/no-absolute-path": "off",
 		// "import/no-unresolved": "off"
 	},

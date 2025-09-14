@@ -1,7 +1,22 @@
 import { useEffect, useState } from 'react';
 
 import AddIcon from '@mui/icons-material/Add';
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Skeleton, Stack } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import {
+	Box,
+	Button,
+	Dialog,
+	DialogActions,
+	DialogContent,
+	DialogTitle,
+	Drawer,
+	IconButton,
+	Skeleton,
+	Stack,
+	Typography,
+	useMediaQuery,
+	useTheme,
+} from '@mui/material';
 import { endOfMonth, format, startOfMonth } from 'date-fns';
 import * as R from 'ramda';
 
@@ -37,6 +52,10 @@ const defaultWaybill: WaybillFormData = {
 };
 
 export default function WaybillPage() {
+	const theme = useTheme();
+	const isMobile = useMediaQuery(theme.breakpoints.down('lg')); // 小於768px為手機版
+	const isTablet = useMediaQuery(theme.breakpoints.between('lg', 'xl')); // 768px-1199px為平板
+
 	const [dateRange, setDateRange] = useState<{
 		start: Date;
 		end: Date;
@@ -47,6 +66,7 @@ export default function WaybillPage() {
 
 	const [selectedWaybill, setSelectedWaybill] = useState<WaybillFormData | null>(null);
 	const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+	const [formDrawerOpen, setFormDrawerOpen] = useState(false);
 
 	const { data: waybills = [], isPending } = useWaybillsQuery(dateRange, selectedDriver?.id);
 	const { mutateAsync: insertWaybill } = useInsertWaybillMutation(() => {
@@ -67,10 +87,29 @@ export default function WaybillPage() {
 
 	const handleSelectWaybill = (waybill: Waybill) => {
 		setSelectedWaybill(waybill);
+		if (isMobile) {
+			setFormDrawerOpen(true);
+		}
 	};
 
 	const handleViewWaybill = (waybill: Waybill) => {
 		setSelectedWaybill(waybill);
+		if (isMobile) {
+			setFormDrawerOpen(true);
+		}
+	};
+
+	const handleNewWaybill = () => {
+		setSelectedWaybill({ ...defaultWaybill });
+		if (isMobile) {
+			setFormDrawerOpen(true);
+		}
+	};
+
+	const handleCloseForm = () => {
+		if (isMobile) {
+			setFormDrawerOpen(false);
+		}
 	};
 
 	const handleDelete = (id: string) => {
@@ -117,64 +156,171 @@ export default function WaybillPage() {
 
 	return (
 		<>
-			{/* 主頁面 */}
-			<Stack direction="row" spacing={1} sx={{ height: '100%', width: '100%', overflow: 'hidden' }}>
-				<Stack
-					direction="column"
-					spacing={1}
-					sx={{ flex: '1 1 auto', width: '100%', height: '100%', maxWidth: 'calc(100% - 600px)' }}
-				>
-					<Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-						<Button
-							variant="contained"
-							color="primary"
-							onClick={() => setSelectedWaybill({ ...defaultWaybill })}
-							sx={{ mb: 2 }}
-							startIcon={<AddIcon />}
+			{/* 主頁面 - 響應式佈局 */}
+			<Box sx={{ height: '100%', width: '100%', overflow: 'hidden' }}>
+				{isMobile ? (
+					// 手機版：單欄佈局
+					<Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+						<Box sx={{ p: 1, flexShrink: 0 }}>
+							<Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2 }}>
+								<Button
+									variant="contained"
+									color="primary"
+									onClick={handleNewWaybill}
+									startIcon={<AddIcon />}
+									size="small"
+								>
+									新增託運單
+								</Button>
+							</Stack>
+							<MonthPicker dateRange={dateRange} onDateChange={handleDateChange} />
+							<Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
+								<Button
+									variant={selectedDriver === null ? 'contained' : 'outlined'}
+									color="primary"
+									onClick={() => handleDriverChange(null)}
+									size="small"
+								>
+									全部
+								</Button>
+								{drivers.map((driver) => (
+									<Button
+										key={driver.id}
+										variant={selectedDriver?.id === driver.id ? 'contained' : 'outlined'}
+										color="primary"
+										onClick={() => handleDriverChange(driver)}
+										size="small"
+									>
+										{driver.name}
+									</Button>
+								))}
+							</Stack>
+						</Box>
+						<Box sx={{ flex: 1, overflow: 'auto' }}>
+							{isPending ? (
+								<Skeleton variant="rectangular" height={500} />
+							) : (
+								<WaybillGrid
+									waybills={waybills || []}
+									onDelete={handleDelete}
+									onSelect={handleSelectWaybill}
+									onView={handleViewWaybill}
+								/>
+							)}
+						</Box>
+					</Box>
+				) : (
+					// 桌面版和平板版：左右佈局
+					<Stack direction="row" spacing={1} sx={{ height: '100%', width: '100%', overflow: 'hidden' }}>
+						<Stack
+							direction="column"
+							spacing={1}
+							sx={{
+								flex: '1 1 auto',
+								width: '100%',
+								height: '100%',
+								maxWidth: 'calc(100% - 558px)',
+							}}
 						>
-							新增託運單
-						</Button>
-					</Stack>
-					<MonthPicker dateRange={dateRange} onDateChange={handleDateChange} />
-					<Stack direction="row" spacing={1}>
-						<Button
-							variant={selectedDriver === null ? 'contained' : 'outlined'}
-							color="primary"
-							onClick={() => handleDriverChange(null)}
-						>
-							全部
-						</Button>
-						{drivers.map((driver) => (
-							<Button
-								key={driver.id}
-								variant={selectedDriver?.id === driver.id ? 'contained' : 'outlined'}
-								color="primary"
-								onClick={() => handleDriverChange(driver)}
-							>
-								{driver.name}
-							</Button>
-						))}
-					</Stack>
-					{isPending ? (
-						<Skeleton variant="rectangular" height={500} />
-					) : (
-						<WaybillGrid
-							waybills={waybills || []}
-							onDelete={handleDelete}
-							onSelect={handleSelectWaybill}
-							onView={handleViewWaybill}
+							<Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+								<Button
+									variant="contained"
+									color="primary"
+									onClick={handleNewWaybill}
+									sx={{ mb: 2 }}
+									startIcon={<AddIcon />}
+								>
+									新增託運單
+								</Button>
+							</Stack>
+							<MonthPicker dateRange={dateRange} onDateChange={handleDateChange} />
+							<Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+								<Button
+									variant={selectedDriver === null ? 'contained' : 'outlined'}
+									color="primary"
+									onClick={() => handleDriverChange(null)}
+								>
+									全部
+								</Button>
+								{drivers.map((driver) => (
+									<Button
+										key={driver.id}
+										variant={selectedDriver?.id === driver.id ? 'contained' : 'outlined'}
+										color="primary"
+										onClick={() => handleDriverChange(driver)}
+									>
+										{driver.name}
+									</Button>
+								))}
+							</Stack>
+							{isPending ? (
+								<Skeleton variant="rectangular" height={500} />
+							) : (
+								<WaybillGrid
+									waybills={waybills || []}
+									onDelete={handleDelete}
+									onSelect={handleSelectWaybill}
+									onView={handleViewWaybill}
+								/>
+							)}
+						</Stack>
+						<WaybillForm
+							companies={companies}
+							drivers={drivers}
+							onSave={handleSave}
+							onAddCompany={handleAddCompany}
+							initialData={selectedWaybill}
+							readonly={selectedWaybill?.status !== 'PENDING'}
 						/>
-					)}
-				</Stack>
-				<WaybillForm
-					companies={companies}
-					drivers={drivers}
-					onSave={handleSave}
-					onAddCompany={handleAddCompany}
-					initialData={selectedWaybill}
-					readonly={selectedWaybill?.status !== 'PENDING'}
-				/>
-			</Stack>
+					</Stack>
+				)}
+			</Box>
+
+			{/* 手機版表單 Drawer */}
+			{isMobile && (
+				<Drawer
+					anchor="bottom"
+					open={formDrawerOpen}
+					onClose={handleCloseForm}
+					PaperProps={{
+						sx: {
+							height: '90vh',
+							borderTopLeftRadius: 16,
+							borderTopRightRadius: 16,
+						},
+					}}
+				>
+					<Box
+						sx={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							p: 2,
+							borderBottom: 1,
+							borderColor: 'divider',
+						}}
+					>
+						<Typography variant="h6">{selectedWaybill?.id ? '編輯託運單' : '新增託運單'}</Typography>
+						<IconButton onClick={handleCloseForm}>
+							<CloseIcon />
+						</IconButton>
+					</Box>
+					<Box sx={{ flex: 1, overflow: 'auto' }}>
+						<WaybillForm
+							companies={companies}
+							drivers={drivers}
+							onSave={async (data) => {
+								await handleSave(data);
+								handleCloseForm();
+							}}
+							onAddCompany={handleAddCompany}
+							initialData={selectedWaybill}
+							readonly={selectedWaybill?.status !== 'PENDING'}
+							isMobile
+						/>
+					</Box>
+				</Drawer>
+			)}
 			{/* 刪除確認視窗 */}
 			<Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
 				<DialogTitle>確認刪除</DialogTitle>

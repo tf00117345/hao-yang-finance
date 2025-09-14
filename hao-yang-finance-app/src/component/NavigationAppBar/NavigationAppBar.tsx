@@ -139,7 +139,7 @@ function NavigationAppBar() {
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const currentPath = location.pathname;
 
-	const useDesktop = useMediaQuery('(min-width:1200px)');
+	const useDesktop = useMediaQuery('(min-width:1600px)');
 
 	const navigateToPage = (path: string) => {
 		navigate(path);

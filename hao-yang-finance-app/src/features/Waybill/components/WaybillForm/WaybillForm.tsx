@@ -16,37 +16,49 @@ import { Driver } from '../../../Settings/types/driver';
 import { WaybillFormData } from '../../types/waybill.types';
 
 // 定義樣式化組件
-const StyledPaper = styled(Box)(({ theme }) => ({
-	padding: theme.spacing(2),
-	maxWidth: '600px',
-	minWidth: '600px',
-	width: '600px',
+const StyledPaper = styled(Box, {
+	shouldForwardProp: (prop) => prop !== 'isMobile',
+})<{ isMobile?: boolean }>(({ theme, isMobile }) => ({
+	padding: theme.spacing(isMobile ? 1 : 2),
+	width: isMobile ? '100%' : '558px',
 	overflow: 'auto',
-	height: '100%',
-	border: '1px solid #DDDDDE',
-	borderRadius: '10px',
+	height: isMobile ? 'auto' : '100%',
+	border: isMobile ? 'none' : '1px solid #DDDDDE',
+	borderRadius: isMobile ? '0' : '10px',
 }));
 
 const FormContainer = styled(Box)(({ theme }) => ({
 	height: 'fit-content',
 }));
 
-const FormRow = styled(Box)(({ theme }) => ({
+const FormRow = styled(Box, {
+	shouldForwardProp: (prop) => prop !== 'isMobile',
+})<{ isMobile?: boolean }>(({ theme, isMobile }) => ({
 	display: 'grid',
 	width: '100%',
-	gridTemplateColumns: '100px 1fr',
+	gridTemplateColumns: isMobile ? '1fr' : '100px 1fr',
 	'& > *': {
-		border: '1px solid black',
+		border: isMobile ? 'none' : '1px solid black',
 		padding: theme.spacing(1),
 		minHeight: '40px',
 		display: 'flex',
 		alignItems: 'center',
 	},
 	'& > :first-of-type': {
-		backgroundColor: '#f5f5f5',
-		justifyContent: 'center',
+		backgroundColor: isMobile ? 'white' : '#f5f5f5',
+		justifyContent: isMobile ? 'flex-start' : 'center',
 		fontWeight: 'bold',
+		...(isMobile && {
+			borderBottom: 'none',
+			paddingBottom: theme.spacing(0.5),
+		}),
 	},
+	...(isMobile && {
+		'& > :last-of-type': {
+			borderTop: 'none',
+			paddingTop: theme.spacing(0.5),
+		},
+	}),
 }));
 
 // 新增 height prop 的介面
@@ -121,9 +133,18 @@ interface WaybillFormProps {
 	readonly: boolean;
 	onSave: (data: WaybillFormData) => Promise<void> | void;
 	onAddCompany: (company: Company) => void; // 新增公司的回調函數
+	isMobile?: boolean; // 手機版標識
 }
 
-function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, readonly = false }: WaybillFormProps) {
+function WaybillForm({
+	initialData,
+	onSave,
+	drivers,
+	companies,
+	onAddCompany,
+	readonly = false,
+	isMobile = false,
+}: WaybillFormProps) {
 	const navigate = useNavigate();
 	// 新增公司相關狀態
 	const [companyFormOpen, setCompanyFormOpen] = useState(false);
@@ -305,12 +326,8 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 		);
 	};
 
-	const handleTest = () => {
-		setFocus('date');
-	};
-
 	return (
-		<StyledPaper>
+		<StyledPaper isMobile={isMobile}>
 			<Typography variant="h5" align="center" gutterBottom sx={{ fontWeight: 'bold' }}>
 				皓揚起重工程行
 			</Typography>
@@ -442,7 +459,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 							</Box>
 						</Box>
 
-						<FormRow>
+						<FormRow isMobile={isMobile}>
 							<Typography>貨主</Typography>
 							<Box
 								sx={{
@@ -533,7 +550,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 							</Box>
 						</FormRow>
 
-						<FormRow>
+						<FormRow isMobile={isMobile}>
 							<Typography>貨名</Typography>
 							<Box sx={{ p: 1 }}>
 								<Controller
@@ -554,7 +571,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 							</Box>
 						</FormRow>
 
-						<FormRow>
+						<FormRow isMobile={isMobile}>
 							<Typography>裝卸地點</Typography>
 							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, p: 1, width: '100%' }}>
 								{fields.map((field, index) => (
@@ -621,7 +638,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 							</Box>
 						</FormRow>
 
-						<FormRow>
+						<FormRow isMobile={isMobile}>
 							<Typography>用車時間</Typography>
 							<Box sx={{ display: 'flex', gap: 1, alignItems: 'center', p: 1 }}>
 								<LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -716,7 +733,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 							</Box>
 						</FormRow>
 
-						<FormRow>
+						<FormRow isMobile={isMobile}>
 							<Typography>運費</Typography>
 							<Box sx={{ p: 1 }}>
 								<Controller
@@ -753,7 +770,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 							</Box>
 						</FormRow>
 
-						<FormRow>
+						<FormRow isMobile={isMobile}>
 							<Typography>額外費用</Typography>
 							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, p: 1 }}>
 								{extraExpenseFields.map((field, index) => (
@@ -834,7 +851,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 							</Box>
 						</FormRow>
 
-						<FormRow>
+						<FormRow isMobile={isMobile}>
 							<Typography>備註</Typography>
 							<Box sx={{ p: 1 }}>
 								<Controller
@@ -860,7 +877,7 @@ function WaybillForm({ initialData, onSave, drivers, companies, onAddCompany, re
 						</FormRow>
 
 						{!initialData?.id && (
-							<FormRow>
+							<FormRow isMobile={isMobile}>
 								<Typography>不開立發票</Typography>
 								<Box sx={{ p: 1 }}>
 									<Controller

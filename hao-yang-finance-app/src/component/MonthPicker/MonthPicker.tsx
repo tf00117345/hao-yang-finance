@@ -1,13 +1,23 @@
 import { useMemo } from 'react';
 
-import { Stack, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import {
+	FormControl,
+	InputLabel,
+	MenuItem,
+	Select,
+	Stack,
+	ToggleButton,
+	ToggleButtonGroup,
+	useMediaQuery,
+	useTheme,
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import { DateRange } from '../../types/date-range';
-import { startOfDay, endOfDay } from '../../utils/date-utils';
+import { endOfDay, startOfDay } from '../../utils/date-utils';
 
 // 將類型定義移到頂部
 interface MonthPickerProps {
@@ -48,6 +58,7 @@ const StyledToggleButton = styled(ToggleButton)(({ theme }) => ({
 	'&.MuiToggleButton-root': {
 		border: `1px solid ${theme.palette.primary.main}`,
 		color: theme.palette.primary.main,
+		lineHeight: 1,
 		'&:hover': {
 			backgroundColor: theme.palette.primary.light,
 			color: theme.palette.primary.contrastText,
@@ -66,6 +77,10 @@ const StyledToggleButton = styled(ToggleButton)(({ theme }) => ({
 const StyledDatePicker = styled(DatePicker)(() => ({}));
 
 function MonthPicker({ dateRange, onDateChange }: MonthPickerProps) {
+	const theme = useTheme();
+	const isMobile = useMediaQuery(theme.breakpoints.down('lg')); // <1200px (平板+手機)
+	const isDesktop = useMediaQuery(theme.breakpoints.up('lg')); // ≥1200px (電腦版)
+
 	// 使用 useMemo 緩存計算結果
 	const months = useMemo(() => generateMonths(), []);
 	const currentYear = dateRange.start.getFullYear();
@@ -84,7 +99,7 @@ function MonthPicker({ dateRange, onDateChange }: MonthPickerProps) {
 		return `${date.getMonth() + 1}月`;
 	};
 
-	// 處理年份變更
+	// 處理年份變更 (ToggleButton)
 	const handleYearChange = (_: React.MouseEvent<HTMLElement>, newYear: number | null) => {
 		if (!newYear) return;
 
@@ -94,9 +109,28 @@ function MonthPicker({ dateRange, onDateChange }: MonthPickerProps) {
 		}
 	};
 
-	// 處理月份變更
+	// 處理年份變更 (Select - 用於手機版)
+	const handleYearSelectChange = (event: any) => {
+		const newYear = event.target.value;
+		const monthData = months.find((m) => m.label === getCurrentMonthLabel(dateRange.start));
+		if (monthData) {
+			onDateChange(startOfDay(monthData.start(newYear)), endOfDay(monthData.end(newYear)));
+		}
+	};
+
+	// 處理月份變更 (ToggleButton)
 	const handleMonthChange = (_: React.MouseEvent<HTMLElement>, newMonth: string | null) => {
 		if (!newMonth) return;
+		const monthData = months.find((m) => m.label === newMonth);
+
+		if (monthData) {
+			onDateChange(startOfDay(monthData.start(currentYear)), endOfDay(monthData.end(currentYear)));
+		}
+	};
+
+	// 處理月份變更 (Select - 用於平板/手機版)
+	const handleMonthSelectChange = (event: any) => {
+		const newMonth = event.target.value;
 		const monthData = months.find((m) => m.label === newMonth);
 
 		if (monthData) {
@@ -120,65 +154,126 @@ function MonthPicker({ dateRange, onDateChange }: MonthPickerProps) {
 	};
 
 	return (
-		<Stack spacing={1}>
-			{/* 年份選擇器 */}
-			<ToggleButtonGroup
-				value={currentYear}
-				exclusive
-				onChange={handleYearChange}
-				aria-label="年份選擇"
-				size="small"
-				sx={{
-					display: 'flex',
-					flexWrap: 'wrap',
-					gap: 0.5,
-					'& .MuiToggleButtonGroup-grouped': {
-						border: 1,
-						borderColor: 'primary.main',
-						mx: 0,
-					},
-				}}
-			>
-				{yearOptions.map((year) => (
-					<StyledToggleButton key={year} value={year} aria-label={`${year}年`}>
-						{year}年
-					</StyledToggleButton>
-				))}
-			</ToggleButtonGroup>
-
-			{/* 月份選擇器和日期選擇器 */}
-			<Stack
-				direction="row"
-				spacing={1}
-				sx={{ flex: 1, justifyContent: 'space-between', display: 'flex', flexWrap: 'wrap' }}
-			>
-				<ToggleButtonGroup
-					value={getCurrentMonthLabel(dateRange.start)}
-					exclusive
-					onChange={handleMonthChange}
-					aria-label="月份選擇"
-					size="small"
-					sx={{
-						display: 'flex',
-						flexWrap: 'wrap',
-						gap: 0.5,
-						'& .MuiToggleButtonGroup-grouped': {
-							border: 1,
-							borderColor: 'primary.main',
-							mx: 0,
-						},
-					}}
-				>
-					{months.map((month) => (
-						<StyledToggleButton key={month.label} value={month.label} aria-label={month.label}>
-							{month.label}
-						</StyledToggleButton>
-					))}
-				</ToggleButtonGroup>
-				<Stack direction="row" spacing={1}>
+		<Stack spacing={isMobile ? 2 : 1}>
+			{/* 年份和月份選擇器 - 響應式 */}
+			{isMobile ? (
+				// 平板/手機版：下拉選單 + 日期選擇器同一行
+				<Stack direction="row" spacing={1} sx={{ flexWrap: 'nowrap' }}>
+					<FormControl size="small" sx={{ maxWidth: 100 }}>
+						<InputLabel>年份</InputLabel>
+						<Select value={currentYear} label="年份" onChange={handleYearSelectChange}>
+							{yearOptions.map((year) => (
+								<MenuItem key={year} value={year}>
+									{year}年
+								</MenuItem>
+							))}
+						</Select>
+					</FormControl>
+					<FormControl size="small" sx={{ maxWidth: 100 }}>
+						<InputLabel>月份</InputLabel>
+						<Select
+							value={getCurrentMonthLabel(dateRange.start)}
+							label="月份"
+							onChange={handleMonthSelectChange}
+						>
+							{months.map((month) => (
+								<MenuItem key={month.label} value={month.label}>
+									{month.label}
+								</MenuItem>
+							))}
+						</Select>
+					</FormControl>
 					<LocalizationProvider dateAdapter={AdapterDateFns}>
 						<StyledDatePicker
 							label="起始"
+							value={dateRange.start}
+							format="yyyy-MM-dd"
+							onChange={handleStartDateChange}
+							slotProps={{
+								textField: {
+									size: 'small',
+									sx: { maxWidth: 150 },
+								},
+							}}
+						/>
+						<StyledDatePicker
+							label="結束"
+							value={dateRange.end}
+							format="yyyy-MM-dd"
+							onChange={handleEndDateChange}
+							slotProps={{
+								textField: {
+									size: 'small',
+									sx: { maxWidth: 150 },
+								},
+							}}
+						/>
+					</LocalizationProvider>
+				</Stack>
+			) : (
+				// 電腦版：按鈕組
+				<>
+					<ToggleButtonGroup
+						value={currentYear}
+						exclusive
+						onChange={handleYearChange}
+						aria-label="年份選擇"
+						size="small"
+						sx={{
+							display: 'flex',
+							flexWrap: 'wrap',
+							gap: 0.5,
+							justifyContent: 'flex-start',
+							'& .MuiToggleButtonGroup-grouped': {
+								border: 1,
+								borderColor: 'primary.main',
+								mx: 0,
+								minWidth: '50px',
+							},
+						}}
+					>
+						{yearOptions.map((year) => (
+							<StyledToggleButton key={year} value={year} aria-label={`${year}年`}>
+								{year}年
+							</StyledToggleButton>
+						))}
+					</ToggleButtonGroup>
+
+					{/* 月份選擇器 - 電腦版按鈕組 */}
+					<ToggleButtonGroup
+						value={getCurrentMonthLabel(dateRange.start)}
+						exclusive
+						onChange={handleMonthChange}
+						aria-label="月份選擇"
+						size="small"
+						sx={{
+							display: 'flex',
+							flexWrap: 'wrap',
+							gap: 0.5,
+							justifyContent: 'flex-start',
+							'& .MuiToggleButtonGroup-grouped': {
+								border: 1,
+								borderColor: 'primary.main',
+								mx: 0,
+								minWidth: '50px',
+							},
+						}}
+					>
+						{months.map((month) => (
+							<StyledToggleButton key={month.label} value={month.label} aria-label={month.label}>
+								{month.label}
+							</StyledToggleButton>
+						))}
+					</ToggleButtonGroup>
+				</>
+			)}
+
+			{/* 電腦版專用的日期選擇器 */}
+			{!isMobile && (
+				<Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+					<LocalizationProvider dateAdapter={AdapterDateFns}>
+						<StyledDatePicker
+							label="起始日期"
 							value={dateRange.start}
 							format="yyyy-MM-dd"
 							onChange={handleStartDateChange}
@@ -190,7 +285,7 @@ function MonthPicker({ dateRange, onDateChange }: MonthPickerProps) {
 							}}
 						/>
 						<StyledDatePicker
-							label="結束"
+							label="結束日期"
 							value={dateRange.end}
 							format="yyyy-MM-dd"
 							onChange={handleEndDateChange}
@@ -203,7 +298,7 @@ function MonthPicker({ dateRange, onDateChange }: MonthPickerProps) {
 						/>
 					</LocalizationProvider>
 				</Stack>
-			</Stack>
+			)}
 		</Stack>
 	);
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
@@ -13,11 +13,13 @@ import {
 	IconButton,
 	Skeleton,
 	Stack,
+	TextField,
 	Typography,
 	useMediaQuery,
 	useTheme,
 } from '@mui/material';
 import { endOfMonth, format, startOfMonth } from 'date-fns';
+import debounce from 'lodash.debounce';
 import * as R from 'ramda';
 
 import MonthPicker from '../../../../component/MonthPicker/MonthPicker';
@@ -68,7 +70,20 @@ export default function WaybillPage() {
 	const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 	const [formDrawerOpen, setFormDrawerOpen] = useState(false);
 
-	const { data: waybills = [], isPending } = useWaybillsQuery(dateRange, selectedDriver?.id);
+	// 輸入框顯示的狀態（立即更新）
+	const [locationSearchInput, setLocationSearchInput] = useState('');
+	const [companySearchInput, setCompanySearchInput] = useState('');
+
+	// API 查詢使用的狀態（debounced 更新）
+	const [locationSearch, setLocationSearch] = useState('');
+	const [companySearch, setCompanySearch] = useState('');
+
+	const { data: waybills = [], isPending } = useWaybillsQuery(
+		dateRange,
+		selectedDriver?.id,
+		locationSearch,
+		companySearch,
+	);
 	const { mutateAsync: insertWaybill } = useInsertWaybillMutation(() => {
 		// 新增完成，馬上重置
 		setTimeout(() => {
@@ -146,6 +161,33 @@ export default function WaybillPage() {
 		setSelectedDriver(driver);
 	};
 
+	// 創建 debounced 函式來更新搜尋狀態（延遲500ms）
+	const debouncedSetLocationSearch = useMemo(
+		() =>
+			debounce((value: string) => {
+				setLocationSearch(value);
+			}, 500),
+		[],
+	);
+
+	const debouncedSetCompanySearch = useMemo(
+		() =>
+			debounce((value: string) => {
+				setCompanySearch(value);
+			}, 500),
+		[],
+	);
+
+	const handleLocationSearchChange = (search: string) => {
+		setLocationSearchInput(search); // 立即更新輸入框顯示
+		debouncedSetLocationSearch(search); // 延遲更新API查詢狀態
+	};
+
+	const handleCompanySearchChange = (search: string) => {
+		setCompanySearchInput(search); // 立即更新輸入框顯示
+		debouncedSetCompanySearch(search); // 延遲更新API查詢狀態
+	};
+
 	const handleAddCompany = (company: Company) => {
 		insertCompany(company);
 	};
@@ -153,6 +195,14 @@ export default function WaybillPage() {
 	useEffect(() => {
 		setSelectedWaybill(R.clone(defaultWaybill));
 	}, []);
+
+	// Cleanup debounced 函式避免記憶體洩漏
+	useEffect(() => {
+		return () => {
+			debouncedSetLocationSearch.cancel();
+			debouncedSetCompanySearch.cancel();
+		};
+	}, [debouncedSetLocationSearch, debouncedSetCompanySearch]);
 
 	return (
 		<>
@@ -194,6 +244,26 @@ export default function WaybillPage() {
 										{driver.name}
 									</Button>
 								))}
+							</Stack>
+							<Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mt: 1 }}>
+								<TextField
+									sx={{ flex: 1 }}
+									label="搜尋地點"
+									variant="outlined"
+									size="small"
+									value={locationSearchInput}
+									onChange={(e) => handleLocationSearchChange(e.target.value)}
+									placeholder="輸入起點或終點進行搜尋..."
+								/>
+								<TextField
+									sx={{ flex: 1 }}
+									label="搜尋貨主"
+									variant="outlined"
+									size="small"
+									value={companySearchInput}
+									onChange={(e) => handleCompanySearchChange(e.target.value)}
+									placeholder="輸入貨主名稱進行搜尋..."
+								/>
 							</Stack>
 						</Box>
 						<Box sx={{ flex: 1, overflow: 'auto' }}>
@@ -253,6 +323,27 @@ export default function WaybillPage() {
 									</Button>
 								))}
 							</Stack>
+							<Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+								<TextField
+									label="搜尋地點"
+									variant="outlined"
+									size="small"
+									value={locationSearchInput}
+									onChange={(e) => handleLocationSearchChange(e.target.value)}
+									placeholder="輸入起點或終點進行搜尋..."
+									sx={{ mt: 1, maxWidth: '300px' }}
+								/>
+								<TextField
+									label="搜尋貨主"
+									variant="outlined"
+									size="small"
+									value={companySearchInput}
+									onChange={(e) => handleCompanySearchChange(e.target.value)}
+									placeholder="輸入貨主名稱進行搜尋..."
+									sx={{ mt: 1, maxWidth: '300px' }}
+								/>
+							</Stack>
+
 							{isPending ? (
 								<Skeleton variant="rectangular" height={500} />
 							) : (

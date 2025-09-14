@@ -20,13 +20,15 @@ namespace hao_yang_finance_api.Controllers
             _context = context;
         }
 
-        // GET: api/Waybill?startDate=2024-01-01&endDate=2024-01-31&driverId=xxx
+        // GET: api/Waybill?startDate=2024-01-01&endDate=2024-01-31&driverId=xxx&locationSearch=xxx&companySearch=xxx
         [HttpGet]
         [RequirePermission(Permission.WaybillRead)]
         public async Task<ActionResult<IEnumerable<WaybillDto>>> GetWaybills(
             [FromQuery] string? startDate = null,
             [FromQuery] string? endDate = null,
-            [FromQuery] string? driverId = null)
+            [FromQuery] string? driverId = null,
+            [FromQuery] string? locationSearch = null,
+            [FromQuery] string? companySearch = null)
         {
             var query = _context.Waybills
                 .Include(w => w.Company)
@@ -41,6 +43,21 @@ namespace hao_yang_finance_api.Controllers
             if (!string.IsNullOrEmpty(driverId))
             {
                 query = query.Where(w => w.DriverId == driverId);
+            }
+
+            // 地點搜尋篩選
+            if (!string.IsNullOrEmpty(locationSearch))
+            {
+                var searchTerm = locationSearch.Trim();
+                query = query.Where(w => w.LoadingLocations.Any(l => 
+                    l.FromLocation.Contains(searchTerm) || l.ToLocation.Contains(searchTerm)));
+            }
+
+            // 貨主搜尋篩選
+            if (!string.IsNullOrEmpty(companySearch))
+            {
+                var companySearchTerm = companySearch.Trim();
+                query = query.Where(w => w.Company.Name.Contains(companySearchTerm));
             }
 
             var waybills = await query

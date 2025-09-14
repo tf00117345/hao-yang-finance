@@ -5,12 +5,18 @@ import { DateRange } from '../../../types/date-range';
 import { axiosInstance } from '../../../utils/axios-instance';
 import { Waybill, WaybillFormData } from '../types/waybill.types';
 
-export const getWaybills = async (dateRange: DateRange, driverId?: string): Promise<Waybill[]> => {
+export const getWaybills = async (dateRange: DateRange, driverId?: string, locationSearch?: string, companySearch?: string): Promise<Waybill[]> => {
 	const params = new URLSearchParams();
 	params.append('startDate', format(dateRange.start, 'yyyy-MM-dd'));
 	params.append('endDate', format(dateRange.end, 'yyyy-MM-dd'));
 	if (driverId) {
 		params.append('driverId', driverId);
+	}
+	if (locationSearch && locationSearch.trim() !== '') {
+		params.append('locationSearch', locationSearch.trim());
+	}
+	if (companySearch && companySearch.trim() !== '') {
+		params.append('companySearch', companySearch.trim());
 	}
 
 	const response = await axiosInstance.get('/waybill', { params });

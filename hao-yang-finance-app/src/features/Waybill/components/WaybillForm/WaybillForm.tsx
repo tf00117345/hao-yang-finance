@@ -772,7 +772,7 @@ function WaybillForm({
 
 						<FormRow isMobile={isMobile}>
 							<Typography>額外費用</Typography>
-							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, p: 1 }}>
+							<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, p: 1, width: '100%' }}>
 								{extraExpenseFields.map((field, index) => (
 									<Box
 										key={field.id}

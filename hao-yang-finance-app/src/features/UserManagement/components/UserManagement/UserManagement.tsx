@@ -31,6 +31,7 @@ import UserStatusCell from '../UserGrid/Cells/UserStatusCell';
 function UserManagement() {
 	const { showSnackbar } = useSnackbar();
 	const { isAdmin } = usePermission();
+
 	const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null);
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);

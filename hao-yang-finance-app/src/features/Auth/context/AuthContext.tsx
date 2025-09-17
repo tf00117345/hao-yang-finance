@@ -1,5 +1,7 @@
-import React, { createContext, useCallback, useContext, useEffect, useReducer } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react';
 
+import { roleApi } from '../../../api/role.api';
+import type { PermissionDto } from '../../../types/role.types';
 import * as authApi from '../api/authApi';
 import type {
 	AuthContextType,
@@ -25,7 +27,10 @@ type AuthAction =
 	| { type: 'LOGOUT' }
 	| { type: 'CLEAR_ERROR' }
 	| { type: 'UPDATE_TOKEN'; payload: { accessToken: string; refreshToken: string } }
-	| { type: 'SET_LOADING'; payload: boolean };
+	| { type: 'SET_LOADING'; payload: boolean }
+	| { type: 'PERMISSIONS_START' }
+	| { type: 'PERMISSIONS_SUCCESS'; payload: PermissionDto[] }
+	| { type: 'PERMISSIONS_FAILURE' };
 
 // Initial state
 const initialState: AuthState = {
@@ -35,6 +40,8 @@ const initialState: AuthState = {
 	isAuthenticated: false,
 	isLoading: true, // Start with loading true to check stored auth
 	error: null,
+	permissions: [],
+	permissionsLoading: false,
 };
 
 // Auth reducer
@@ -92,6 +99,23 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 				...state,
 				isLoading: action.payload,
 			};
+		case 'PERMISSIONS_START':
+			return {
+				...state,
+				permissionsLoading: true,
+			};
+		case 'PERMISSIONS_SUCCESS':
+			return {
+				...state,
+				permissions: action.payload,
+				permissionsLoading: false,
+			};
+		case 'PERMISSIONS_FAILURE':
+			return {
+				...state,
+				permissions: [],
+				permissionsLoading: false,
+			};
 		default:
 			return state;
 	}
@@ -134,6 +158,17 @@ const getStoredAuthData = () => {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [state, dispatch] = useReducer(authReducer, initialState);
 
+	// Fetch user permissions
+	const fetchPermissions = useCallback(async () => {
+		dispatch({ type: 'PERMISSIONS_START' });
+		try {
+			const permissionsData = await roleApi.getMyPermissions();
+			dispatch({ type: 'PERMISSIONS_SUCCESS', payload: permissionsData.permissions });
+		} catch {
+			dispatch({ type: 'PERMISSIONS_FAILURE' });
+		}
+	}, []);
+
 	// Initialize auth state from localStorage
 	useEffect(() => {
 		const initializeAuth = async () => {
@@ -147,6 +182,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 						type: 'AUTH_SUCCESS',
 						payload: storedAuth,
 					});
+					// Fetch permissions after successful auth verification
+					await fetchPermissions();
 				} catch {
 					// Token is invalid, clear stored data
 					clearAuthData();
@@ -158,7 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		};
 
 		initializeAuth();
-	}, []);
+	}, [fetchPermissions]);
 
 	// Listen for auth events from axios interceptors
 	useEffect(() => {
@@ -185,31 +222,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	}, []);
 
 	// Login function
-	const login = useCallback(async (credentials: LoginRequest): Promise<boolean> => {
-		dispatch({ type: 'AUTH_START' });
+	const login = useCallback(
+		async (credentials: LoginRequest): Promise<boolean> => {
+			dispatch({ type: 'AUTH_START' });
 
-		try {
-			const response = await authApi.login(credentials);
+			try {
+				const response = await authApi.login(credentials);
 
-			// Store auth data
-			storeAuthData(response.user, response.accessToken, response.refreshToken);
+				// Store auth data
+				storeAuthData(response.user, response.accessToken, response.refreshToken);
 
-			dispatch({
-				type: 'AUTH_SUCCESS',
-				payload: {
-					user: response.user,
-					accessToken: response.accessToken,
-					refreshToken: response.refreshToken,
-				},
-			});
+				dispatch({
+					type: 'AUTH_SUCCESS',
+					payload: {
+						user: response.user,
+						accessToken: response.accessToken,
+						refreshToken: response.refreshToken,
+					},
+				});
 
-			return true;
-		} catch (error: any) {
-			const errorMessage = error.response?.data?.message || '登入失敗，請檢查您的用戶名和密碼';
-			dispatch({ type: 'AUTH_FAILURE', payload: errorMessage });
-			return false;
-		}
-	}, []);
+				// Fetch permissions after successful login
+				await fetchPermissions();
+
+				return true;
+			} catch (error: any) {
+				const errorMessage = error.response?.data?.message || '登入失敗，請檢查您的用戶名和密碼';
+				dispatch({ type: 'AUTH_FAILURE', payload: errorMessage });
+				return false;
+			}
+		},
+		[fetchPermissions],
+	);
 
 	// Logout function
 	const logout = useCallback(async (): Promise<void> => {
@@ -298,18 +341,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	}, []);
 
 	// Context value
-	const contextValue: AuthContextType = {
-		user: state.user,
-		isAuthenticated: state.isAuthenticated,
-		isLoading: state.isLoading,
-		error: state.error,
-		login,
-		logout,
-		register,
-		refreshToken: refreshTokenFn,
-		changePassword,
-		clearError,
-	};
+	const contextValue: AuthContextType = useMemo(
+		() => ({
+			user: state.user,
+			isAuthenticated: state.isAuthenticated,
+			isLoading: state.isLoading,
+			error: state.error,
+			permissions: state.permissions,
+			permissionsLoading: state.permissionsLoading,
+			login,
+			logout,
+			register,
+			refreshToken: refreshTokenFn,
+			changePassword,
+			clearError,
+		}),
+		[
+			state.user,
+			state.isAuthenticated,
+			state.isLoading,
+			state.error,
+			state.permissions,
+			state.permissionsLoading,
+			login,
+			logout,
+			register,
+			refreshTokenFn,
+			changePassword,
+			clearError,
+		],
+	);
 
 	return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }

@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 import { usePermission } from '../../contexts/PermissionContext';
 import { Permission } from '../../types/permission.types';
@@ -14,7 +14,7 @@ interface PermissionGuardProps {
 	hideWhenNoPermission?: boolean; // true = 沒權限時隱藏, false = 顯示 fallback (default)
 }
 
-const PermissionGuard: React.FC<PermissionGuardProps> = ({
+function PermissionGuard({
 	children,
 	permission,
 	permissions,
@@ -23,7 +23,7 @@ const PermissionGuard: React.FC<PermissionGuardProps> = ({
 	roles,
 	fallback = null,
 	hideWhenNoPermission = false,
-}) => {
+}: PermissionGuardProps) {
 	const { hasPermission, hasAnyPermission, hasAllPermissions, userRole } = usePermission();
 
 	// 檢查單一權限
@@ -51,6 +51,6 @@ const PermissionGuard: React.FC<PermissionGuardProps> = ({
 	}
 
 	return <>{children}</>;
-};
+}
 
 export default PermissionGuard;

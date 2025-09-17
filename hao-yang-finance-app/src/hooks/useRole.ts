@@ -43,7 +43,9 @@ export const useMyPermissions = () => {
 	return useQuery({
 		queryKey: ROLE_QUERY_KEYS.myPermissions,
 		queryFn: roleApi.getMyPermissions,
-		staleTime: 1000 * 60 * 5, // 5 minutes
+		staleTime: 0,
+		retryOnMount: true,
+		refetchOnMount: 'always',
 	});
 };
 
@@ -53,6 +55,8 @@ export const useCheckPermission = (permissionName: string) => {
 		queryKey: ROLE_QUERY_KEYS.checkPermission(permissionName),
 		queryFn: () => roleApi.checkPermission(permissionName),
 		enabled: !!permissionName,
-		staleTime: 1000 * 60 * 5, // 5 minutes
+		staleTime: 0,
+		retryOnMount: true,
+		refetchOnMount: 'always',
 	});
 };

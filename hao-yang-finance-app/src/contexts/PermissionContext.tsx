@@ -1,6 +1,6 @@
-import { createContext, ReactNode, useContext } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useMemo } from 'react';
 
-import { useMyPermissions } from '../hooks/useRole';
+import { useAuth } from '../features/Auth/context/AuthContext';
 import { Permission } from '../types/permission.types';
 import { PermissionDto } from '../types/role.types';
 
@@ -25,52 +25,77 @@ interface PermissionProviderProps {
 }
 
 export function PermissionProvider({ children }: PermissionProviderProps) {
-	const { data: userPermissions, isLoading, error } = useMyPermissions();
+	const { permissions, permissionsLoading, user } = useAuth();
 
-	const permissions = userPermissions?.permissions || [];
-	const userRole = userPermissions?.role || '';
+	const userRole = user?.role || '';
+	const isLoading = permissionsLoading;
+	const error = null; // Auth context handles errors
 
-	const hasPermission = (permission: Permission): boolean => {
-		return permissions.some((p) => p.name === permission);
-	};
+	const hasPermission = useCallback(
+		(permission: Permission): boolean => {
+			return permissions.some((p) => p.name === permission);
+		},
+		[permissions],
+	);
 
-	const hasAnyPermission = (permissionList: Permission[]): boolean => {
-		return permissionList.some((permission) => hasPermission(permission));
-	};
+	const hasAnyPermission = useCallback(
+		(permissionList: Permission[]): boolean => {
+			return permissionList.some((permission) => hasPermission(permission));
+		},
+		[hasPermission],
+	);
 
-	const hasAllPermissions = (permissionList: Permission[]): boolean => {
-		return permissionList.every((permission) => hasPermission(permission));
-	};
+	const hasAllPermissions = useCallback(
+		(permissionList: Permission[]): boolean => {
+			return permissionList.every((permission) => hasPermission(permission));
+		},
+		[hasPermission],
+	);
 
-	const isAdmin = (): boolean => {
+	const isAdmin = useCallback((): boolean => {
 		return userRole === 'Admin';
-	};
+	}, [userRole]);
 
-	const isAccountant = (): boolean => {
+	const isAccountant = useCallback((): boolean => {
 		return userRole === 'Accountant';
-	};
+	}, [userRole]);
 
-	const isDriver = (): boolean => {
+	const isDriver = useCallback((): boolean => {
 		return userRole === 'Driver';
-	};
+	}, [userRole]);
 
-	const canManageUsers = (): boolean => {
+	const canManageUsers = useCallback((): boolean => {
 		return hasPermission(Permission.UserRead);
-	};
+	}, [hasPermission]);
 
-	const contextValue: PermissionContextType = {
-		permissions,
-		userRole,
-		hasPermission,
-		hasAnyPermission,
-		hasAllPermissions,
-		isAdmin,
-		isAccountant,
-		isDriver,
-		canManageUsers,
-		isLoading,
-		error,
-	};
+	const contextValue: PermissionContextType = useMemo(
+		() => ({
+			permissions,
+			userRole,
+			hasPermission,
+			hasAnyPermission,
+			hasAllPermissions,
+			isAdmin,
+			isAccountant,
+			isDriver,
+			canManageUsers,
+			isLoading,
+			error,
+		}),
+		[
+			permissions,
+			userRole,
+			hasPermission,
+			hasAnyPermission,
+			hasAllPermissions,
+			isAdmin,
+			isAccountant,
+			isDriver,
+			canManageUsers,
+			isLoading,
+			error,
+		],
+	);
 
 	return <PermissionContext.Provider value={contextValue}>{children}</PermissionContext.Provider>;
 }

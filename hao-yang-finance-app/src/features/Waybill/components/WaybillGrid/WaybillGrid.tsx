@@ -93,10 +93,22 @@ export function WaybillGrid({ waybills, onDelete, onSelect, onView }: WaybillGri
 
 	// 手機版 Card 渲染
 	const renderMobileCard = (waybill: Waybill) => {
-		const statusColor =
-			waybill.status === 'PENDING' ? 'warning' : waybill.status === 'INVOICED' ? 'success' : 'default';
-		const statusText =
-			waybill.status === 'PENDING' ? '待開發票' : waybill.status === 'INVOICED' ? '已開發票' : '無需發票';
+		const getStatusDisplay = (status: string) => {
+			switch (status) {
+				case 'PENDING':
+					return { color: 'warning' as const, text: '待開發票' };
+				case 'INVOICED':
+					return { color: 'success' as const, text: '已開發票' };
+				case 'NO_INVOICE_NEEDED':
+					return { color: 'default' as const, text: '不需開發票' };
+				case 'PENDING_PAYMENT':
+					return { color: 'error' as const, text: '待收款' };
+				default:
+					return { color: 'default' as const, text: '無狀態' };
+			}
+		};
+
+		const { color: statusColor, text: statusText } = getStatusDisplay(waybill.status);
 
 		return (
 			<Card

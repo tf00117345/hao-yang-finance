@@ -1,18 +1,20 @@
 // 託運單狀態定義
-export type WaybillStatus = 'PENDING' | 'INVOICED' | 'NO_INVOICE_NEEDED';
+export type WaybillStatus = 'PENDING' | 'INVOICED' | 'NO_INVOICE_NEEDED' | 'PENDING_PAYMENT';
 
 // 狀態顯示名稱對應
 export const WaybillStatusLabels: Record<WaybillStatus, string> = {
 	PENDING: '待開發票',
 	INVOICED: '已開發票',
 	NO_INVOICE_NEEDED: '不需開發票',
+	PENDING_PAYMENT: '待收款',
 };
 
 // 狀態顏色對應 (可配合 Material-UI Chip 使用)
-export const WaybillStatusColors: Record<WaybillStatus, 'warning' | 'success' | 'default'> = {
+export const WaybillStatusColors: Record<WaybillStatus, 'warning' | 'success' | 'default' | 'error'> = {
 	PENDING: 'warning',
 	INVOICED: 'success',
 	NO_INVOICE_NEEDED: 'default',
+	PENDING_PAYMENT: 'error',
 };
 
 // 狀態業務邏輯檢查
@@ -37,15 +39,26 @@ export const WaybillStatusRules = {
 		return status === 'PENDING';
 	},
 
+	// 可以標記為待收款的狀態
+	canMarkPendingPayment: (status: WaybillStatus): boolean => {
+		return status === 'PENDING';
+	},
+
+	// 可以編輯備註的狀態
+	canEditNotes: (status: WaybillStatus): boolean => {
+		return status === 'PENDING_PAYMENT';
+	},
+
 	// 可以還原為待開發票的狀態
 	canRestore: (status: WaybillStatus): boolean => {
-		return status === 'NO_INVOICE_NEEDED';
+		return status === 'NO_INVOICE_NEEDED' || status === 'PENDING_PAYMENT';
 	},
 };
 
 // 狀態轉換規則
 export const WaybillStatusTransitions = {
-	PENDING: ['INVOICED', 'NO_INVOICE_NEEDED'],
+	PENDING: ['INVOICED', 'NO_INVOICE_NEEDED', 'PENDING_PAYMENT'],
 	INVOICED: ['PENDING'], // 當發票被刪除/作廢時
 	NO_INVOICE_NEEDED: ['PENDING'], // 還原功能
+	PENDING_PAYMENT: ['PENDING'], // 還原功能
 } as const;

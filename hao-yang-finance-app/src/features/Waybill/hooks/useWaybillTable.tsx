@@ -127,11 +127,13 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 				cell: ({ getValue }) => {
 					let component: React.ReactNode;
 					if (getValue() === 'PENDING') {
-						component = <Chip label="未開立" color="error" size="small" variant="filled" />;
+						component = <Chip label="待開發票" color="warning" size="small" variant="filled" />;
 					} else if (getValue() === 'NO_INVOICE_NEEDED') {
-						component = <Chip label="無須開發票" color="warning" size="small" variant="filled" />;
+						component = <Chip label="不需開發票" color="default" size="small" variant="filled" />;
 					} else if (getValue() === 'INVOICED') {
-						component = <Chip label="已開立" color="success" size="small" variant="filled" />;
+						component = <Chip label="已開發票" color="success" size="small" variant="filled" />;
+					} else if (getValue() === 'PENDING_PAYMENT') {
+						component = <Chip label="待收款" color="error" size="small" variant="filled" />;
 					} else {
 						component = <Chip label="無狀態" color="info" size="small" variant="filled" />;
 					}
@@ -166,22 +168,40 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 				enablePinning: true,
 				pin: 'right',
 				cell: ({ row }) => {
-					if (row.original.status === 'PENDING') {
-						return (
-							<>
-								<IconButton size="small" onClick={() => onSelect(row.original)}>
-									<EditIcon />
-								</IconButton>
-								<IconButton size="small" color="error" onClick={() => onDelete(row.original.id ?? '')}>
-									<DeleteIcon />
-								</IconButton>
-							</>
-						);
-					}
+					const waybill = row.original;
+					const { status } = waybill;
+
 					return (
-						<IconButton size="small" onClick={() => onView(row.original)}>
-							<VisibilityIcon />
-						</IconButton>
+						<Stack direction="row" spacing={0.5}>
+							{/* PENDING 狀態：編輯、刪除 */}
+							{status === 'PENDING' && (
+								<>
+									<Tooltip title="編輯">
+										<IconButton size="small" onClick={() => onSelect(waybill)}>
+											<EditIcon />
+										</IconButton>
+									</Tooltip>
+									<Tooltip title="刪除">
+										<IconButton
+											size="small"
+											color="error"
+											onClick={() => onDelete(waybill.id ?? '')}
+										>
+											<DeleteIcon />
+										</IconButton>
+									</Tooltip>
+								</>
+							)}
+
+							{/* 其他狀態：查看 */}
+							{status !== 'PENDING' && (
+								<Tooltip title="查看詳情">
+									<IconButton size="small" onClick={() => onView(waybill)}>
+										<VisibilityIcon />
+									</IconButton>
+								</Tooltip>
+							)}
+						</Stack>
 					);
 				},
 			},

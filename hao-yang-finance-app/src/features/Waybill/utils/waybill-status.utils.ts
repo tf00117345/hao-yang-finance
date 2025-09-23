@@ -33,6 +33,20 @@ export class WaybillStatusUtils {
 	}
 
 	/**
+	 * 檢查是否可以標記為待收款
+	 */
+	static canMarkPendingPayment(status: WaybillStatus): boolean {
+		return WaybillStatusRules.canMarkPendingPayment(status);
+	}
+
+	/**
+	 * 檢查是否可以編輯備註
+	 */
+	static canEditNotes(status: WaybillStatus): boolean {
+		return WaybillStatusRules.canEditNotes(status);
+	}
+
+	/**
 	 * 檢查是否可以還原為待開發票
 	 */
 	static canRestore(status: WaybillStatus): boolean {
@@ -47,6 +61,8 @@ export class WaybillStatusUtils {
 		canDelete: boolean;
 		canInvoice: boolean;
 		canMarkNoInvoiceNeeded: boolean;
+		canMarkPendingPayment: boolean;
+		canEditNotes: boolean;
 		canRestore: boolean;
 	} {
 		return {
@@ -54,6 +70,8 @@ export class WaybillStatusUtils {
 			canDelete: this.canDelete(status),
 			canInvoice: this.canInvoice(status),
 			canMarkNoInvoiceNeeded: this.canMarkNoInvoiceNeeded(status),
+			canMarkPendingPayment: this.canMarkPendingPayment(status),
+			canEditNotes: this.canEditNotes(status),
 			canRestore: this.canRestore(status),
 		};
 	}
@@ -103,9 +121,10 @@ export class WaybillStatusUtils {
 	 */
 	static canTransitionTo(fromStatus: WaybillStatus, toStatus: WaybillStatus): boolean {
 		const transitions = {
-			PENDING: ['INVOICED', 'NO_INVOICE_NEEDED'],
+			PENDING: ['INVOICED', 'NO_INVOICE_NEEDED', 'PENDING_PAYMENT'],
 			INVOICED: ['PENDING'], // 當發票被刪除/作廢時
 			NO_INVOICE_NEEDED: ['PENDING'], // 還原功能
+			PENDING_PAYMENT: ['PENDING'], // 還原功能
 		};
 
 		return transitions[fromStatus]?.includes(toStatus) || false;
@@ -121,8 +140,10 @@ export class WaybillStatusUtils {
 		const transitions = {
 			'PENDING->INVOICED': '託運單已開立發票',
 			'PENDING->NO_INVOICE_NEEDED': '託運單標記為不需開發票',
+			'PENDING->PENDING_PAYMENT': '託運單標記為待收款狀態',
 			'INVOICED->PENDING': '發票已刪除或作廢，託運單恢復為待開發票狀態',
 			'NO_INVOICE_NEEDED->PENDING': '託運單恢復為待開發票狀態',
+			'PENDING_PAYMENT->PENDING': '待收款託運單恢復為待開發票狀態',
 		};
 
 		const key = `${fromStatus}->${toStatus}` as keyof typeof transitions;
@@ -141,6 +162,24 @@ export const useWaybillStatusActions = () => {
 		// TODO: 實作 API 呼叫
 		// eslint-disable-next-line no-console
 		console.log('標記託運單為不需開發票:', waybillId);
+	};
+
+	/**
+	 * 標記託運單為待收款
+	 */
+	const markPendingPayment = async (waybillId: string) => {
+		// TODO: 實作 API 呼叫
+		// eslint-disable-next-line no-console
+		console.log('標記託運單為待收款:', waybillId);
+	};
+
+	/**
+	 * 更新託運單備註
+	 */
+	const updateNotes = async (waybillId: string, notes: string) => {
+		// TODO: 實作 API 呼叫
+		// eslint-disable-next-line no-console
+		console.log('更新託運單備註:', waybillId, notes);
 	};
 
 	/**
@@ -163,6 +202,8 @@ export const useWaybillStatusActions = () => {
 
 	return {
 		markNoInvoiceNeeded,
+		markPendingPayment,
+		updateNotes,
 		restoreToPending,
 		createInvoice,
 	};

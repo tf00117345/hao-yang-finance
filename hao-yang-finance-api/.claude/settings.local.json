@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/SourceCode/hao-yang-finance/hao-yang-finance-app/**)",
+      "Read(//d/SourceCode/hao-yang-finance/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

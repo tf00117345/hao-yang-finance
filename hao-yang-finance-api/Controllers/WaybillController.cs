@@ -493,9 +493,9 @@ namespace hao_yang_finance_api.Controllers
             }
 
             // 檢查狀態：只有 PENDING 狀態可以標記為不需開發票
-            if (waybill.Status != "PENDING")
+            if (waybill.Status != "PENDING" && waybill.Status != "PENDING_PAYMENT")
             {
-                return BadRequest(new { message = $"無法將狀態為 '{waybill.Status}' 的託運單標記為不需開發票，只有 'PENDING' 狀態的託運單可以標記" });
+                return BadRequest(new { message = $"無法將狀態為 '{waybill.Status}' 的託運單標記為不需開發票，只有 'PENDING' 或 'PENDING_PAYMENT' 狀態的託運單可以標記" });
             }
 
             waybill.Status = "NO_INVOICE_NEEDED";
@@ -612,6 +612,65 @@ namespace hao_yang_finance_api.Controllers
             });
         }
 
+        // PUT: api/Waybill/5/pending-payment
+        [HttpPut("{id}/pending-payment")]
+        [RequirePermission(Permission.WaybillUpdate)]
+        public async Task<IActionResult> MarkAsPendingPayment(string id, [FromBody] UpdateNotesDto? dto)
+        {
+            var waybill = await _context.Waybills.FindAsync(id);
+
+            if (waybill == null)
+            {
+                return NotFound();
+            }
+
+            // 檢查狀態：只有 PENDING 狀態可以標記為待收款
+            if (waybill.Status != "PENDING")
+            {
+                return BadRequest(new { message = $"無法將狀態為 '{waybill.Status}' 的託運單標記為待收款，只有 'PENDING' 狀態的託運單可以標記" });
+            }
+
+            waybill.Status = "PENDING_PAYMENT";
+
+            // 更新備註（如果有提供）
+            if (dto?.Notes != null)
+            {
+                waybill.Notes = dto.Notes;
+            }
+
+            waybill.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "託運單已成功標記為待收款狀態" });
+        }
+
+        // PUT: api/Waybill/5/update-notes
+        [HttpPut("{id}/update-notes")]
+        [RequirePermission(Permission.WaybillUpdate)]
+        public async Task<IActionResult> UpdateWaybillNotes(string id, [FromBody] UpdateNotesDto updateNotesDto)
+        {
+            var waybill = await _context.Waybills.FindAsync(id);
+
+            if (waybill == null)
+            {
+                return NotFound();
+            }
+
+            // 檢查狀態：只有 PENDING_PAYMENT 狀態可以編輯備註
+            if (waybill.Status != "PENDING_PAYMENT")
+            {
+                return BadRequest(new { message = $"無法編輯狀態為 '{waybill.Status}' 的託運單備註，只有 'PENDING_PAYMENT' 狀態的託運單可以編輯備註" });
+            }
+
+            waybill.Notes = updateNotesDto.Notes;
+            waybill.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "託運單備註已成功更新" });
+        }
+
         // PUT: api/Waybill/5/restore
         [HttpPut("{id}/restore")]
         [RequirePermission(Permission.WaybillUpdate)]
@@ -624,10 +683,10 @@ namespace hao_yang_finance_api.Controllers
                 return NotFound();
             }
 
-            // 檢查狀態：只有 NO_INVOICE_NEEDED 狀態可以還原
-            if (waybill.Status != "NO_INVOICE_NEEDED")
+            // 檢查狀態：只有 NO_INVOICE_NEEDED 或 PENDING_PAYMENT 狀態可以還原
+            if (waybill.Status != "NO_INVOICE_NEEDED" && waybill.Status != "PENDING_PAYMENT")
             {
-                return BadRequest(new { message = $"無法還原狀態為 '{waybill.Status}' 的託運單，只有 'NO_INVOICE_NEEDED' 狀態的託運單可以還原" });
+                return BadRequest(new { message = $"無法還原狀態為 '{waybill.Status}' 的託運單，只有 'NO_INVOICE_NEEDED' 或 'PENDING_PAYMENT' 狀態的託運單可以還原" });
             }
 
             waybill.Status = "PENDING";
@@ -677,15 +736,15 @@ namespace hao_yang_finance_api.Controllers
             {
                 try
                 {
-                    // 檢查狀態：只有 NO_INVOICE_NEEDED 狀態可以還原
-                    if (waybill.Status != "NO_INVOICE_NEEDED")
+                    // 檢查狀態：只有 NO_INVOICE_NEEDED 或 PENDING_PAYMENT 狀態可以還原
+                    if (waybill.Status != "NO_INVOICE_NEEDED" && waybill.Status != "PENDING_PAYMENT")
                     {
                         results.Add(new
                         {
                             id = waybill.Id,
                             // waybillNumber = waybill.WaybillNumber,
                             success = false,
-                            message = $"無法還原狀態為 '{waybill.Status}' 的託運單，只有 'NO_INVOICE_NEEDED' 狀態的託運單可以還原"
+                            message = $"無法還原狀態為 '{waybill.Status}' 的託運單，只有 'NO_INVOICE_NEEDED' 或 'PENDING_PAYMENT' 狀態的託運單可以還原"
                         });
                         failureCount++;
                         continue;

@@ -5,9 +5,21 @@ import { Waybill } from '../types/waybill.types';
 import { getWaybills, getWaybillsByIds } from './api';
 
 // 取得託運單列表
-export const useWaybillsQuery = (dateRange: DateRange, driverId?: string, locationSearch?: string, companySearch?: string) => {
+export const useWaybillsQuery = (
+	dateRange: DateRange,
+	driverId?: string,
+	locationSearch?: string,
+	companySearch?: string,
+) => {
 	return useQuery<Waybill[]>({
-		queryKey: ['waybills', dateRange.start.toISOString(), dateRange.end.toISOString(), driverId, locationSearch, companySearch],
+		queryKey: [
+			'waybills',
+			dateRange.start.toISOString(),
+			dateRange.end.toISOString(),
+			driverId,
+			locationSearch,
+			companySearch,
+		],
 		queryFn: () => getWaybills(dateRange, driverId, locationSearch, companySearch),
 	});
 };

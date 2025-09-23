@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import {
 	Button,
 	Dialog,
@@ -15,7 +16,6 @@ import {
 	Stack,
 	Typography,
 } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 import { useSnackbar } from '../../../../contexts/SnackbarContext';
 import { UserListItem } from '../../../../types/user-management.types';
@@ -144,11 +144,7 @@ export default function ResetPasswordDialog({ open, user, onClose }: ResetPasswo
 				<Button onClick={handleClose} disabled={resetPasswordMutation.isPending}>
 					取消
 				</Button>
-				<Button
-					onClick={handleSubmit}
-					variant="contained"
-					disabled={resetPasswordMutation.isPending}
-				>
+				<Button onClick={handleSubmit} variant="contained" disabled={resetPasswordMutation.isPending}>
 					{resetPasswordMutation.isPending ? '重設中...' : '確認重設'}
 				</Button>
 			</DialogActions>

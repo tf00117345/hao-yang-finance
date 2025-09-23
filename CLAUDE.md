@@ -18,7 +18,7 @@ This is a finance tracking system for 皓揚財務追蹤系統 (Haoyang Finance 
 #### 1. Waybill Management (託運單管理)
 - Location: `hao-yang-finance-app/src/features/Waybill/`
 - CRUD operations for waybills
-- Status management: PENDING → INVOICED → NO_INVOICE_NEEDED
+- Status management: PENDING → INVOICED | NO_INVOICE_NEEDED | PENDING_PAYMENT
 - Components: WaybillPage, WaybillForm, WaybillGrid
 
 #### 2. Invoice Management (發票管理)
@@ -150,6 +150,8 @@ src/
 - `PUT /waybills/{id}` - Update waybill
 - `DELETE /waybills/{id}` - Delete waybill
 - `PUT /waybills/{id}/no-invoice` - Mark as no invoice needed
+- `PUT /waybills/{id}/pending-payment` - Mark as pending payment (待收款)
+- `PUT /waybills/{id}/update-notes` - Update notes for pending payment waybills
 - `PUT /waybills/{id}/restore` - Restore to pending
 
 ### Invoice Management
@@ -179,6 +181,7 @@ src/
 - Only PENDING waybills can be selected for invoicing
 - Invoice numbers must be unique
 - When invoice is created/deleted/voided, waybill status changes atomically
+- PENDING_PAYMENT waybills can only have notes edited, not full waybill data
 - All operations require proper validation and error handling
 
 ## Development Guidelines
@@ -214,9 +217,22 @@ src/
 
 ### Waybill Status Management
 - Changed from `isInvoiceIssued: boolean` to `status: WaybillStatus`
-- Status values: `'PENDING' | 'INVOICED' | 'NO_INVOICE_NEEDED'`
+- Status values: `'PENDING' | 'INVOICED' | 'NO_INVOICE_NEEDED' | 'PENDING_PAYMENT'`
 - Added complete status management utilities
 - Automatic status synchronization with invoice operations
+- `PENDING_PAYMENT` status for tracking outstanding payments without invoicing
+
+### PENDING_PAYMENT Feature (待收款功能)
+**Added in December 2024**
+- New waybill status for tracking unpaid invoices without formal invoice generation
+- Business scenario: Customer owes money but no official invoice is needed
+- Features:
+  - Mark PENDING waybills as PENDING_PAYMENT
+  - Edit notes/comments for payment tracking
+  - Restore to PENDING status when needed
+  - Visual indication with red error color in UI
+- Status transitions: PENDING → PENDING_PAYMENT → PENDING (restore)
+- API endpoints: `/pending-payment`, `/update-notes`, `/restore`
 
 ### Unified Naming Convention
 - Use `company` instead of `customer` throughout the system

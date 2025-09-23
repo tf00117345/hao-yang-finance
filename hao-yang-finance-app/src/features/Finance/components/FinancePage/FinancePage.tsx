@@ -13,6 +13,7 @@ import { Invoice } from '../../types/invoice.type';
 import { InvoiceDialog } from '../InvoiceDialog/InvoiceDialog';
 import { InvoicedTable } from '../InvoicedTable/InvoicedTable';
 import { NoInvoicedNeededTable } from '../NoInvoicedTable/NoInvoicedTable';
+import { PendingPaymentTable } from '../PendingPaymentTable/PendingPaymentTable';
 import { UninvoicedTable } from '../UninvoicedTable/UninvoicedTable';
 
 export default function FinancePage() {
@@ -37,6 +38,7 @@ export default function FinancePage() {
 	// 篩選未開立發票的waybills (PENDING狀態)
 	const uninvoicedWaybills = allWaybills.filter((waybill) => waybill.status === 'PENDING');
 	const noInvoicedNeededWaybills = allWaybills.filter((waybill) => waybill.status === 'NO_INVOICE_NEEDED');
+	const pendingPaymentWaybills = allWaybills.filter((waybill) => waybill.status === 'PENDING_PAYMENT');
 
 	// 獲取發票列表
 	const { data: invoices = [], isPending: isInvoicesPending } = useInvoicesQuery({
@@ -109,12 +111,14 @@ export default function FinancePage() {
 			>
 				<Tabs value={tab} onChange={handleTabChange} sx={{ mb: 2 }}>
 					<Tab label="未開立發票之貨運單" />
+					<Tab label="現金待收款" />
 					<Tab label="無須開發票之貨運單" />
 					<Tab label="已開立發票" />
 				</Tabs>
 				{tab === 0 && <UninvoicedTable waybills={uninvoicedWaybills} />}
-				{tab === 1 && <NoInvoicedNeededTable waybills={noInvoicedNeededWaybills} />}
-				{tab === 2 && <InvoicedTable invoices={invoices} onEdit={handleEditInvoice} />}
+				{tab === 1 && <PendingPaymentTable waybills={pendingPaymentWaybills} />}
+				{tab === 2 && <NoInvoicedNeededTable waybills={noInvoicedNeededWaybills} />}
+				{tab === 3 && <InvoicedTable invoices={invoices} onEdit={handleEditInvoice} />}
 			</Box>
 
 			{/* 編輯發票對話框 */}

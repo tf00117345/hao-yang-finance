@@ -59,6 +59,11 @@ namespace hao_yang_finance_api.DTOs
         public List<ExtraExpenseDto> ExtraExpenses { get; set; } = new List<ExtraExpenseDto>();
     }
 
+    public class UpdateNotesDto
+    {
+        public string? Notes { get; set; }
+    }
+
     public class LoadingLocationDto
     {
         public string From { get; set; } = string.Empty;

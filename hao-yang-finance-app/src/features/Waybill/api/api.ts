@@ -5,7 +5,12 @@ import { DateRange } from '../../../types/date-range';
 import { axiosInstance } from '../../../utils/axios-instance';
 import { Waybill, WaybillFormData } from '../types/waybill.types';
 
-export const getWaybills = async (dateRange: DateRange, driverId?: string, locationSearch?: string, companySearch?: string): Promise<Waybill[]> => {
+export const getWaybills = async (
+	dateRange: DateRange,
+	driverId?: string,
+	locationSearch?: string,
+	companySearch?: string,
+): Promise<Waybill[]> => {
 	const params = new URLSearchParams();
 	params.append('startDate', format(dateRange.start, 'yyyy-MM-dd'));
 	params.append('endDate', format(dateRange.end, 'yyyy-MM-dd'));
@@ -104,6 +109,16 @@ export const deleteWaybill = async (waybillId: string): Promise<void> => {
 
 export const markWaybillAsNoInvoiceNeeded = async (waybillId: string): Promise<void> => {
 	await axiosInstance.put(`/waybill/${waybillId}/no-invoice`);
+	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
+};
+
+export const markWaybillAsPendingPayment = async (params: { waybillId: string; notes?: string }): Promise<void> => {
+	await axiosInstance.put(`/waybill/${params.waybillId}/pending-payment`, { notes: params.notes });
+	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
+};
+
+export const updateWaybillNotes = async (waybillId: string, notes: string): Promise<void> => {
+	await axiosInstance.put(`/waybill/${waybillId}/update-notes`, { notes });
 	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
 };
 

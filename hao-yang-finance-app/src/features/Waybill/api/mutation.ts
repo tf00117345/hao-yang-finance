@@ -7,6 +7,8 @@ import {
 	insertWaybill,
 	updateWaybill,
 	markWaybillAsNoInvoiceNeeded,
+	markWaybillAsPendingPayment,
+	updateWaybillNotes,
 	restoreWaybill,
 	markWaybillsAsNoInvoiceNeededBatch,
 	restoreWaybillsBatch,
@@ -70,6 +72,39 @@ export const useMarkWaybillAsNoInvoiceNeededMutation = () => {
 		onSuccess: () => {
 			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
 			notifySuccess('託運單已標記為不需開發票');
+		},
+		onError: (error) => {
+			notifyError(error);
+		},
+	});
+};
+
+// 標記為待收款
+export const useMarkWaybillAsPendingPaymentMutation = () => {
+	const { notifySuccess, notifyError } = useNotifications();
+
+	return useMutation({
+		mutationFn: markWaybillAsPendingPayment,
+		onSuccess: () => {
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			notifySuccess('託運單已標記為待收款狀態');
+		},
+		onError: (error) => {
+			notifyError(error);
+		},
+	});
+};
+
+// 更新託運單備註
+export const useUpdateWaybillNotesMutation = () => {
+	const { notifySuccess, notifyError } = useNotifications();
+
+	return useMutation({
+		mutationFn: ({ waybillId, notes }: { waybillId: string; notes: string }) =>
+			updateWaybillNotes(waybillId, notes),
+		onSuccess: () => {
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			notifySuccess('託運單備註已更新');
 		},
 		onError: (error) => {
 			notifyError(error);

@@ -20,7 +20,6 @@ import {
 	TextField,
 	Typography,
 } from '@mui/material';
-import { format } from 'date-fns';
 
 import { usePermission } from '../../../contexts/PermissionContext';
 import { Permission } from '../../../types/permission.types';
@@ -29,15 +28,17 @@ import { useDriverStats, useStatsSummary } from '../hooks/useDriverStats';
 export function StatisticsPage() {
 	const { hasPermission } = usePermission();
 
-	// 日期範圍狀態 - 預設為過去3個月
-	const getThreeMonthsAgo = () => {
-		const date = new Date();
-		date.setMonth(date.getMonth() - 3);
-		return format(date, 'yyyy-MM-dd');
-	};
-
-	const getCurrentDate = () => {
-		return format(new Date(), 'yyyy-MM-dd');
+	// 日期範圍狀態 - 預設為過去1個月
+	const getThisMonth = () => {
+		const now = new Date();
+		// 開始：當月第一天
+		const start = new Date(now.getFullYear(), now.getMonth(), 1);
+		// 結束：當月最後一天
+		const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+		return {
+			startDate: formatDateLocal(start),
+			endDate: formatDateLocal(end),
+		};
 	};
 
 	// 以本地時間格式化日期避免時區造成的偏移
@@ -48,8 +49,8 @@ export function StatisticsPage() {
 		return `${year}-${month}-${day}`;
 	};
 
-	const [startDate, setStartDate] = useState<string>(getThreeMonthsAgo());
-	const [endDate, setEndDate] = useState<string>(getCurrentDate());
+	const [startDate, setStartDate] = useState<string>(getThisMonth().startDate);
+	const [endDate, setEndDate] = useState<string>(getThisMonth().endDate);
 
 	// 格式化日期參數
 	const dateParams = useMemo(() => {
@@ -101,14 +102,14 @@ export function StatisticsPage() {
 	}
 
 	return (
-		<Box sx={{ p: 3, overflow: 'auto', width: '100%' }}>
+		<Box sx={{ p: 1, overflow: 'auto', width: '100%' }}>
 			<Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 				<TrendingUp />
 				司機業績統計
 			</Typography>
 
 			{/* 日期範圍選擇器 */}
-			<Card sx={{ mb: 3 }}>
+			<Card sx={{ mb: 1 }}>
 				<CardContent>
 					<Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 						<DateRange />
@@ -149,11 +150,11 @@ export function StatisticsPage() {
 				</CardContent>
 			</Card>
 
-			{isLoading && <LinearProgress sx={{ mb: 2 }} />}
+			{isLoading && <LinearProgress sx={{ mb: 1 }} />}
 
 			{/* 總體統計卡片 */}
 			{summary && (
-				<Grid container spacing={3} sx={{ mb: 3 }}>
+				<Grid container spacing={3} sx={{ mb: 1 }}>
 					<Grid item xs={12} sm={6} md={3}>
 						<Card>
 							<CardContent>
@@ -224,7 +225,7 @@ export function StatisticsPage() {
 
 			{/* 狀態分佈統計 */}
 			{summary && (
-				<Card sx={{ mb: 3 }}>
+				<Card sx={{ mb: 1 }}>
 					<CardContent>
 						<Typography variant="h6" gutterBottom>
 							託運單狀態分佈

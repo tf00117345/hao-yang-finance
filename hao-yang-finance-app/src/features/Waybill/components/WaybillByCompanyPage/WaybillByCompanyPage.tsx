@@ -111,17 +111,17 @@ export default function WaybillByCompanyPage() {
 	}, [groupedCompanies]);
 
 	return (
-		<Box sx={{ p: 2, width: '100%', overflow: 'auto' }}>
+		<Box sx={{ p: 1, width: '100%', overflow: 'auto' }}>
 			<Typography variant="h4" gutterBottom>
 				公司查詢
 			</Typography>
 
 			{/* 日期範圍選擇器 */}
-			<Paper sx={{ p: 2, mb: 2 }}>
+			<Paper sx={{ p: 1 }}>
 				<Typography variant="h6" gutterBottom>
 					日期範圍
 				</Typography>
-				<Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" sx={{ mb: 2 }}>
+				<Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" sx={{ mb: 1 }}>
 					<TextField
 						label="開始日期"
 						type="date"

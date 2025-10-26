@@ -42,7 +42,7 @@ export default function MainPage() {
 								sx={{
 									display: 'flex',
 									alignItems: 'center',
-									mb: 2,
+									mb: 1,
 								}}
 							>
 								<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

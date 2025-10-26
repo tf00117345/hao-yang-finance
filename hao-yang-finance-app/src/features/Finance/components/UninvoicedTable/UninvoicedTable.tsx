@@ -294,7 +294,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 
 	return (
 		<Stack direction="column" sx={{ flex: 1, minHeight: 0 }}>
-			<Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+			<Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
 				<Stack direction="row" spacing={1}>
 					<Typography sx={{ flex: '1 1 100%', px: 2 }} variant="h6" component="div">
 						未開立發票之貨運單
@@ -545,7 +545,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 			>
 				<DialogTitle id="pending-payment-dialog-title">標記為待收款 - {pendingPaymentWaybill?.id}</DialogTitle>
 				<DialogContent>
-					<DialogContentText sx={{ mb: 2 }}>
+					<DialogContentText sx={{ mb: 1 }}>
 						將此託運單標記為「待收款」狀態，表示不需要開發票但款項未收齊。
 					</DialogContentText>
 					<TextField

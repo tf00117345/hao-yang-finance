@@ -331,7 +331,7 @@ function WaybillForm({
 			<Typography variant="h5" align="center" gutterBottom sx={{ fontWeight: 'bold' }}>
 				皓揚起重工程行
 			</Typography>
-			<Typography variant="h6" align="center" gutterBottom sx={{ textDecoration: 'underline', mb: 2 }}>
+			<Typography variant="h6" align="center" gutterBottom sx={{ textDecoration: 'underline', mb: 1 }}>
 				託運單
 			</Typography>
 

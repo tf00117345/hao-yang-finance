@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import {
+	Autocomplete,
 	Box,
 	Button,
 	Checkbox,
@@ -9,11 +10,7 @@ import {
 	DialogContent,
 	DialogTitle,
 	Divider,
-	FormControl,
 	FormControlLabel,
-	InputLabel,
-	MenuItem,
-	Select,
 	Stack,
 	Switch,
 	Table,
@@ -295,27 +292,42 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 							name="companyId"
 							control={control}
 							rules={{ required: '請選擇公司' }}
-							render={({ field }) => (
-								<FormControl fullWidth error={!!errors.companyId}>
-									<InputLabel>選擇公司</InputLabel>
-									<Select {...field} label="選擇公司" disabled={!!editingInvoice}>
-										{companies.map((company) => (
-											<MenuItem key={company.id} value={company.id}>
-												{company.name} ({company.taxId})
-											</MenuItem>
-										))}
-									</Select>
-									{editingInvoice && (
-										<Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1.5 }}>
-											編輯模式下無法修改公司，若開錯公司，請刪除後重新開立
-										</Typography>
+							render={({ field: { onChange, value, ...field } }) => (
+								<Autocomplete
+									{...field}
+									options={companies}
+									getOptionLabel={(option) =>
+										typeof option === 'string'
+											? companies.find((c) => c.id === option)?.name || ''
+											: `${option.name} (${option.taxId})`
+									}
+									getOptionKey={(option) => option.id}
+									value={companies.find((c) => c.id === value) || null}
+									onChange={(_, data) => onChange(data?.id || '')}
+									disabled={!!editingInvoice}
+									renderInput={(params) => (
+										<TextField
+											{...params}
+											label="選擇公司"
+											error={!!errors.companyId}
+											helperText={
+												editingInvoice
+													? '編輯模式下無法修改公司，若開錯公司，請刪除後重新開立'
+													: errors.companyId?.message
+											}
+											placeholder="輸入公司名稱或統編搜尋..."
+										/>
 									)}
-									{errors.companyId && (
-										<Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-											{errors.companyId.message}
-										</Typography>
-									)}
-								</FormControl>
+									filterOptions={(options, { inputValue }) => {
+										const searchText = inputValue.toLowerCase();
+										return options.filter(
+											(option) =>
+												option.name?.toLowerCase().includes(searchText) ||
+												option.taxId?.includes(searchText),
+										);
+									}}
+									isOptionEqualToValue={(option, val) => option.id === val.id}
+								/>
 							)}
 						/>
 

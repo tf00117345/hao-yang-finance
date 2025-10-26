@@ -567,7 +567,7 @@ namespace hao_yang_finance_api.Controllers
             }
 
             // 檢查狀態：只有 issued 和 void 狀態可以刪除
-            if (invoice.Status is not ("issued" or "void")) return BadRequest(new { message = $"只有作廢和已開立狀態的發票可以刪除" });
+            if (invoice.Status is not ("issued" or "void")) return BadRequest(new { message = $"只有作廢和未收款狀態的發票可以刪除" });
 
             // 恢復關聯託運單的狀態為 PENDING
             var waybills = await _context.Waybills

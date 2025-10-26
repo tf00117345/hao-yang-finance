@@ -213,7 +213,7 @@ export function NoInvoicedNeededTable({ waybills }: NoInvoicedNeededTableProps) 
 
 	return (
 		<Stack direction="column" sx={{ flex: 1, minHeight: 0 }}>
-			<Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+			<Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
 				<Stack direction="row" spacing={1}>
 					<Typography sx={{ flex: '1 1 100%', px: 2 }} variant="h6" component="div">
 						無須開發票之貨運單

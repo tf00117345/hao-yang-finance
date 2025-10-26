@@ -144,7 +144,7 @@ export function LoginPage() {
 					<CardContent sx={{ p: 4 }}>
 						{/* Logo and Title */}
 						<Box sx={{ textAlign: 'center', mb: 4 }}>
-							<Business sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
+							<Business sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
 							<Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 600 }}>
 								皓揚財務追蹤系統
 							</Typography>
@@ -384,7 +384,7 @@ export function LoginPage() {
 
 						{/* Mode Switch */}
 						<Box sx={{ mt: 3 }}>
-							<Divider sx={{ mb: 2 }} />
+							<Divider sx={{ mb: 1 }} />
 							<Box sx={{ textAlign: 'center' }}>
 								<Typography variant="body2" color="text.secondary">
 									{isRegisterMode ? '已經有帳戶了？' : '還沒有帳戶？'}{' '}

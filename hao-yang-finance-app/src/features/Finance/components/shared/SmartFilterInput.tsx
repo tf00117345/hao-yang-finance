@@ -43,7 +43,7 @@ export function SmartFilterInput({ columnId, columnHeader, value, onChange, onCl
 		switch (filterType) {
 			case 'status':
 				return [
-					{ label: '已開立', value: 'issued' },
+					{ label: '未收款', value: 'issued' },
 					{ label: '已收款', value: 'paid' },
 					{ label: '已作廢', value: 'void' },
 				];

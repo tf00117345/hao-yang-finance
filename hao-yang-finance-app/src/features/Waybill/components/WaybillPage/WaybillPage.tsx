@@ -212,7 +212,7 @@ export default function WaybillPage() {
 					// 手機版：單欄佈局
 					<Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
 						<Box sx={{ p: 1, flexShrink: 0 }}>
-							<Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2 }}>
+							<Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1 }}>
 								<Button
 									variant="contained"
 									color="primary"
@@ -281,7 +281,7 @@ export default function WaybillPage() {
 					</Box>
 				) : (
 					// 桌面版和平板版：左右佈局
-					<Stack direction="row" spacing={1} sx={{ height: '100%', width: '100%', overflow: 'hidden' }}>
+					<Stack direction="row" spacing={1} sx={{ height: '100%', width: '100%', overflow: 'hidden', p: 1 }}>
 						<Stack
 							direction="column"
 							spacing={1}
@@ -292,17 +292,6 @@ export default function WaybillPage() {
 								maxWidth: 'calc(100% - 558px)',
 							}}
 						>
-							<Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-								<Button
-									variant="contained"
-									color="primary"
-									onClick={handleNewWaybill}
-									sx={{ mb: 2 }}
-									startIcon={<AddIcon />}
-								>
-									新增託運單
-								</Button>
-							</Stack>
 							<MonthPicker dateRange={dateRange} onDateChange={handleDateChange} />
 							<Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
 								<Button
@@ -318,30 +307,41 @@ export default function WaybillPage() {
 										variant={selectedDriver?.id === driver.id ? 'contained' : 'outlined'}
 										color="primary"
 										onClick={() => handleDriverChange(driver)}
+										size="small"
 									>
 										{driver.name}
 									</Button>
 								))}
 							</Stack>
-							<Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-								<TextField
-									label="搜尋地點"
-									variant="outlined"
-									size="small"
-									value={locationSearchInput}
-									onChange={(e) => handleLocationSearchChange(e.target.value)}
-									placeholder="輸入起點或終點進行搜尋..."
-									sx={{ mt: 1, maxWidth: '300px' }}
-								/>
-								<TextField
-									label="搜尋貨主"
-									variant="outlined"
-									size="small"
-									value={companySearchInput}
-									onChange={(e) => handleCompanySearchChange(e.target.value)}
-									placeholder="輸入貨主名稱進行搜尋..."
-									sx={{ mt: 1, maxWidth: '300px' }}
-								/>
+							<Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+								<Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+									<TextField
+										label="搜尋地點"
+										variant="outlined"
+										size="small"
+										value={locationSearchInput}
+										onChange={(e) => handleLocationSearchChange(e.target.value)}
+										placeholder="輸入起點或終點進行搜尋..."
+										sx={{ mt: 1, maxWidth: '300px' }}
+									/>
+									<TextField
+										label="搜尋貨主"
+										variant="outlined"
+										size="small"
+										value={companySearchInput}
+										onChange={(e) => handleCompanySearchChange(e.target.value)}
+										placeholder="輸入貨主名稱進行搜尋..."
+										sx={{ mt: 1, maxWidth: '300px' }}
+									/>
+								</Stack>
+								<Button
+									variant="contained"
+									color="primary"
+									onClick={handleNewWaybill}
+									startIcon={<AddIcon />}
+								>
+									新增託運單
+								</Button>
 							</Stack>
 
 							{isPending ? (

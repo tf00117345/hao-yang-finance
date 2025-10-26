@@ -211,65 +211,81 @@ function MonthPicker({ dateRange, onDateChange }: MonthPickerProps) {
 					</LocalizationProvider>
 				</Stack>
 			) : (
-				// 電腦版：按鈕組
+				// 電腦版：年份下拉選單 + 月份按鈕組
 				<>
-					<ToggleButtonGroup
-						value={currentYear}
-						exclusive
-						onChange={handleYearChange}
-						aria-label="年份選擇"
-						size="small"
-						sx={{
-							display: 'flex',
-							flexWrap: 'wrap',
-							gap: 0.5,
-							justifyContent: 'flex-start',
-							'& .MuiToggleButtonGroup-grouped': {
-								border: 1,
-								borderColor: 'primary.main',
-								mx: 0,
-								minWidth: '50px',
-							},
-						}}
-					>
-						{yearOptions.map((year) => (
-							<StyledToggleButton key={year} value={year} aria-label={`${year}年`}>
-								{year}年
-							</StyledToggleButton>
-						))}
-					</ToggleButtonGroup>
+					<Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+						{/* 年份下拉選單 */}
+						<FormControl size="small" sx={{ minWidth: 120 }}>
+							<InputLabel>年份</InputLabel>
+							<Select value={currentYear} label="年份" onChange={handleYearSelectChange}>
+								{yearOptions.map((year) => (
+									<MenuItem key={year} value={year}>
+										{year}年
+									</MenuItem>
+								))}
+							</Select>
+						</FormControl>
 
-					{/* 月份選擇器 - 電腦版按鈕組 */}
-					<ToggleButtonGroup
-						value={getCurrentMonthLabel(dateRange.start)}
-						exclusive
-						onChange={handleMonthChange}
-						aria-label="月份選擇"
-						size="small"
-						sx={{
-							display: 'flex',
-							flexWrap: 'wrap',
-							gap: 0.5,
-							justifyContent: 'flex-start',
-							'& .MuiToggleButtonGroup-grouped': {
-								border: 1,
-								borderColor: 'primary.main',
-								mx: 0,
-								minWidth: '50px',
-							},
-						}}
-					>
-						{months.map((month) => (
-							<StyledToggleButton key={month.label} value={month.label} aria-label={month.label}>
-								{month.label}
-							</StyledToggleButton>
-						))}
-					</ToggleButtonGroup>
+						{/* 月份選擇器 - 按鈕組 */}
+						<ToggleButtonGroup
+							value={getCurrentMonthLabel(dateRange.start)}
+							exclusive
+							onChange={handleMonthChange}
+							aria-label="月份選擇"
+							size="small"
+							sx={{
+								display: 'flex',
+								flexWrap: 'wrap',
+								gap: 0.5,
+								justifyContent: 'flex-start',
+								'& .MuiToggleButtonGroup-grouped': {
+									border: 1,
+									borderColor: 'primary.main',
+									mx: 0,
+									minWidth: '50px',
+								},
+							}}
+						>
+							{months.map((month) => (
+								<StyledToggleButton key={month.label} value={month.label} aria-label={month.label}>
+									{month.label}
+								</StyledToggleButton>
+							))}
+						</ToggleButtonGroup>
+
+						{/* 日期選擇器 */}
+						<LocalizationProvider dateAdapter={AdapterDateFns}>
+							<StyledDatePicker
+								label="起始日期"
+								value={dateRange.start}
+								format="yyyy-MM-dd"
+								onChange={handleStartDateChange}
+								slotProps={{
+									textField: {
+										size: 'small',
+										sx: { width: '180px' },
+									},
+								}}
+							/>
+							<StyledDatePicker
+								label="結束日期"
+								value={dateRange.end}
+								format="yyyy-MM-dd"
+								onChange={handleEndDateChange}
+								slotProps={{
+									textField: {
+										size: 'small',
+										sx: { width: '180px' },
+									},
+								}}
+							/>
+						</LocalizationProvider>
+					</Stack>
 				</>
 			)}
 
 			{/* 電腦版專用的日期選擇器 */}
-			{!isMobile && (
+			{/* {!isMobile && (
 				<Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
 					<LocalizationProvider dateAdapter={AdapterDateFns}>
 						<StyledDatePicker
@@ -298,7 +314,7 @@ function MonthPicker({ dateRange, onDateChange }: MonthPickerProps) {
 						/>
 					</LocalizationProvider>
 				</Stack>
-			)}
+			)} */}
 		</Stack>
 	);
 }

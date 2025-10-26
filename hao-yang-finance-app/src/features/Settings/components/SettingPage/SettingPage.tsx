@@ -32,7 +32,7 @@ export function SettingPage() {
 	return (
 		<Stack sx={{ width: '100%' }} spacing={1}>
 			{/* Tab 導航 */}
-			<Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+			<Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 1 }}>
 				<Tabs value={getCurrentTab()} onChange={handleTabChange} aria-label="settings navigation tabs">
 					<Tab label="公司清單管理" />
 					<Tab label="駕駛清單管理" />

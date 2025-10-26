@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import {
 	ColumnFiltersState,
+	ColumnPinningState,
 	ColumnResizeDirection,
 	ColumnResizeMode,
 	createColumnHelper,
@@ -44,9 +45,8 @@ export function useInvoiceTable({
 				enableSorting: true,
 				enableGrouping: false,
 				enableResizing: true,
-				size: 150,
+				size: 140,
 				minSize: 120,
-				maxSize: 200,
 			}),
 			invoiceColumnHelper.accessor('companyName', {
 				header: '客戶名稱',
@@ -56,9 +56,8 @@ export function useInvoiceTable({
 				enableResizing: true,
 				enableColumnFilter: true,
 				filterFn: 'includesString',
-				size: 150,
-				minSize: 120,
-				maxSize: 250,
+				size: 180,
+				minSize: 140,
 			}),
 			invoiceColumnHelper.accessor('date', {
 				header: '開立日期',
@@ -70,9 +69,8 @@ export function useInvoiceTable({
 				enableGrouping: false,
 				enableResizing: true,
 				enableColumnFilter: true,
-				size: 120,
-				minSize: 100,
-				maxSize: 150,
+				size: 140,
+				minSize: 140,
 			}),
 			// invoiceColumnHelper.accessor('subtotal', {
 			// 	header: '小計',
@@ -110,9 +108,8 @@ export function useInvoiceTable({
 				enableResizing: true,
 				enableColumnFilter: true,
 				filterFn: 'inNumberRange',
-				size: 120,
-				minSize: 100,
-				maxSize: 150,
+				size: 140,
+				minSize: 140,
 			}),
 			invoiceColumnHelper.accessor('waybills', {
 				header: '發票金額',
@@ -126,9 +123,8 @@ export function useInvoiceTable({
 				enableResizing: true,
 				enableColumnFilter: true,
 				filterFn: 'inNumberRange',
-				size: 120,
-				minSize: 100,
-				maxSize: 150,
+				size: 140,
+				minSize: 140,
 			}),
 			invoiceColumnHelper.accessor('total', {
 				header: '應收帳款',
@@ -138,9 +134,8 @@ export function useInvoiceTable({
 				enableResizing: true,
 				enableColumnFilter: true,
 				filterFn: 'inNumberRange',
-				size: 120,
-				minSize: 100,
-				maxSize: 150,
+				size: 140,
+				minSize: 140,
 			}),
 			invoiceColumnHelper.accessor('status', {
 				header: '狀態',
@@ -151,7 +146,7 @@ export function useInvoiceTable({
 				enableColumnFilter: true,
 				filterFn: 'equals',
 				size: 100,
-				minSize: 80,
+				minSize: 100,
 			}),
 			invoiceColumnHelper.accessor('paymentMethod', {
 				header: '付款方式',
@@ -161,8 +156,8 @@ export function useInvoiceTable({
 				enableResizing: true,
 				enableColumnFilter: true,
 				filterFn: 'equals',
-				size: 100,
-				minSize: 80,
+				size: 120,
+				minSize: 120,
 			}),
 			invoiceColumnHelper.accessor('paymentNote', {
 				header: '付款備註',
@@ -170,6 +165,8 @@ export function useInvoiceTable({
 				enableSorting: true,
 				enableGrouping: true,
 				enableResizing: true,
+				size: 200,
+				minSize: 200,
 			}),
 			{
 				id: 'actions',
@@ -178,9 +175,8 @@ export function useInvoiceTable({
 				enableSorting: false,
 				enableGrouping: false,
 				enableResizing: false,
-				size: 300,
-				minSize: 300,
-				maxSize: 300,
+				size: 350,
+				minSize: 350,
 			},
 		],
 		[],
@@ -194,6 +190,9 @@ export function useInvoiceTable({
 	const [columnResizeMode] = useState<ColumnResizeMode>('onChange');
 	const [columnResizeDirection] = useState<ColumnResizeDirection>('ltr');
 	const [columnVisibility, setColumnVisibility] = useState({});
+	const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
+		right: ['actions'],
+	});
 
 	// Filter helpers
 	const setStatusFilter = useCallback((status: string | null) => {
@@ -263,6 +262,7 @@ export function useInvoiceTable({
 			expanded,
 			sorting,
 			columnVisibility,
+			columnPinning,
 		},
 		autoResetPageIndex: false,
 		onColumnFiltersChange: setColumnFilters,
@@ -270,6 +270,7 @@ export function useInvoiceTable({
 		onExpandedChange: setExpanded,
 		onSortingChange: setSorting,
 		onColumnVisibilityChange: setColumnVisibility,
+		onColumnPinningChange: setColumnPinning,
 		columnResizeMode,
 		columnResizeDirection,
 		getExpandedRowModel: getExpandedRowModel(),
@@ -284,18 +285,38 @@ export function useInvoiceTable({
 		enableSorting: true,
 		enableFilters: true,
 		enableHiding: true,
+		enablePinning: true,
 		globalFilterFn: 'includesString',
 		debugTable: false,
 		debugHeaders: false,
 		debugColumns: false,
 	});
 
-	// Table statistics
+	// Table statistics - 基於篩選後的資料
 	const tableStats = useMemo(() => {
+		// 使用 table.getFilteredRowModel() 獲取篩選後的資料
+		// 需要在 useMemo 內部調用以確保響應性
+		let filteredInvoices = stableData;
+		try {
+			filteredInvoices = table.getFilteredRowModel().rows.map((row) => row.original);
+		} catch (e) {
+			// 如果 getFilteredRowModel 失敗，使用原始數據
+			filteredInvoices = stableData;
+		}
+
+		// 排除已作廢的發票
+		const validInvoices = filteredInvoices.filter((invoice) => invoice.status !== 'void');
+
 		const totalInvoices = stableData.length;
 		const issuedInvoices = stableData.filter((invoice) => invoice.status === 'issued').length;
 		const paidInvoices = stableData.filter((invoice) => invoice.status === 'paid').length;
 		const voidInvoices = stableData.filter((invoice) => invoice.status === 'void').length;
+
+		// 有效發票（不含作廢）的統計
+		const validInvoiceCount = validInvoices.length;
+		const validTotalAmount = validInvoices.reduce((sum, invoice) => sum + invoice.total, 0);
+		const validTotalTax = validInvoices.reduce((sum, invoice) => sum + invoice.tax, 0);
+
 		const totalAmount = stableData.reduce((sum, invoice) => sum + invoice.total, 0);
 		const paidAmount = stableData
 			.filter((invoice) => invoice.status === 'paid')
@@ -312,8 +333,12 @@ export function useInvoiceTable({
 			totalAmount,
 			paidAmount,
 			outstandingAmount,
+			// 新增：有效發票統計（排除作廢，響應篩選）
+			validInvoiceCount,
+			validTotalAmount,
+			validTotalTax,
 		};
-	}, [stableData]);
+	}, [stableData, table]);
 
 	// Get available filter options
 	const filterOptions = useMemo(() => {

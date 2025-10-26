@@ -349,7 +349,7 @@ export function PendingPaymentTable({ waybills }: PendingPaymentTableProps) {
 
 	return (
 		<Stack direction="column" sx={{ flex: 1, minHeight: 0 }}>
-			<Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+			<Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
 				<Stack direction="row" spacing={1}>
 					<Typography sx={{ flex: '1 1 100%', px: 2 }} variant="h6" component="div">
 						待收款之貨運單
@@ -558,7 +558,7 @@ export function PendingPaymentTable({ waybills }: PendingPaymentTableProps) {
 			>
 				<DialogTitle id="complete-notes-dialog-title">確認收款完成 - {completingWaybill?.id}</DialogTitle>
 				<DialogContent>
-					<DialogContentText sx={{ mb: 2 }}>
+					<DialogContentText sx={{ mb: 1 }}>
 						將此託運單標記為「收款完成」並歸檔到「無須開發票」狀態。
 						<br />
 						請輸入收款完成的相關備註：

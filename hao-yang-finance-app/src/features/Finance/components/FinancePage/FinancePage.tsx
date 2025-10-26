@@ -77,7 +77,7 @@ export default function FinancePage() {
 	const { data: editingWaybills = [] } = useWaybillsByIdsQuery(editingWaybillIds);
 
 	return (
-		<Stack direction="column" spacing={1} sx={{ height: '100%', width: '100%', overflow: 'hidden' }}>
+		<Stack direction="column" spacing={1} sx={{ height: '100%', width: '100%', overflow: 'hidden', p: 1 }}>
 			<MonthPicker dateRange={dateRange} onDateChange={handleDateChange} />
 			<Stack direction="row" spacing={1}>
 				<Button
@@ -90,6 +90,7 @@ export default function FinancePage() {
 				{drivers.map((driver) => (
 					<Button
 						key={driver.id}
+						size="small"
 						variant={selectedDriver?.id === driver.id ? 'contained' : 'outlined'}
 						color="primary"
 						onClick={() => {
@@ -109,7 +110,7 @@ export default function FinancePage() {
 					minHeight: 0, // 確保可以縮小
 				}}
 			>
-				<Tabs value={tab} onChange={handleTabChange} sx={{ mb: 2 }}>
+				<Tabs value={tab} onChange={handleTabChange} sx={{ mb: 1 }}>
 					<Tab label="未開立發票之貨運單" />
 					<Tab label="現金待收款" />
 					<Tab label="無須開發票之貨運單" />

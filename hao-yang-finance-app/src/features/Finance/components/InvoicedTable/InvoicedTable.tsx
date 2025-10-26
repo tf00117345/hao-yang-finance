@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { ArrowDownward, ArrowUpward, UnfoldMore } from '@mui/icons-material';
+import { ArrowDownward, ArrowUpward, Assessment, UnfoldMore } from '@mui/icons-material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import StickyNote2Icon from '@mui/icons-material/StickyNote2';
@@ -63,6 +63,9 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 	// 對話框狀態管理
 	const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 	const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+	const [viewDialogOpen, setViewDialogOpen] = useState(false);
+	const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
+	const [statsDialogOpen, setStatsDialogOpen] = useState(false);
 
 	// 列印貼紙對話框
 	const [printDialogOpen, setPrintDialogOpen] = useState(false);
@@ -121,6 +124,11 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 		[onEdit],
 	);
 
+	const handleViewInvoice = useCallback((invoice: Invoice) => {
+		setViewingInvoice(invoice);
+		setViewDialogOpen(true);
+	}, []);
+
 	// 收款表單提交
 	const onPaymentSubmit = useCallback(
 		(data: MarkInvoicePaidRequest) => {
@@ -173,7 +181,7 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 	const getStatusChip = useCallback((status: string) => {
 		switch (status) {
 			case 'issued':
-				return <Chip label="已開立" color="primary" size="small" />;
+				return <Chip label="未收款" color="primary" size="small" />;
 			case 'paid':
 				return <Chip label="已收款" color="success" size="small" />;
 			case 'void':
@@ -189,6 +197,9 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 			if (invoice.status === 'issued') {
 				return (
 					<Stack direction="row" spacing={1}>
+						<Button size="small" variant="outlined" onClick={() => handleViewInvoice(invoice)}>
+							查看
+						</Button>
 						<Button
 							size="small"
 							variant="contained"
@@ -222,20 +233,32 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 
 			if (invoice.status === 'paid' || invoice.status === 'void') {
 				return (
-					<Button
-						size="small"
-						variant="contained"
-						color={invoice.status === 'void' ? 'warning' : 'success'}
-						onClick={() => handleRestoreInvoice(invoice)}
-					>
-						恢復發票到已開立
-					</Button>
+					<Stack direction="row" spacing={1}>
+						<Button size="small" variant="outlined" onClick={() => handleViewInvoice(invoice)}>
+							查看
+						</Button>
+						<Button
+							size="small"
+							variant="contained"
+							color={invoice.status === 'void' ? 'warning' : 'success'}
+							onClick={() => handleRestoreInvoice(invoice)}
+						>
+							恢復發票到已開立
+						</Button>
+					</Stack>
 				);
 			}
 
 			return null;
 		},
-		[handleMarkPaid, handleEditInvoice, handleVoidInvoice, handleDeleteInvoice, handleRestoreInvoice],
+		[
+			handleMarkPaid,
+			handleEditInvoice,
+			handleVoidInvoice,
+			handleDeleteInvoice,
+			handleRestoreInvoice,
+			handleViewInvoice,
+		],
 	);
 
 	// 渲染表頭內容的函數
@@ -288,7 +311,7 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 		[renderActionButtons, getStatusChip],
 	);
 
-	const { table } = useInvoiceTable({
+	const { table, tableStats } = useInvoiceTable({
 		data: invoices,
 		onVoidInvoice: (invoiceId) => voidMutation.mutate(invoiceId),
 		onEditInvoice: onEdit,
@@ -369,13 +392,21 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 
 	return (
 		<Stack direction="column" sx={{ flex: 1, minHeight: 0 }}>
-			<Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+			<Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
 				<Stack direction="row" spacing={1}>
 					<Typography sx={{ flex: '1 1 100%', px: 2 }} variant="h6" component="div">
 						已開立發票清單
 					</Typography>
 				</Stack>
 				<Stack direction="row" spacing={1}>
+					<Button
+						size="small"
+						variant="outlined"
+						startIcon={<Assessment />}
+						onClick={() => setStatsDialogOpen(true)}
+					>
+						查看統計
+					</Button>
 					<Button
 						size="small"
 						variant="contained"
@@ -386,6 +417,7 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 					</Button>
 				</Stack>
 			</Stack>
+
 			<TableContainer
 				component={Paper}
 				id="invoiced-table-container"
@@ -396,135 +428,173 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 					display: printDialogOpen ? 'none' : 'block',
 				}}
 			>
-				<Table stickyHeader sx={{ tableLayout: 'fixed' }}>
+				<Table stickyHeader sx={{ minWidth: 1700, width: 'max-content' }}>
 					<TableHead ref={tableHeadRef}>
 						{/* 表頭行 */}
 						{table.getHeaderGroups().map((headerGroup) => (
 							<TableRow key={headerGroup.id}>
-								{headerGroup.headers.map((header) => (
-									<StyledTableCell
-										key={header.id}
-										size="small"
-										onClick={header.column.getToggleSortingHandler()}
-										sx={{
-											width: header.getSize(),
-											minWidth: header.column.columnDef.minSize || 120,
-											cursor: header.column.getCanSort() ? 'pointer' : 'default',
-											userSelect: 'none',
-											'&:hover': header.column.getCanSort()
-												? { backgroundColor: 'action.hover' }
-												: {},
-										}}
-									>
-										<Box
+								{headerGroup.headers.map((header) => {
+									const isPinned = header.column.getIsPinned();
+									return (
+										<StyledTableCell
+											key={header.id}
+											size="small"
+											onClick={header.column.getToggleSortingHandler()}
 											sx={{
-												display: 'flex',
-												alignItems: 'center',
-												justifyContent: 'space-between',
-												position: 'relative',
+												width: header.getSize(),
+												minWidth: header.column.columnDef.minSize || 120,
+												cursor: header.column.getCanSort() ? 'pointer' : 'default',
+												background: '#FAFAFB !important',
+												userSelect: 'none',
+												'&:hover': header.column.getCanSort()
+													? { backgroundColor: 'action.hover' }
+													: {},
+												// 固定列样式
+												...(isPinned && {
+													position: 'sticky',
+													right: isPinned === 'right' ? 0 : undefined,
+													zIndex: 2,
+													boxShadow:
+														isPinned === 'right' ? '-2px 0 4px rgba(0,0,0,0.1)' : undefined,
+												}),
 											}}
 										>
-											<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-												{renderHeaderContent(header)}
+											<Box
+												sx={{
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'space-between',
+													position: 'relative',
+												}}
+											>
+												<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+													{renderHeaderContent(header)}
 
-												{/* 排序指示器 */}
-												{header.column.getCanSort() && (
-													<Box sx={{ display: 'flex', flexDirection: 'column', ml: 0.5 }}>
-														{header.column.getIsSorted() === 'asc' && (
-															<ArrowUpward
-																sx={{ fontSize: '0.875rem', color: 'primary.main' }}
-															/>
-														)}
-														{header.column.getIsSorted() === 'desc' && (
-															<ArrowDownward
-																sx={{ fontSize: '0.875rem', color: 'primary.main' }}
-															/>
-														)}
-														{!header.column.getIsSorted() && (
-															<UnfoldMore
-																sx={{ fontSize: '0.875rem', color: 'text.disabled' }}
-															/>
-														)}
-													</Box>
+													{/* 排序指示器 */}
+													{header.column.getCanSort() && (
+														<Box sx={{ display: 'flex', flexDirection: 'column', ml: 0.5 }}>
+															{header.column.getIsSorted() === 'asc' && (
+																<ArrowUpward
+																	sx={{ fontSize: '0.875rem', color: 'primary.main' }}
+																/>
+															)}
+															{header.column.getIsSorted() === 'desc' && (
+																<ArrowDownward
+																	sx={{ fontSize: '0.875rem', color: 'primary.main' }}
+																/>
+															)}
+															{!header.column.getIsSorted() && (
+																<UnfoldMore
+																	sx={{
+																		fontSize: '0.875rem',
+																		color: 'text.disabled',
+																	}}
+																/>
+															)}
+														</Box>
+													)}
+												</Box>
+
+												{/* 列寬調整器 */}
+												{header.column.getCanResize() && (
+													<Box
+														onMouseDown={header.getResizeHandler()}
+														onTouchStart={header.getResizeHandler()}
+														sx={{
+															position: 'absolute',
+															right: 0,
+															top: 0,
+															height: '100%',
+															width: '3px',
+															cursor: 'col-resize',
+															userSelect: 'none',
+															touchAction: 'none',
+															backgroundColor: header.column.getIsResizing()
+																? 'primary.main'
+																: 'rgba(0, 0, 0, 0.12)',
+															'&:hover': {
+																backgroundColor: 'primary.light',
+															},
+														}}
+													/>
 												)}
 											</Box>
-
-											{/* 列寬調整器 */}
-											{header.column.getCanResize() && (
-												<Box
-													onMouseDown={header.getResizeHandler()}
-													onTouchStart={header.getResizeHandler()}
-													sx={{
-														position: 'absolute',
-														right: 0,
-														top: 0,
-														height: '100%',
-														width: '5px',
-														cursor: 'col-resize',
-														userSelect: 'none',
-														touchAction: 'none',
-														backgroundColor: header.column.getIsResizing()
-															? 'primary.main'
-															: 'transparent',
-														'&:hover': {
-															backgroundColor: 'primary.light',
-														},
-													}}
-												/>
-											)}
-										</Box>
-									</StyledTableCell>
-								))}
+										</StyledTableCell>
+									);
+								})}
 							</TableRow>
 						))}
 
 						{/* 篩選行 */}
 						<TableRow ref={filterRowRef}>
-							{table.getHeaderGroups()[0].headers.map((header) => (
-								<TableCell
-									key={`filter-${header.id}`}
-									size="small"
-									sx={{
-										py: 1,
-										px: 1,
-										position: 'sticky',
-										top: filterTop,
-										zIndex: 1,
-										backgroundColor: '#FAFAFB',
-									}}
-								>
-									{header.column.getCanFilter() && (
-										<SmartFilterInput
-											columnId={header.id}
-											columnHeader={header.column.columnDef.header as string}
-											value={getFilterValue(header.id) as string}
-											onChange={(value) => handleFilterChange(header.id, value)}
-											onClear={() => clearFilter(header.id)}
-										/>
-									)}
-								</TableCell>
-							))}
+							{table.getHeaderGroups()[0].headers.map((header) => {
+								const isPinned = header.column.getIsPinned();
+								return (
+									<TableCell
+										key={`filter-${header.id}`}
+										size="small"
+										sx={{
+											py: 1,
+											px: 1,
+											position: 'sticky',
+											top: filterTop,
+											zIndex: isPinned ? 3 : 1,
+											backgroundColor: '#FAFAFB',
+											// 固定列样式
+											...(isPinned && {
+												right: isPinned === 'right' ? 0 : undefined,
+												boxShadow:
+													isPinned === 'right' ? '-2px 0 4px rgba(0,0,0,0.1)' : undefined,
+											}),
+										}}
+									>
+										{header.column.getCanFilter() && (
+											<SmartFilterInput
+												columnId={header.id}
+												columnHeader={header.column.columnDef.header as string}
+												value={getFilterValue(header.id) as string}
+												onChange={(value) => handleFilterChange(header.id, value)}
+												onClear={() => clearFilter(header.id)}
+											/>
+										)}
+									</TableCell>
+								);
+							})}
 						</TableRow>
 					</TableHead>
 					<TableBody>
 						{table.getRowModel().rows.map((row) => (
 							<React.Fragment key={row.id}>
 								<StyledTableRow>
-									{row.getVisibleCells().map((cell) => (
-										<TableCell
-											key={cell.id}
-											size="small"
-											sx={{
-												width: cell.column.getSize(),
-												maxWidth: cell.column.getSize(),
-												overflow: 'hidden',
-												textOverflow: 'ellipsis',
-												whiteSpace: 'nowrap',
-											}}
-										>
-											{renderCellContent(cell, row)}
-										</TableCell>
-									))}
+									{row.getVisibleCells().map((cell) => {
+										const isPinned = cell.column.getIsPinned();
+										return (
+											<TableCell
+												key={cell.id}
+												size="small"
+												sx={{
+													width: cell.column.getSize(),
+													minWidth: cell.column.getSize(),
+													overflow: 'hidden',
+													textOverflow: 'ellipsis',
+													whiteSpace: 'nowrap',
+													// 固定列样式
+													...(isPinned && {
+														position: 'sticky',
+														right: isPinned === 'right' ? 0 : undefined,
+														zIndex: 1,
+														backgroundColor: '#fff',
+														boxShadow:
+															isPinned === 'right'
+																? '-2px 0 4px rgba(0,0,0,0.1)'
+																: undefined,
+													}),
+												}}
+											>
+												{renderCellContent(cell, row)}
+											</TableCell>
+										);
+									})}
 								</StyledTableRow>
 								{row.getIsExpanded() && (
 									<TableRow>
@@ -618,8 +688,346 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 				onConfirm={confirmDialogConfirm}
 			/>
 
+			{/* 統計資訊對話框 */}
+			<Dialog open={statsDialogOpen} onClose={() => setStatsDialogOpen(false)} maxWidth="sm" fullWidth>
+				<DialogTitle>
+					<Stack direction="row" alignItems="center" gap={1}>
+						<Assessment color="primary" />
+						<Typography variant="h6">發票統計資訊</Typography>
+					</Stack>
+				</DialogTitle>
+				<DialogContent dividers>
+					<Stack spacing={3}>
+						{/* 發票張數 */}
+						<Box>
+							<Typography variant="body2" color="text.secondary" gutterBottom>
+								發票張數
+							</Typography>
+							<Typography variant="h4" fontWeight="bold" color="primary">
+								{tableStats.validInvoiceCount} 張
+							</Typography>
+							<Typography variant="caption" color="text.secondary">
+								（不含已作廢的發票）
+							</Typography>
+						</Box>
+
+						{/* 發票總額 */}
+						<Box>
+							<Typography variant="body2" color="text.secondary" gutterBottom>
+								發票總額
+							</Typography>
+							<Typography variant="h4" fontWeight="bold" color="success.main">
+								${tableStats.validTotalAmount.toLocaleString()}
+							</Typography>
+							<Typography variant="caption" color="text.secondary">
+								含稅總金額
+							</Typography>
+						</Box>
+
+						{/* 發票總稅額 */}
+						<Box>
+							<Typography variant="body2" color="text.secondary" gutterBottom>
+								發票總稅額
+							</Typography>
+							<Typography variant="h4" fontWeight="bold" color="warning.main">
+								${tableStats.validTotalTax.toLocaleString()}
+							</Typography>
+							<Typography variant="caption" color="text.secondary">
+								稅額合計
+							</Typography>
+						</Box>
+					</Stack>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setStatsDialogOpen(false)}>關閉</Button>
+				</DialogActions>
+			</Dialog>
+
 			{/* 列印貼紙對話框 */}
 			{printDialogOpen && <CompanyLabelsPrint companyIds={companyIdsForPrint} />}
+
+			{/* 查看發票詳情對話框 */}
+			<Dialog
+				open={viewDialogOpen}
+				onClose={() => setViewDialogOpen(false)}
+				maxWidth="md"
+				fullWidth
+				PaperProps={{
+					sx: {
+						minHeight: '70vh',
+						maxHeight: '90vh',
+					},
+				}}
+			>
+				<DialogTitle>
+					<Stack direction="row" justifyContent="space-between" alignItems="center">
+						<Typography variant="h6">發票詳情</Typography>
+						{viewingInvoice && getStatusChip(viewingInvoice.status)}
+					</Stack>
+				</DialogTitle>
+				<DialogContent dividers>
+					{viewingInvoice && (
+						<Stack spacing={3}>
+							{/* 基本資訊 */}
+							<Box>
+								<Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+									基本資訊
+								</Typography>
+								<Stack spacing={1.5}>
+									<Stack direction="row" spacing={2}>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
+											發票號碼:
+										</Typography>
+										<Typography variant="body2" fontWeight="medium">
+											{viewingInvoice.invoiceNumber}
+										</Typography>
+									</Stack>
+									<Stack direction="row" spacing={2}>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
+											開立日期:
+										</Typography>
+										<Typography variant="body2">
+											{new Date(viewingInvoice.date).toLocaleDateString('zh-TW')}
+										</Typography>
+									</Stack>
+									<Stack direction="row" spacing={2}>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
+											客戶名稱:
+										</Typography>
+										<Typography variant="body2">{viewingInvoice.companyName}</Typography>
+									</Stack>
+									{viewingInvoice.notes && (
+										<Stack direction="row" spacing={2}>
+											<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
+												備註:
+											</Typography>
+											<Typography variant="body2">{viewingInvoice.notes}</Typography>
+										</Stack>
+									)}
+								</Stack>
+							</Box>
+
+							{/* 金額資訊 */}
+							<Box>
+								<Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+									金額資訊
+								</Typography>
+								<Stack spacing={1.5}>
+									<Stack direction="row" spacing={2}>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
+											小計:
+										</Typography>
+										<Typography variant="body2">
+											${viewingInvoice.subtotal.toLocaleString()}
+										</Typography>
+									</Stack>
+									<Stack direction="row" spacing={2}>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
+											稅率:
+										</Typography>
+										<Typography variant="body2">{viewingInvoice.taxRate}%</Typography>
+									</Stack>
+									<Stack direction="row" spacing={2}>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
+											稅額:
+										</Typography>
+										<Typography variant="body2">${viewingInvoice.tax.toLocaleString()}</Typography>
+									</Stack>
+									<Stack direction="row" spacing={2}>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
+											總計:
+										</Typography>
+										<Typography variant="body2" fontWeight="bold" fontSize="1.1rem">
+											${viewingInvoice.total.toLocaleString()}
+										</Typography>
+									</Stack>
+									<Stack direction="row" spacing={2}>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
+											額外費用含稅:
+										</Typography>
+										<Typography variant="body2">
+											{viewingInvoice.extraExpensesIncludeTax ? '是' : '否'}
+										</Typography>
+									</Stack>
+								</Stack>
+							</Box>
+
+							{/* 付款資訊 */}
+							{viewingInvoice.status === 'paid' && (
+								<Box>
+									<Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+										付款資訊
+									</Typography>
+									<Stack spacing={1.5}>
+										{viewingInvoice.paymentMethod && (
+											<Stack direction="row" spacing={2}>
+												<Typography
+													variant="body2"
+													color="text.secondary"
+													sx={{ minWidth: 100 }}
+												>
+													付款方式:
+												</Typography>
+												<Typography variant="body2">{viewingInvoice.paymentMethod}</Typography>
+											</Stack>
+										)}
+										{viewingInvoice.paidAt && (
+											<Stack direction="row" spacing={2}>
+												<Typography
+													variant="body2"
+													color="text.secondary"
+													sx={{ minWidth: 100 }}
+												>
+													收款時間:
+												</Typography>
+												<Typography variant="body2">
+													{new Date(viewingInvoice.paidAt).toLocaleString('zh-TW')}
+												</Typography>
+											</Stack>
+										)}
+										{viewingInvoice.paymentNote && (
+											<Stack direction="row" spacing={2}>
+												<Typography
+													variant="body2"
+													color="text.secondary"
+													sx={{ minWidth: 100 }}
+												>
+													付款備註:
+												</Typography>
+												<Typography variant="body2">{viewingInvoice.paymentNote}</Typography>
+											</Stack>
+										)}
+									</Stack>
+								</Box>
+							)}
+
+							{/* 託運單列表 */}
+							{viewingInvoice.waybills && viewingInvoice.waybills.length > 0 && (
+								<Box>
+									<Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+										託運單明細 ({viewingInvoice.waybills.length} 筆)
+									</Typography>
+									<TableContainer component={Paper} variant="outlined">
+										<Table size="small">
+											<TableHead>
+												<TableRow>
+													<StyledTableCell>日期</StyledTableCell>
+													<StyledTableCell>品項</StyledTableCell>
+													<StyledTableCell>司機</StyledTableCell>
+													<StyledTableCell align="right">金額</StyledTableCell>
+												</TableRow>
+											</TableHead>
+											<TableBody>
+												{viewingInvoice.waybills.map((waybill) => (
+													<TableRow key={waybill.waybillId}>
+														<TableCell>
+															{new Date(waybill.date).toLocaleDateString('zh-TW')}
+														</TableCell>
+														<TableCell>{waybill.item}</TableCell>
+														<TableCell>{waybill.driverName}</TableCell>
+														<TableCell align="right">
+															${waybill.fee.toLocaleString()}
+														</TableCell>
+													</TableRow>
+												))}
+												<TableRow>
+													<TableCell colSpan={3} align="right">
+														<Typography variant="body2" fontWeight="bold">
+															託運單小計:
+														</Typography>
+													</TableCell>
+													<TableCell align="right">
+														<Typography variant="body2" fontWeight="bold">
+															$
+															{viewingInvoice.waybills
+																.reduce((sum, w) => sum + w.fee, 0)
+																.toLocaleString()}
+														</Typography>
+													</TableCell>
+												</TableRow>
+											</TableBody>
+										</Table>
+									</TableContainer>
+								</Box>
+							)}
+
+							{/* 額外費用列表 */}
+							{viewingInvoice.extraExpenses && viewingInvoice.extraExpenses.length > 0 && (
+								<Box>
+									<Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+										額外費用明細 ({viewingInvoice.extraExpenses.length} 筆)
+									</Typography>
+									<TableContainer component={Paper} variant="outlined">
+										<Table size="small">
+											<TableHead>
+												<TableRow>
+													<StyledTableCell>項目</StyledTableCell>
+													<StyledTableCell>備註</StyledTableCell>
+													<StyledTableCell align="right">金額</StyledTableCell>
+												</TableRow>
+											</TableHead>
+											<TableBody>
+												{viewingInvoice.extraExpenses.map((expense) => (
+													<TableRow key={expense.extraExpenseId}>
+														<TableCell>{expense.item}</TableCell>
+														<TableCell>{expense.notes || '-'}</TableCell>
+														<TableCell align="right">
+															${expense.fee.toLocaleString()}
+														</TableCell>
+													</TableRow>
+												))}
+												<TableRow>
+													<TableCell colSpan={2} align="right">
+														<Typography variant="body2" fontWeight="bold">
+															額外費用小計:
+														</Typography>
+													</TableCell>
+													<TableCell align="right">
+														<Typography variant="body2" fontWeight="bold">
+															$
+															{viewingInvoice.extraExpenses
+																.reduce((sum, e) => sum + e.fee, 0)
+																.toLocaleString()}
+														</Typography>
+													</TableCell>
+												</TableRow>
+											</TableBody>
+										</Table>
+									</TableContainer>
+								</Box>
+							)}
+
+							{/* 時間資訊 */}
+							<Box>
+								<Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+									時間資訊
+								</Typography>
+								<Stack spacing={1.5}>
+									<Stack direction="row" spacing={2}>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
+											建立時間:
+										</Typography>
+										<Typography variant="body2">
+											{new Date(viewingInvoice.createdAt).toLocaleString('zh-TW')}
+										</Typography>
+									</Stack>
+									<Stack direction="row" spacing={2}>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
+											更新時間:
+										</Typography>
+										<Typography variant="body2">
+											{new Date(viewingInvoice.updatedAt).toLocaleString('zh-TW')}
+										</Typography>
+									</Stack>
+								</Stack>
+							</Box>
+						</Stack>
+					)}
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setViewDialogOpen(false)}>關閉</Button>
+				</DialogActions>
+			</Dialog>
 		</Stack>
 	);
 }

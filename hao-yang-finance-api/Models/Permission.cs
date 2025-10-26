@@ -34,6 +34,13 @@ namespace hao_yang_finance_api.Models
         [Description("查看統計報表")] StatisticsRead,
         [Description("匯出統計資料")] StatisticsExport,
 
+        // Driver settlement permissions
+        [Description("查看司機結算表")] DriverSettlementRead,
+        [Description("新增司機結算表")] DriverSettlementCreate,
+        [Description("編輯司機結算表")] DriverSettlementUpdate,
+        [Description("刪除司機結算表")] DriverSettlementDelete,
+        [Description("匯出司機結算表PDF")] DriverSettlementExport,
+
         // User management permissions (Admin only)
         [Description("查看使用者")] UserRead,
         [Description("新增使用者")] UserCreate,
@@ -56,17 +63,21 @@ namespace hao_yang_finance_api.Models
                 Permission.CompanyRead, Permission.CompanyCreate, Permission.CompanyUpdate, Permission.CompanyDelete,
                 Permission.DriverRead, Permission.DriverCreate, Permission.DriverUpdate, Permission.DriverDelete,
                 Permission.StatisticsRead, Permission.StatisticsExport,
+                Permission.DriverSettlementRead, Permission.DriverSettlementCreate, Permission.DriverSettlementUpdate,
+                Permission.DriverSettlementDelete, Permission.DriverSettlementExport,
                 Permission.UserRead, Permission.UserCreate, Permission.UserUpdate, Permission.UserDelete,
                 Permission.UserChangeRole, Permission.UserChangeStatus
             },
             ["Accountant"] = new[]
             {
-                Permission.WaybillRead,
+                Permission.WaybillRead, Permission.WaybillUpdate,
                 Permission.InvoiceRead, Permission.InvoiceCreate, Permission.InvoiceUpdate, Permission.InvoiceDelete,
                 Permission.InvoiceVoid, Permission.InvoiceMarkPaid,
                 Permission.CompanyRead,
                 Permission.DriverRead,
                 Permission.StatisticsRead, Permission.StatisticsExport,
+                Permission.DriverSettlementRead, Permission.DriverSettlementCreate, Permission.DriverSettlementUpdate,
+                Permission.DriverSettlementDelete, Permission.DriverSettlementExport,
             },
             ["Driver"] = new[]
             {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -47,6 +48,11 @@ const routeConfig = [
 		name: '財務表',
 		path: 'finance',
 		icon: <ReceiptLong />,
+	},
+	{
+		name: '司機結算表',
+		path: 'driver-settlement',
+		icon: <AccountBalanceWalletIcon />,
 	},
 	{
 		name: '業績統計',

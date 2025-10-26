@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using hao_yang_finance_api.Data;
@@ -11,9 +12,11 @@ using hao_yang_finance_api.Data;
 namespace hao_yang_finance_api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250925142701_ChangeTargetMonthToString")]
+    partial class ChangeTargetMonthToString
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -127,14 +130,6 @@ namespace hao_yang_finance_api.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("phone");
 
-                    b.Property<decimal>("ProfitShareRatio")
-                        .HasColumnType("numeric")
-                        .HasColumnName("profit_share_ratio");
-
-                    b.Property<decimal?>("TruckTonnage")
-                        .HasColumnType("numeric")
-                        .HasColumnName("truck_tonnage");
-
                     b.Property<string>("UpdatedAt")
                         .IsRequired()
                         .HasColumnType("text")
@@ -199,7 +194,7 @@ namespace hao_yang_finance_api.Migrations
                     b.HasIndex("DriverId", "TargetMonth")
                         .IsUnique();
 
-                    b.ToTable("driver_settlement");
+                    b.ToTable("DriverSettlements");
                 });
 
             modelBuilder.Entity("hao_yang_finance_api.Models.Expense", b =>
@@ -242,7 +237,7 @@ namespace hao_yang_finance_api.Migrations
 
                     b.HasIndex("SettlementId");
 
-                    b.ToTable("expense");
+                    b.ToTable("Expenses");
                 });
 
             modelBuilder.Entity("hao_yang_finance_api.Models.ExpenseType", b =>
@@ -278,7 +273,7 @@ namespace hao_yang_finance_api.Migrations
 
                     b.HasKey("ExpenseTypeId");
 
-                    b.ToTable("expense_type");
+                    b.ToTable("ExpenseTypes");
                 });
 
             modelBuilder.Entity("hao_yang_finance_api.Models.ExtraExpense", b =>
@@ -510,6 +505,41 @@ namespace hao_yang_finance_api.Migrations
                     b.HasIndex("WaybillId");
 
                     b.ToTable("loading_location");
+                });
+
+            modelBuilder.Entity("hao_yang_finance_api.Models.SettlementAuditLog", b =>
+                {
+                    b.Property<long>("LogId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("LogId"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ChangedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("jsonb");
+
+                    b.Property<long>("SettlementId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("LogId");
+
+                    b.HasIndex("SettlementId");
+
+                    b.ToTable("SettlementAuditLogs");
                 });
 
             modelBuilder.Entity("hao_yang_finance_api.Models.User", b =>
@@ -765,6 +795,17 @@ namespace hao_yang_finance_api.Migrations
                     b.Navigation("Waybill");
                 });
 
+            modelBuilder.Entity("hao_yang_finance_api.Models.SettlementAuditLog", b =>
+                {
+                    b.HasOne("hao_yang_finance_api.Models.DriverSettlement", "Settlement")
+                        .WithMany("AuditLogs")
+                        .HasForeignKey("SettlementId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Settlement");
+                });
+
             modelBuilder.Entity("hao_yang_finance_api.Models.Waybill", b =>
                 {
                     b.HasOne("hao_yang_finance_api.Models.Company", "Company")
@@ -809,6 +850,8 @@ namespace hao_yang_finance_api.Migrations
 
             modelBuilder.Entity("hao_yang_finance_api.Models.DriverSettlement", b =>
                 {
+                    b.Navigation("AuditLogs");
+
                     b.Navigation("Expenses");
                 });
 

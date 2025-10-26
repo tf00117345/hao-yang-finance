@@ -19,6 +19,12 @@ namespace hao_yang_finance_api.Models
         [MaxLength(20)]
         public string? Phone { get; set; }
 
+        [Column("profit_share_ratio")]
+        public decimal ProfitShareRatio { get; set; } = 50;
+
+        [Column("truck_tonnage")]
+        public decimal? TruckTonnage { get; set; }
+
         [Column("is_active")]
         public bool IsActive { get; set; } = true;
 
@@ -30,5 +36,6 @@ namespace hao_yang_finance_api.Models
 
         // Navigation properties
         public virtual ICollection<Waybill> Waybills { get; set; } = new List<Waybill>();
+        public virtual ICollection<DriverSettlement> Settlements { get; set; } = new List<DriverSettlement>();
     }
 }

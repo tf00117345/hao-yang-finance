@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using hao_yang_finance_api.Data;
@@ -11,9 +12,11 @@ using hao_yang_finance_api.Data;
 namespace hao_yang_finance_api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251022152123_RemoveSettlementAuditLog")]
+    partial class RemoveSettlementAuditLog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -126,14 +129,6 @@ namespace hao_yang_finance_api.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("phone");
-
-                    b.Property<decimal>("ProfitShareRatio")
-                        .HasColumnType("numeric")
-                        .HasColumnName("profit_share_ratio");
-
-                    b.Property<decimal?>("TruckTonnage")
-                        .HasColumnType("numeric")
-                        .HasColumnName("truck_tonnage");
 
                     b.Property<string>("UpdatedAt")
                         .IsRequired()

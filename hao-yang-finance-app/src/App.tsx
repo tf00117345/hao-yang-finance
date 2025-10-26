@@ -13,6 +13,7 @@ import { SnackbarProvider } from './contexts/SnackbarContext';
 import { LoginPage } from './features/Auth/components/LoginPage/LoginPage';
 import { ProtectedRoute } from './features/Auth/components/ProtectedRoute/ProtectedRoute';
 import { AuthProvider } from './features/Auth/context/AuthContext';
+import DriverSettlementPage from './features/DriverSettlement/components/DriverSettlementPage/DriverSettlementPage';
 import FinancePage from './features/Finance/components/FinancePage/FinancePage';
 import { SettingPage } from './features/Settings/components/SettingPage/SettingPage';
 import { StatisticsPage } from './features/Statistics/components/StatisticsPage';
@@ -45,6 +46,7 @@ function App() {
 										<Route index element={<Navigate replace to="/waybill" />} />
 										<Route path="/waybill/*" element={<WaybillPage />} />
 										<Route path="/finance" element={<FinancePage />} />
+										<Route path="/driver-settlement" element={<DriverSettlementPage />} />
 										<Route path="/statistics" element={<StatisticsPage />} />
 										<Route path="/user-management" element={<UserManagement />} />
 										<Route path="/settings/*" element={<SettingPage />} />

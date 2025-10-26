@@ -60,6 +60,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 
+// Add Driver Settlement Service
+builder.Services.AddScoped<DriverSettlementService>();
+
 // Add JWT Authentication
 var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ??
              builder.Configuration["JWT:Key"] ??

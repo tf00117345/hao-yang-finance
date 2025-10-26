@@ -20,6 +20,9 @@ namespace hao_yang_finance_api.Data
         public DbSet<ExtraExpense> ExtraExpenses { get; set; }
         public DbSet<InvoiceWaybill> InvoiceWaybills { get; set; }
         public DbSet<InvoiceExtraExpense> InvoiceExtraExpenses { get; set; }
+        public DbSet<ExpenseType> ExpenseTypes { get; set; }
+        public DbSet<DriverSettlement> DriverSettlements { get; set; }
+        public DbSet<Expense> Expenses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -51,6 +54,11 @@ namespace hao_yang_finance_api.Data
                     .WithOne(w => w.Driver)
                     .HasForeignKey(w => w.DriverId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasMany(d => d.Settlements)
+                    .WithOne(s => s.Driver)
+                    .HasForeignKey(s => s.DriverId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Configure Waybill
@@ -102,6 +110,37 @@ namespace hao_yang_finance_api.Data
                     .WithMany()
                     .HasForeignKey(ie => ie.ExtraExpenseId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure DriverSettlement
+            modelBuilder.Entity<DriverSettlement>(entity =>
+            {
+                entity.HasIndex(ds => new { ds.DriverId, ds.TargetMonth })
+                    .IsUnique();
+
+                entity.HasMany(ds => ds.Expenses)
+                    .WithOne(e => e.Settlement)
+                    .HasForeignKey(e => e.SettlementId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure Expense
+            modelBuilder.Entity<Expense>(entity =>
+            {
+                entity.HasOne(e => e.ExpenseType)
+                    .WithMany()
+                    .HasForeignKey(e => e.ExpenseTypeId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.Property(e => e.Amount)
+                    .HasPrecision(12, 2);
+            });
+
+            // Configure ExpenseType
+            modelBuilder.Entity<ExpenseType>(entity =>
+            {
+                entity.Property(et => et.DefaultAmount)
+                    .HasPrecision(12, 2);
             });
         }
     }

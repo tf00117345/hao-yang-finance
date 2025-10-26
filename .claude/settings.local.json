@@ -29,7 +29,9 @@
       "Bash(powershell:*)",
       "Bash(dotnet script:*)",
       "WebFetch(domain:docs.railway.com)",
-      "Bash(railway up:*)"
+      "Bash(railway up:*)",
+      "Bash(npm run dev)",
+      "Bash(yarn prettier:*)"
     ],
     "deny": []
   }

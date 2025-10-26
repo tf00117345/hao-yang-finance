@@ -36,6 +36,8 @@ namespace hao_yang_finance_api.Controllers
                     Phone = d.Phone,
                     IsActive = d.IsActive,
                     CreatedAt = d.CreatedAt,
+                    ProfitShareRatio = d.ProfitShareRatio,
+                    TruckTonnage = d.TruckTonnage ?? 11,
                     UpdatedAt = d.UpdatedAt
                 })
                 .ToListAsync();

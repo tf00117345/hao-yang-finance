@@ -405,16 +405,9 @@ function WaybillForm({
 													if (newValue && typeof newValue !== 'string') {
 														onChange(newValue.name);
 														setValue('driverId', newValue.id);
-														if (newValue.name === '黃天賜') {
-															setValue('tonnage', 10.4);
-														} else if (newValue.name === '林豐基') {
-															setValue('tonnage', 17);
-														} else if (newValue.name === '陳文輝') {
-															setValue('tonnage', 17);
-														} else if (newValue.name === '黃奕熏') {
-															setValue('tonnage', 11);
-														} else {
-															setValue('tonnage', 10.4);
+														// Auto-fill tonnage from driver's truck tonnage
+														if (newValue.truckTonnage) {
+															setValue('tonnage', newValue.truckTonnage);
 														}
 													} else {
 														onChange(newValue);

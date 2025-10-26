@@ -18,6 +18,7 @@ import FinancePage from './features/Finance/components/FinancePage/FinancePage';
 import { SettingPage } from './features/Settings/components/SettingPage/SettingPage';
 import { StatisticsPage } from './features/Statistics/components/StatisticsPage';
 import UserManagement from './features/UserManagement/components/UserManagement/UserManagement';
+import WaybillByCompanyPage from './features/Waybill/components/WaybillByCompanyPage/WaybillByCompanyPage';
 import WaybillPage from './features/Waybill/components/WaybillPage/WaybillPage';
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
 										}
 									>
 										<Route index element={<Navigate replace to="/waybill" />} />
+										<Route path="/query-waybills" element={<WaybillByCompanyPage />} />
 										<Route path="/waybill/*" element={<WaybillPage />} />
 										<Route path="/finance" element={<FinancePage />} />
 										<Route path="/driver-settlement" element={<DriverSettlementPage />} />

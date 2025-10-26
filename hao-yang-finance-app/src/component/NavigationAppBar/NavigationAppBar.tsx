@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import BusinessIcon from '@mui/icons-material/Business';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
@@ -43,6 +44,11 @@ const routeConfig = [
 		name: '託運單',
 		path: 'waybill',
 		icon: <PendingActionsIcon />,
+	},
+	{
+		name: '託運單查詢',
+		path: 'query-waybills',
+		icon: <BusinessIcon />,
 	},
 	{
 		name: '財務表',
@@ -143,7 +149,7 @@ function NavigationAppBar() {
 	const { user, logout } = useAuth();
 	const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
 	const [mobileOpen, setMobileOpen] = useState(false);
-	const currentPath = location.pathname;
+	const currentPath = location.pathname.split('/')[1];
 
 	const useDesktop = useMediaQuery('(min-width:1600px)');
 
@@ -188,7 +194,7 @@ function NavigationAppBar() {
 						return (
 							<ListItem key={route.name} disablePadding>
 								<ListItemButton
-									selected={currentPath.includes(route.path)}
+									selected={currentPath === route.path}
 									onClick={() => navigateToPage(route.path)}
 								>
 									<ListItemIcon>{route.icon}</ListItemIcon>

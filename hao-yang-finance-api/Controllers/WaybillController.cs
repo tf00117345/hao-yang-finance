@@ -861,5 +861,70 @@ namespace hao_yang_finance_api.Controllers
 
             return Ok(result);
         }
+
+        // GET: api/Waybill/suggested-for-invoice?companyId={id}
+        [HttpGet("suggested-for-invoice")]
+        [RequirePermission(Permission.WaybillRead)]
+        public async Task<ActionResult<IEnumerable<WaybillDto>>> GetSuggestedWaybillsForInvoice(
+            [FromQuery] string companyId)
+        {
+            if (string.IsNullOrEmpty(companyId))
+            {
+                return BadRequest(new { message = "請提供公司ID" });
+            }
+
+            // 計算一年前的日期
+            var oneYearAgo = DateTime.UtcNow.AddYears(-1).ToString("yyyy-MM-dd");
+
+            var waybills = await _context.Waybills
+                .Include(w => w.Company)
+                .Include(w => w.Driver)
+                .Include(w => w.LoadingLocations)
+                .Include(w => w.ExtraExpenses)
+                .Where(w => w.CompanyId == companyId &&
+                            w.Status == "PENDING" &&
+                            w.Date.CompareTo(oneYearAgo) >= 0)
+                .OrderByDescending(w => w.Date)
+                .ThenByDescending(w => w.CreatedAt)
+                .ToListAsync();
+
+            var result = waybills.Select(w => new WaybillDto
+            {
+                Id = w.Id,
+                // WaybillNumber = w.WaybillNumber,
+                Date = w.Date,
+                Item = w.Item,
+                Tonnage = w.Tonnage,
+                CompanyId = w.CompanyId,
+                CompanyName = w.Company.Name,
+                WorkingTimeStart = w.WorkingTimeStart,
+                WorkingTimeEnd = w.WorkingTimeEnd,
+                Fee = w.Fee,
+                DriverId = w.DriverId,
+                DriverName = w.Driver.Name,
+                PlateNumber = w.PlateNumber,
+                Notes = w.Notes,
+                Status = w.Status,
+                InvoiceId = w.InvoiceId,
+                LoadingLocations = w.LoadingLocations
+                    .OrderBy(l => l.SequenceOrder)
+                    .Select(l => new LoadingLocationDto
+                    {
+                        From = l.FromLocation,
+                        To = l.ToLocation
+                    }).ToList(),
+                ExtraExpenses = w.ExtraExpenses.Select(e => new ExtraExpenseDto
+                {
+                    Id = e.Id,
+                    Item = e.Item ?? e.Description,
+                    Fee = e.Fee ?? e.Amount,
+                    Notes = e.Notes
+                }).ToList(),
+                CreatedAt = w.CreatedAt,
+                UpdatedAt = w.UpdatedAt
+            }).ToList();
+
+            return Ok(result);
+        }
     }
 }

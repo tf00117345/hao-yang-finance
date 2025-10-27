@@ -918,18 +918,23 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 												</TableRow>
 											</TableHead>
 											<TableBody>
-												{viewingInvoice.waybills.map((waybill) => (
-													<TableRow key={waybill.waybillId}>
-														<TableCell>
-															{new Date(waybill.date).toLocaleDateString('zh-TW')}
-														</TableCell>
-														<TableCell>{waybill.item}</TableCell>
-														<TableCell>{waybill.driverName}</TableCell>
-														<TableCell align="right">
-															${waybill.fee.toLocaleString()}
-														</TableCell>
-													</TableRow>
-												))}
+												{viewingInvoice.waybills
+													.sort(
+														(a, b) =>
+															new Date(a.date).getTime() - new Date(b.date).getTime(),
+													)
+													.map((waybill) => (
+														<TableRow key={waybill.waybillId}>
+															<TableCell>
+																{new Date(waybill.date).toLocaleDateString('zh-TW')}
+															</TableCell>
+															<TableCell>{waybill.item}</TableCell>
+															<TableCell>{waybill.driverName}</TableCell>
+															<TableCell align="right">
+																${waybill.fee.toLocaleString()}
+															</TableCell>
+														</TableRow>
+													))}
 												<TableRow>
 													<TableCell colSpan={3} align="right">
 														<Typography variant="body2" fontWeight="bold">

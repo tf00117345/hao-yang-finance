@@ -2,9 +2,30 @@ import { pinyin } from 'pinyin-pro';
 
 // 注音符號順序對照表
 const BOPOMOFO_ORDER = [
-	'ㄅ', 'ㄆ', 'ㄇ', 'ㄈ', 'ㄉ', 'ㄊ', 'ㄋ', 'ㄌ',
-	'ㄍ', 'ㄎ', 'ㄏ', 'ㄐ', 'ㄑ', 'ㄒ', 'ㄓ', 'ㄔ',
-	'ㄕ', 'ㄖ', 'ㄗ', 'ㄘ', 'ㄙ', 'ㄧ', 'ㄨ', 'ㄩ'
+	'ㄅ',
+	'ㄆ',
+	'ㄇ',
+	'ㄈ',
+	'ㄉ',
+	'ㄊ',
+	'ㄋ',
+	'ㄌ',
+	'ㄍ',
+	'ㄎ',
+	'ㄏ',
+	'ㄐ',
+	'ㄑ',
+	'ㄒ',
+	'ㄓ',
+	'ㄔ',
+	'ㄕ',
+	'ㄖ',
+	'ㄗ',
+	'ㄘ',
+	'ㄙ',
+	'ㄧ',
+	'ㄨ',
+	'ㄩ',
 ];
 
 /**
@@ -21,16 +42,42 @@ export function getBopomofoInitial(text: string): string {
 
 	// 拼音首字母對應注音符號的映射
 	const pinyinToBopomofo: Record<string, string> = {
-		'b': 'ㄅ', 'p': 'ㄆ', 'm': 'ㄇ', 'f': 'ㄈ',
-		'd': 'ㄉ', 't': 'ㄊ', 'n': 'ㄋ', 'l': 'ㄌ',
-		'g': 'ㄍ', 'k': 'ㄎ', 'h': 'ㄏ',
-		'j': 'ㄐ', 'q': 'ㄑ', 'x': 'ㄒ',
-		'zh': 'ㄓ', 'ch': 'ㄔ', 'sh': 'ㄕ', 'r': 'ㄖ',
-		'z': 'ㄗ', 'c': 'ㄘ', 's': 'ㄙ',
-		'y': 'ㄧ', 'w': 'ㄨ', 'yu': 'ㄩ',
-		'a': 'ㄚ', 'o': 'ㄛ', 'e': 'ㄜ',
-		'ai': 'ㄞ', 'ei': 'ㄟ', 'ao': 'ㄠ', 'ou': 'ㄡ',
-		'an': 'ㄢ', 'en': 'ㄣ', 'ang': 'ㄤ', 'eng': 'ㄥ', 'er': 'ㄦ'
+		b: 'ㄅ',
+		p: 'ㄆ',
+		m: 'ㄇ',
+		f: 'ㄈ',
+		d: 'ㄉ',
+		t: 'ㄊ',
+		n: 'ㄋ',
+		l: 'ㄌ',
+		g: 'ㄍ',
+		k: 'ㄎ',
+		h: 'ㄏ',
+		j: 'ㄐ',
+		q: 'ㄑ',
+		x: 'ㄒ',
+		zh: 'ㄓ',
+		ch: 'ㄔ',
+		sh: 'ㄕ',
+		r: 'ㄖ',
+		z: 'ㄗ',
+		c: 'ㄘ',
+		s: 'ㄙ',
+		y: 'ㄧ',
+		w: 'ㄨ',
+		yu: 'ㄩ',
+		a: 'ㄚ',
+		o: 'ㄛ',
+		e: 'ㄜ',
+		ai: 'ㄞ',
+		ei: 'ㄟ',
+		ao: 'ㄠ',
+		ou: 'ㄡ',
+		an: 'ㄢ',
+		en: 'ㄣ',
+		ang: 'ㄤ',
+		eng: 'ㄥ',
+		er: 'ㄦ',
 	};
 
 	// 遍歷所有字符，跳過特殊字元，找到第一個可以轉換的中文字
@@ -41,7 +88,7 @@ export function getBopomofoInitial(text: string): string {
 		const result = pinyin(char, {
 			toneType: 'none',
 			type: 'array',
-			pattern: 'first'
+			pattern: 'first',
 		});
 
 		if (result && result.length > 0) {
@@ -71,10 +118,7 @@ export function getBopomofoInitial(text: string): string {
  * @param getNameFn 從項目中提取名稱的函數
  * @returns 按注音符號分組的對象
  */
-export function groupByBopomofo<T>(
-	items: T[],
-	getNameFn: (item: T) => string
-): Record<string, T[]> {
+export function groupByBopomofo<T>(items: T[], getNameFn: (item: T) => string): Record<string, T[]> {
 	const groups: Record<string, T[]> = {};
 
 	items.forEach((item) => {

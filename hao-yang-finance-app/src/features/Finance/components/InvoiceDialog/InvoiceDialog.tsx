@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
 	Autocomplete,
@@ -27,10 +27,14 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { useCompaniesQuery } from '../../../Settings/api/query';
 import { Company } from '../../../Settings/types/company';
+import { useSuggestedWaybillsQuery } from '../../../Waybill/api/query';
 import { Waybill } from '../../../Waybill/types/waybill.types';
 import { useCreateInvoiceMutation, useUpdateInvoiceMutation } from '../../api/mutation';
 import { useLastInvoiceNumberQuery } from '../../api/query';
 import { CreateInvoiceRequest, Invoice } from '../../types/invoice.type';
+
+// 定義一個常量空數組，避免每次都創建新的物件引用
+const EMPTY_WAYBILLS: Waybill[] = [];
 
 interface InvoiceDialogProps {
 	open: boolean;
@@ -54,6 +58,10 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 	}, [open, editingInvoice, refetchLastInvoiceNumber]);
 
 	const [selectedExtraExpenses, setSelectedExtraExpenses] = useState<string[]>([]);
+	const [selectedSuggestedIds, setSelectedSuggestedIds] = useState<string[]>([]);
+
+	// 用於追踪是否已經初始化建議託運單的選擇
+	const initializedSuggestedRef = useRef<string>('');
 
 	const {
 		control,
@@ -75,6 +83,12 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 	});
 
 	const watchedValues = watch();
+
+	// 查詢建議的託運單（僅在新建模式下啟用）
+	const { data: filteredSuggestedWaybillsData = [] } = useSuggestedWaybillsQuery(
+		watchedValues.companyId,
+		open && !editingInvoice,
+	);
 
 	// 初始化表單資料
 	useEffect(() => {
@@ -144,6 +158,45 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 		}
 	}, [open, editingInvoice, waybillList, companies, reset, lastInvoiceNumber]);
 
+	// 使用當前選中的 waybill IDs（穩定的字符串標識）
+	const currentWaybillIdsString = useMemo(() => {
+		return waybillList
+			.map((w) => w.id)
+			.filter(Boolean)
+			.sort()
+			.join(',');
+	}, [waybillList]);
+
+	// 使用 useMemo 計算過濾後的建議託運單（排除已選中的託運單）
+	const filteredSuggestedWaybills = useMemo(() => {
+		if (filteredSuggestedWaybillsData.length === 0 || editingInvoice) {
+			return EMPTY_WAYBILLS; // 使用常量空數組，避免每次都創建新的物件引用
+		}
+		// 排除已在當前選中列表中的託運單
+		const currentWaybillIds = new Set(currentWaybillIdsString.split(',').filter(Boolean));
+		return filteredSuggestedWaybillsData.filter((w) => !currentWaybillIds.has(w.id || ''));
+	}, [filteredSuggestedWaybillsData, editingInvoice, currentWaybillIdsString]);
+
+	// 只在對話框打開且 companyId 變化時初始化建議託運單的選擇
+	const currentCompanyId = watchedValues.companyId;
+	useEffect(() => {
+		if (!open || editingInvoice) {
+			// 對話框關閉或編輯模式，重置
+			initializedSuggestedRef.current = '';
+			setSelectedSuggestedIds([]);
+			return;
+		}
+
+		// 只在 companyId 變化時初始化
+		if (currentCompanyId && initializedSuggestedRef.current !== currentCompanyId) {
+			initializedSuggestedRef.current = currentCompanyId;
+			// 默認全選建議的託運單
+			if (filteredSuggestedWaybills.length > 0) {
+				setSelectedSuggestedIds(filteredSuggestedWaybills.map((w) => w.id).filter(Boolean) as string[]);
+			}
+		}
+	}, [open, editingInvoice, currentCompanyId, filteredSuggestedWaybills]);
+
 	// 處理對話框關閉
 	const handleClose = () => {
 		onClose();
@@ -151,9 +204,13 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 
 	// 處理表單提交
 	const onSubmit = (data: CreateInvoiceRequest) => {
+		// 合併當前選中的託運單和建議的託運單
+		const allWaybillIds = [...data.waybillIds, ...selectedSuggestedIds];
+
 		// 更新選中的額外費用ID
 		const baseData = {
 			...data,
+			waybillIds: allWaybillIds,
 			extraExpenseIds: selectedExtraExpenses,
 		};
 
@@ -196,7 +253,16 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 
 	// 計算金額
 	const calculateAmounts = () => {
-		const waybillAmount = waybillList.reduce((sum, waybill) => sum + (waybill.fee || 0), 0);
+		// 當前選中的託運單金額
+		const currentWaybillAmount = waybillList.reduce((sum, waybill) => sum + (waybill.fee || 0), 0);
+
+		// 選中的建議託運單金額
+		const suggestedWaybillAmount = filteredSuggestedWaybills
+			.filter((w) => selectedSuggestedIds.includes(w.id || ''))
+			.reduce((sum, waybill) => sum + (waybill.fee || 0), 0);
+
+		// 總託運單金額
+		const waybillAmount = currentWaybillAmount + suggestedWaybillAmount;
 
 		// if (watchedValues.extraExpensesIncludeTax) {
 		// 	// 額外費用包含稅率：稅額 = (託運單金額 + 額外費用) × 稅率
@@ -485,6 +551,95 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 								</Table>
 							</TableContainer>
 						</Box>
+
+						{/* 建議的託運單列表（前一年未開票） */}
+						{!editingInvoice && filteredSuggestedWaybills.length > 0 && (
+							<Box
+								sx={{
+									border: '2px solid #ff9800',
+									p: 2,
+									borderRadius: 1,
+									bgcolor: '#fff3e0',
+								}}
+							>
+								<Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+									<Typography variant="subtitle2" color="warning.dark">
+										⚠️ 發現有相關未開發票的託運單 ({filteredSuggestedWaybills.length})
+									</Typography>
+								</Stack>
+								<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+									這些託運單屬於同一公司，建議一起開發票
+								</Typography>
+
+								<Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+									<Button
+										size="small"
+										variant="outlined"
+										onClick={() => {
+											const allIds = filteredSuggestedWaybills
+												.map((w) => w.id)
+												.filter(Boolean) as string[];
+											setSelectedSuggestedIds(allIds);
+										}}
+									>
+										全選
+									</Button>
+									<Button size="small" variant="outlined" onClick={() => setSelectedSuggestedIds([])}>
+										取消全選
+									</Button>
+									<Typography variant="body2" sx={{ ml: 'auto', alignSelf: 'center' }}>
+										已選: {selectedSuggestedIds.length} / {filteredSuggestedWaybills.length}
+									</Typography>
+								</Stack>
+
+								<Divider sx={{ my: 1 }} />
+
+								<TableContainer sx={{ maxHeight: 300 }}>
+									<Table size="small">
+										<TableHead>
+											<TableRow>
+												<TableCell padding="checkbox" />
+												<TableCell>日期</TableCell>
+												<TableCell>品項</TableCell>
+												<TableCell>司機</TableCell>
+												<TableCell align="right">費用</TableCell>
+											</TableRow>
+										</TableHead>
+										<TableBody>
+											{filteredSuggestedWaybills.map((waybill) => (
+												<TableRow
+													key={waybill.id}
+													hover
+													onClick={() => {
+														const waybillId = waybill.id || '';
+														if (selectedSuggestedIds.includes(waybillId)) {
+															setSelectedSuggestedIds((prev) =>
+																prev.filter((id) => id !== waybillId),
+															);
+														} else {
+															setSelectedSuggestedIds((prev) => [...prev, waybillId]);
+														}
+													}}
+													sx={{ cursor: 'pointer' }}
+												>
+													<TableCell padding="checkbox">
+														<Checkbox
+															checked={selectedSuggestedIds.includes(waybill.id || '')}
+														/>
+													</TableCell>
+													<TableCell>{waybill.date}</TableCell>
+													<TableCell>{waybill.item}</TableCell>
+													<TableCell>{waybill.driverName}</TableCell>
+													<TableCell align="right">
+														${waybill.fee?.toLocaleString()}
+													</TableCell>
+												</TableRow>
+											))}
+										</TableBody>
+									</Table>
+								</TableContainer>
+							</Box>
+						)}
 
 						{/* 額外費用選擇 */}
 						{waybillList.some((w) => w.extraExpenses && w.extraExpenses.length > 0) && (

@@ -65,6 +65,14 @@ export const getWaybillsByIds = async (waybillIds: string[]): Promise<Waybill[]>
 	return response.data.map(transformWaybillFromApi);
 };
 
+// 取得建議的託運單（用於開發票時顯示前一年未開票的託運單）
+export const getSuggestedWaybillsForInvoice = async (companyId: string): Promise<Waybill[]> => {
+	const response = await axiosInstance.get('/waybill/suggested-for-invoice', {
+		params: { companyId },
+	});
+	return response.data.map(transformWaybillFromApi);
+};
+
 // 轉換前端格式為 API 格式
 const transformWaybillToApi = (waybill: WaybillFormData): any => {
 	return {

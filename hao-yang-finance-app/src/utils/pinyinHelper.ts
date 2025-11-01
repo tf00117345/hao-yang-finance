@@ -84,26 +84,51 @@ export function getBopomofoInitial(text: string): string {
 	for (let i = 0; i < trimmedText.length; i++) {
 		const char = trimmedText[i];
 
-		// 嘗試轉換為注音
+		// 嘗試轉換為注音（獲取完整拼音以正確區分 y/w 系列）
 		const result = pinyin(char, {
 			toneType: 'none',
 			type: 'array',
-			pattern: 'first',
 		});
 
 		if (result && result.length > 0) {
-			const pinyinStr = result[0];
+			const pinyinStr = result[0].toLowerCase();
+
+			// 特殊處理：y 開頭的拼音需要區分 ㄧ 和 ㄩ
+			// ㄩ 系列：yu, yue, yuan, yun, yong
+			if (
+				pinyinStr === 'yu' ||
+				pinyinStr.startsWith('yue') ||
+				pinyinStr.startsWith('yuan') ||
+				pinyinStr.startsWith('yun') ||
+				pinyinStr.startsWith('yong')
+			) {
+				return 'ㄩ';
+			}
+			// 其他 y 開頭（yi, ya, yan, yang, yao, ye, yin, ying 等）→ ㄧ
+			if (pinyinStr.startsWith('y')) {
+				return 'ㄧ';
+			}
+
+			// w 開頭的拼音全部映射到 ㄨ
+			if (pinyinStr.startsWith('w')) {
+				return 'ㄨ';
+			}
 
 			// 嘗試兩個字符的組合（zh, ch, sh）
-			const twoChar = pinyinStr.toLowerCase().substring(0, 2);
+			const twoChar = pinyinStr.substring(0, 2);
 			if (pinyinToBopomofo[twoChar]) {
 				return pinyinToBopomofo[twoChar];
 			}
 
-			// 嘗試單個字符
-			const oneChar = pinyinStr.toLowerCase()[0];
+			// 嘗試單個字符（b, p, m, f, d, t, n, l, g, k, h, j, q, x, r, z, c, s 等聲母，或韻母 a, o, e 等）
+			const oneChar = pinyinStr[0];
 			if (pinyinToBopomofo[oneChar]) {
 				return pinyinToBopomofo[oneChar];
+			}
+
+			// 處理完整韻母（ai, ei, ao, ou, an, en, ang, eng, er）
+			if (pinyinToBopomofo[pinyinStr]) {
+				return pinyinToBopomofo[pinyinStr];
 			}
 		}
 	}

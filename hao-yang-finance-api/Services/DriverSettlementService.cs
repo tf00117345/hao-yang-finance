@@ -299,6 +299,136 @@ namespace hao_yang_finance_api.Services
             return await GetExpenseTypesAsync(category);
         }
 
+        public async Task<ExpenseTypeDto?> GetExpenseTypeByIdAsync(int expenseTypeId)
+        {
+            var expenseType = await _context.ExpenseTypes
+                .FirstOrDefaultAsync(et => et.ExpenseTypeId == expenseTypeId);
+
+            if (expenseType == null)
+                return null;
+
+            return new ExpenseTypeDto
+            {
+                ExpenseTypeId = expenseType.ExpenseTypeId,
+                Category = expenseType.Category,
+                Name = expenseType.Name,
+                IsDefault = expenseType.IsDefault,
+                DefaultAmount = expenseType.DefaultAmount,
+                Formula = expenseType.Formula,
+                CreatedAt = expenseType.CreatedAt
+            };
+        }
+
+        public async Task<ExpenseTypeDto> CreateExpenseTypeAsync(CreateExpenseTypeDto createDto, string changedBy)
+        {
+            // Check if expense type with same name and category already exists
+            var existing = await _context.ExpenseTypes
+                .FirstOrDefaultAsync(et => et.Name == createDto.Name && et.Category == createDto.Category);
+
+            if (existing != null)
+            {
+                throw new InvalidOperationException(
+                    $"Expense type '{createDto.Name}' in category '{createDto.Category}' already exists.");
+            }
+
+            var formula = ConvertFormulaTypeToFormula(createDto.FormulaType, createDto.FormulaValue);
+
+            var expenseType = new ExpenseType
+            {
+                Category = createDto.Category,
+                Name = createDto.Name,
+                IsDefault = createDto.IsDefault,
+                DefaultAmount = createDto.DefaultAmount,
+                Formula = formula,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.ExpenseTypes.Add(expenseType);
+            await _context.SaveChangesAsync();
+
+            return await GetExpenseTypeByIdAsync(expenseType.ExpenseTypeId) ??
+                   throw new InvalidOperationException("Failed to retrieve created expense type");
+        }
+
+        public async Task<ExpenseTypeDto> UpdateExpenseTypeAsync(int expenseTypeId, UpdateExpenseTypeDto updateDto,
+            string changedBy)
+        {
+            var expenseType = await _context.ExpenseTypes
+                .FirstOrDefaultAsync(et => et.ExpenseTypeId == expenseTypeId);
+
+            if (expenseType == null)
+                throw new NotFoundException($"Expense type with ID {expenseTypeId} not found");
+
+            // Check if name conflict (same name and category but different ID)
+            var conflict = await _context.ExpenseTypes
+                .FirstOrDefaultAsync(et =>
+                    et.Name == updateDto.Name &&
+                    et.Category == expenseType.Category &&
+                    et.ExpenseTypeId != expenseTypeId);
+
+            if (conflict != null)
+            {
+                throw new InvalidOperationException(
+                    $"Expense type '{updateDto.Name}' in category '{expenseType.Category}' already exists.");
+            }
+
+            var formula = ConvertFormulaTypeToFormula(updateDto.FormulaType, updateDto.FormulaValue);
+
+            expenseType.Name = updateDto.Name;
+            expenseType.IsDefault = updateDto.IsDefault;
+            expenseType.DefaultAmount = updateDto.DefaultAmount;
+            expenseType.Formula = formula;
+
+            await _context.SaveChangesAsync();
+
+            return await GetExpenseTypeByIdAsync(expenseTypeId) ??
+                   throw new InvalidOperationException("Failed to retrieve updated expense type");
+        }
+
+        public async Task<bool> DeleteExpenseTypeAsync(int expenseTypeId, string changedBy)
+        {
+            var expenseType = await _context.ExpenseTypes
+                .FirstOrDefaultAsync(et => et.ExpenseTypeId == expenseTypeId);
+
+            if (expenseType == null)
+                return false;
+
+            // Check if expense type is being used by any expenses
+            var isUsed = await _context.Expenses
+                .AnyAsync(e => e.ExpenseTypeId == expenseTypeId);
+
+            if (isUsed)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot delete expense type '{expenseType.Name}' because it is being used in settlements.");
+            }
+
+            _context.ExpenseTypes.Remove(expenseType);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        private string? ConvertFormulaTypeToFormula(string? formulaType, decimal? formulaValue)
+        {
+            if (string.IsNullOrEmpty(formulaType) || formulaType == "fixed")
+                return null;
+
+            if (!formulaValue.HasValue)
+                return null;
+
+            // Convert percentage to decimal (e.g., 5 -> 0.05)
+            var decimalValue = formulaValue.Value / 100;
+
+            return formulaType switch
+            {
+                "income_percentage" => $"income * {decimalValue}",
+                "income_cash_percentage" => $"income_cash * {decimalValue}",
+                "total_income_percentage" => $"(income + income_cash) * {decimalValue}",
+                _ => null
+            };
+        }
+
         private async Task<(decimal invoiceIncome, decimal cashIncome)> CalculateMonthlyIncomeAsync(string driverId,
             DateTime targetMonth)
         {

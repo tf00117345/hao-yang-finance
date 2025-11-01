@@ -78,3 +78,31 @@ export interface SettlementFormData {
 	companyExpenses: CreateExpense[];
 	personalExpenses: CreateExpense[];
 }
+
+export type FormulaType = 'fixed' | 'income_percentage' | 'income_cash_percentage' | 'total_income_percentage';
+
+export interface CreateExpenseType {
+	category: 'company' | 'personal';
+	name: string;
+	isDefault: boolean;
+	defaultAmount?: number;
+	formulaType?: FormulaType;
+	formulaValue?: number;
+}
+
+export interface UpdateExpenseType {
+	name: string;
+	isDefault: boolean;
+	defaultAmount?: number;
+	formulaType?: FormulaType;
+	formulaValue?: number;
+}
+
+export interface ExpenseTypeFormData {
+	name: string;
+	isDefault: boolean;
+	amountType: 'fixed' | 'formula';
+	defaultAmount?: number;
+	formulaType?: FormulaType;
+	formulaValue?: number;
+}

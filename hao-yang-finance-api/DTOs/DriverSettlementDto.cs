@@ -80,4 +80,23 @@ namespace hao_yang_finance_api.DTOs
         public decimal Bonus { get; set; }
         public decimal FinalAmount { get; set; }
     }
+
+    public class CreateExpenseTypeDto
+    {
+        public string Category { get; set; } = string.Empty;       // "company" or "personal"
+        public string Name { get; set; } = string.Empty;
+        public bool IsDefault { get; set; }
+        public decimal? DefaultAmount { get; set; }
+        public string? FormulaType { get; set; }                   // "fixed", "income_percentage", etc.
+        public decimal? FormulaValue { get; set; }                 // Percentage value (e.g., 5 for 5%)
+    }
+
+    public class UpdateExpenseTypeDto
+    {
+        public string Name { get; set; } = string.Empty;
+        public bool IsDefault { get; set; }
+        public decimal? DefaultAmount { get; set; }
+        public string? FormulaType { get; set; }
+        public decimal? FormulaValue { get; set; }
+    }
 }

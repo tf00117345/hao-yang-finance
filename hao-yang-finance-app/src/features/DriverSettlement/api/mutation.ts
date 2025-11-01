@@ -1,6 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { CreateDriverSettlement, UpdateDriverSettlement } from '../types/driver-settlement.types';
+import {
+	CreateDriverSettlement,
+	CreateExpenseType,
+	UpdateDriverSettlement,
+	UpdateExpenseType,
+} from '../types/driver-settlement.types';
 import { driverSettlementApi } from './api';
 
 export const useCreateDriverSettlement = () => {
@@ -44,5 +49,45 @@ export const useDeleteDriverSettlement = () => {
 export const useExportDriverSettlementPdf = () => {
 	return useMutation({
 		mutationFn: (settlementId: number) => driverSettlementApi.exportSettlementPdf(settlementId),
+	});
+};
+
+export const useCreateExpenseType = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (data: CreateExpenseType) => driverSettlementApi.createExpenseType(data),
+		onSuccess: () => {
+			// Invalidate expense types list
+			queryClient.invalidateQueries({ queryKey: ['expense-types'] });
+			queryClient.invalidateQueries({ queryKey: ['default-expenses'] });
+		},
+	});
+};
+
+export const useUpdateExpenseType = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({ id, data }: { id: number; data: UpdateExpenseType }) =>
+			driverSettlementApi.updateExpenseType(id, data),
+		onSuccess: () => {
+			// Invalidate expense types list and default expenses
+			queryClient.invalidateQueries({ queryKey: ['expense-types'] });
+			queryClient.invalidateQueries({ queryKey: ['default-expenses'] });
+		},
+	});
+};
+
+export const useDeleteExpenseType = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (id: number) => driverSettlementApi.deleteExpenseType(id),
+		onSuccess: () => {
+			// Invalidate expense types list and default expenses
+			queryClient.invalidateQueries({ queryKey: ['expense-types'] });
+			queryClient.invalidateQueries({ queryKey: ['default-expenses'] });
+		},
 	});
 };

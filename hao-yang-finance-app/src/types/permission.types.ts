@@ -36,6 +36,13 @@ export enum Permission {
 	UserDelete = 'UserDelete',
 	UserChangeRole = 'UserChangeRole',
 	UserChangeStatus = 'UserChangeStatus',
+
+	// Driver settlement permissions
+	DriverSettlementRead = 'DriverSettlementRead',
+	DriverSettlementCreate = 'DriverSettlementCreate',
+	DriverSettlementUpdate = 'DriverSettlementUpdate',
+	DriverSettlementDelete = 'DriverSettlementDelete',
+	DriverSettlementExport = 'DriverSettlementExport',
 }
 
 export type UserRole = 'Admin' | 'Accountant' | 'Driver';

@@ -2,10 +2,12 @@ import { axiosInstance } from '../../../utils/axios-instance';
 import {
 	CreateDriverSettlement,
 	CreateExpense,
+	CreateExpenseType,
 	DriverSettlement,
 	DriverSettlementSummary,
 	ExpenseType,
 	UpdateDriverSettlement,
+	UpdateExpenseType,
 } from '../types/driver-settlement.types';
 
 // Driver Settlement API functions
@@ -65,5 +67,28 @@ export const driverSettlementApi = {
 	exportSettlementPdf: async (settlementId: number): Promise<void> => {
 		const response = await axiosInstance.post(`driverSettlement/${settlementId}/export-pdf`);
 		return response.data;
+	},
+
+	// Get expense type by ID
+	getExpenseType: async (id: number): Promise<ExpenseType> => {
+		const response = await axiosInstance.get<ExpenseType>(`driverSettlement/expense-types/${id}`);
+		return response.data;
+	},
+
+	// Create expense type
+	createExpenseType: async (data: CreateExpenseType): Promise<ExpenseType> => {
+		const response = await axiosInstance.post<ExpenseType>('driverSettlement/expense-types', data);
+		return response.data;
+	},
+
+	// Update expense type
+	updateExpenseType: async (id: number, data: UpdateExpenseType): Promise<ExpenseType> => {
+		const response = await axiosInstance.put<ExpenseType>(`driverSettlement/expense-types/${id}`, data);
+		return response.data;
+	},
+
+	// Delete expense type
+	deleteExpenseType: async (id: number): Promise<void> => {
+		await axiosInstance.delete(`driverSettlement/expense-types/${id}`);
 	},
 };

@@ -5,6 +5,7 @@ import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 import { Company } from '../Company/Company';
 import { Driver } from '../Driver/Driver';
+import { ExpenseTypeManagement } from '../ExpenseType/ExpenseTypeManagement';
 
 export function SettingPage() {
 	const location = useLocation();
@@ -14,6 +15,7 @@ export function SettingPage() {
 	const getCurrentTab = () => {
 		if (location.pathname.includes('/settings/company')) return 0;
 		if (location.pathname.includes('/settings/driver')) return 1;
+		if (location.pathname.includes('/settings/expense-types')) return 2;
 		return 0;
 	};
 
@@ -27,6 +29,7 @@ export function SettingPage() {
 	const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
 		if (newValue === 0) navigate('/settings/company');
 		if (newValue === 1) navigate('/settings/driver');
+		if (newValue === 2) navigate('/settings/expense-types');
 	};
 
 	return (
@@ -36,6 +39,7 @@ export function SettingPage() {
 				<Tabs value={getCurrentTab()} onChange={handleTabChange} aria-label="settings navigation tabs">
 					<Tab label="公司清單管理" />
 					<Tab label="駕駛清單管理" />
+					<Tab label="費用類型管理" />
 				</Tabs>
 			</Box>
 
@@ -44,6 +48,7 @@ export function SettingPage() {
 				<Routes>
 					<Route path="/company" element={<Company />} />
 					<Route path="/driver" element={<Driver />} />
+					<Route path="/expense-types" element={<ExpenseTypeManagement />} />
 				</Routes>
 			</Stack>
 		</Stack>

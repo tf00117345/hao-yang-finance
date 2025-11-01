@@ -240,5 +240,117 @@ namespace hao_yang_finance_api.Controllers
                 return StatusCode(500, new { message = "An error occurred while exporting PDF." });
             }
         }
+
+        [HttpGet("expense-types/{id}")]
+        [RequirePermission(Permission.DriverSettlementRead)]
+        public async Task<ActionResult<ExpenseTypeDto>> GetExpenseType(int id)
+        {
+            try
+            {
+                var expenseType = await _settlementService.GetExpenseTypeByIdAsync(id);
+
+                if (expenseType == null)
+                {
+                    return NotFound(new { message = $"Expense type with ID {id} not found." });
+                }
+
+                return Ok(expenseType);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving expense type {Id}", id);
+                return StatusCode(500, new { message = "An error occurred while retrieving the expense type." });
+            }
+        }
+
+        [HttpPost("expense-types")]
+        [RequirePermission(Permission.DriverSettlementCreate)]
+        public async Task<ActionResult<ExpenseTypeDto>> CreateExpenseType([FromBody] CreateExpenseTypeDto createDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
+                var expenseType = await _settlementService.CreateExpenseTypeAsync(createDto, userId);
+
+                return CreatedAtAction(
+                    nameof(GetExpenseType),
+                    new { id = expenseType.ExpenseTypeId },
+                    expenseType);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating expense type");
+                return StatusCode(500, new { message = "An error occurred while creating the expense type." });
+            }
+        }
+
+        [HttpPut("expense-types/{id}")]
+        [RequirePermission(Permission.DriverSettlementUpdate)]
+        public async Task<ActionResult<ExpenseTypeDto>> UpdateExpenseType(
+            int id,
+            [FromBody] UpdateExpenseTypeDto updateDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
+                var expenseType = await _settlementService.UpdateExpenseTypeAsync(id, updateDto, userId);
+
+                return Ok(expenseType);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating expense type {Id}", id);
+                return StatusCode(500, new { message = "An error occurred while updating the expense type." });
+            }
+        }
+
+        [HttpDelete("expense-types/{id}")]
+        [RequirePermission(Permission.DriverSettlementDelete)]
+        public async Task<ActionResult> DeleteExpenseType(int id)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "system";
+                var deleted = await _settlementService.DeleteExpenseTypeAsync(id, userId);
+
+                if (!deleted)
+                {
+                    return NotFound(new { message = $"Expense type with ID {id} not found." });
+                }
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting expense type {Id}", id);
+                return StatusCode(500, new { message = "An error occurred while deleting the expense type." });
+            }
+        }
     }
 }

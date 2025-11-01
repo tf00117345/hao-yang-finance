@@ -181,11 +181,11 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 	const getStatusChip = useCallback((status: string) => {
 		switch (status) {
 			case 'issued':
-				return <Chip label="未收款" color="primary" size="small" />;
+				return <Chip label="未收款" color="error" size="small" />;
 			case 'paid':
 				return <Chip label="已收款" color="success" size="small" />;
 			case 'void':
-				return <Chip label="已作廢" color="default" size="small" />;
+				return <Chip label="已作廢" color="warning" size="small" />;
 			default:
 				return <Chip label={status} size="small" />;
 		}

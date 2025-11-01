@@ -1,7 +1,17 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { Assignment, AttachMoney, CalendarToday, Clear, FilterList, Flag, Info, Receipt } from '@mui/icons-material';
-import { Box, Chip, IconButton, InputAdornment, Stack, TextField, Tooltip } from '@mui/material';
+import {
+	Box,
+	Chip,
+	ChipPropsColorOverrides,
+	IconButton,
+	InputAdornment,
+	Stack,
+	TextField,
+	Tooltip,
+} from '@mui/material';
+import { OverridableStringUnion } from '@mui/types';
 
 interface SmartFilterInputProps {
 	columnId: string;
@@ -43,9 +53,9 @@ export function SmartFilterInput({ columnId, columnHeader, value, onChange, onCl
 		switch (filterType) {
 			case 'status':
 				return [
-					{ label: '未收款', value: 'issued' },
-					{ label: '已收款', value: 'paid' },
-					{ label: '已作廢', value: 'void' },
+					{ label: '未收款', value: 'issued', color: 'error' },
+					{ label: '已收款', value: 'paid', color: 'success' },
+					{ label: '已作廢', value: 'void', color: 'warning' },
 				];
 			default:
 				return [];
@@ -149,7 +159,12 @@ export function SmartFilterInput({ columnId, columnHeader, value, onChange, onCl
 							label={filter.label}
 							size="small"
 							variant={value === filter.value ? 'filled' : 'outlined'}
-							color={value === filter.value ? 'primary' : 'default'}
+							color={
+								filter.color as OverridableStringUnion<
+									'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning',
+									ChipPropsColorOverrides
+								>
+							}
 							onClick={() => {
 								if (value === filter.value) {
 									onClear();
@@ -228,7 +243,7 @@ export function SmartFilterInput({ columnId, columnHeader, value, onChange, onCl
 									label={filter.label}
 									size="small"
 									variant={value === filter.value ? 'filled' : 'outlined'}
-									color={value === filter.value ? 'primary' : 'default'}
+									color={value === filter.color ? 'primary' : 'default'}
 									onClick={() => {
 										if (value === filter.value) {
 											onClear();

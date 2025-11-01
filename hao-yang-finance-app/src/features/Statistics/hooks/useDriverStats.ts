@@ -30,3 +30,12 @@ export const useStatsSummary = (params: { startDate?: string; endDate?: string }
 		staleTime: 5 * 60 * 1000, // 5 minutes
 	});
 };
+
+// 用於圖表的 hook，預設啟用月度分解
+export const useDriverStatsWithMonthly = (params: Omit<DriverStatsQueryParams, 'includeMonthlyBreakdown'>) => {
+	return useQuery({
+		queryKey: ['driverStats', { ...params, includeMonthlyBreakdown: true }],
+		queryFn: () => getDriverStats({ ...params, includeMonthlyBreakdown: true }),
+		staleTime: 5 * 60 * 1000, // 5 minutes
+	});
+};

@@ -684,6 +684,11 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 					</Stack>
 				</DialogContent>
 				<DialogActions>
+					<Box sx={{ flex: 1, display: 'flex', alignItems: 'center', ml: 2 }}>
+						<Typography variant="body2" color="text.secondary">
+							共 {waybillList.length + selectedSuggestedIds.length} 張託運單
+						</Typography>
+					</Box>
 					<Button onClick={handleClose}>取消</Button>
 					<Button
 						type="submit"

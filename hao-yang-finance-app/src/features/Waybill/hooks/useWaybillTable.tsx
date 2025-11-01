@@ -19,6 +19,7 @@ import {
 	useReactTable,
 } from '@tanstack/react-table';
 
+import { WaybillStatus } from '../types/waybill-status.types';
 import { ExtraExpense, Waybill } from '../types/waybill.types';
 
 const columnHelper = createColumnHelper<Waybill>();
@@ -119,27 +120,41 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 			columnHelper.accessor('fee', {
 				header: '運費',
 				enableGrouping: false,
-				size: 80,
+				size: 120,
+				cell: ({ row }) => {
+					const { fee } = row.original;
+					const { taxAmount } = row.original;
+					if (fee == null) return '';
+
+					if (taxAmount) {
+						const totalWithTax = fee + taxAmount;
+						return `${fee.toLocaleString()}`;
+					}
+					return fee.toLocaleString();
+				},
 			}),
 			columnHelper.accessor('status', {
 				header: '狀態',
 				enableGrouping: false,
 				cell: ({ getValue }) => {
 					let component: React.ReactNode;
-					if (getValue() === 'PENDING') {
+					const status = getValue();
+					if (status === WaybillStatus.PENDING) {
 						component = <Chip label="待開發票" color="warning" size="small" variant="filled" />;
-					} else if (getValue() === 'NO_INVOICE_NEEDED') {
+					} else if (status === WaybillStatus.NO_INVOICE_NEEDED) {
 						component = <Chip label="不需開發票" color="default" size="small" variant="filled" />;
-					} else if (getValue() === 'INVOICED') {
+					} else if (status === WaybillStatus.INVOICED) {
 						component = <Chip label="已開發票" color="success" size="small" variant="filled" />;
-					} else if (getValue() === 'PENDING_PAYMENT') {
-						component = <Chip label="待收款" color="error" size="small" variant="filled" />;
+					} else if (status === WaybillStatus.NEED_TAX_UNPAID) {
+						component = <Chip label="未收款" color="error" size="small" variant="filled" />;
+					} else if (status === WaybillStatus.NEED_TAX_PAID) {
+						component = <Chip label="已收款" color="success" size="small" variant="filled" />;
 					} else {
 						component = <Chip label="無狀態" color="info" size="small" variant="filled" />;
 					}
 					return component;
 				},
-				size: 115,
+				size: 140,
 			}),
 			columnHelper.accessor(
 				(row) => row.extraExpenses?.reduce((acc: number, expense: ExtraExpense) => +acc + +expense.fee, 0),
@@ -174,7 +189,7 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 					return (
 						<Stack direction="row" spacing={0.5}>
 							{/* PENDING 狀態：編輯、刪除 */}
-							{status === 'PENDING' && (
+							{status === WaybillStatus.PENDING && (
 								<>
 									<Tooltip title="編輯">
 										<IconButton size="small" onClick={() => onSelect(waybill)}>
@@ -194,7 +209,7 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 							)}
 
 							{/* 其他狀態：查看 */}
-							{status !== 'PENDING' && (
+							{status !== WaybillStatus.PENDING && (
 								<Tooltip title="查看詳情">
 									<IconButton size="small" onClick={() => onView(waybill)}>
 										<VisibilityIcon />

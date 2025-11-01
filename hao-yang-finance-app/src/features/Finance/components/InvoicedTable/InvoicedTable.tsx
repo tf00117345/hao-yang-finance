@@ -28,6 +28,7 @@ import {
 	TableHead,
 	TableRow,
 	TextField,
+	Tooltip,
 	Typography,
 } from '@mui/material';
 import { flexRender } from '@tanstack/react-table';
@@ -196,7 +197,7 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 		(invoice: Invoice) => {
 			if (invoice.status === 'issued') {
 				return (
-					<Stack direction="row" spacing={1}>
+					<Stack direction="row" spacing={1} width="180px">
 						<Button size="small" variant="outlined" onClick={() => handleViewInvoice(invoice)}>
 							查看
 						</Button>
@@ -211,14 +212,14 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 						<Button size="small" variant="contained" onClick={() => handleEditInvoice(invoice)}>
 							編輯
 						</Button>
-						<Button
+						{/* <Button
 							size="small"
 							variant="contained"
 							color="warning"
 							onClick={() => handleVoidInvoice(invoice)}
 						>
 							作廢
-						</Button>
+						</Button> */}
 						<Button
 							size="small"
 							variant="contained"
@@ -254,7 +255,7 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 		[
 			handleMarkPaid,
 			handleEditInvoice,
-			handleVoidInvoice,
+			// handleVoidInvoice,
 			handleDeleteInvoice,
 			handleRestoreInvoice,
 			handleViewInvoice,
@@ -940,10 +941,7 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 																	<Stack direction="row" flexWrap="wrap" gap={0.5}>
 																		{visible.map((loc, idx) => (
 																			<Chip
-																				key={
-																					loc.id ??
-																					`${loc.from}-${loc.to}-${idx}`
-																				}
+																				key={`${loc.from}-${loc.to}-${idx.toString()}`}
 																				label={`${loc.from} → ${loc.to}`}
 																				size="small"
 																				variant="outlined"

@@ -174,14 +174,14 @@ export function LoginPage() {
 												message: '用戶名至少需要3個字符',
 											},
 										}}
-										render={({ field, fieldState: { error } }) => (
+										render={({ field, fieldState: { error: fieldError } }) => (
 											<TextField
 												{...field}
 												label="用戶名"
 												variant="outlined"
 												fullWidth
-												error={!!error}
-												helperText={error?.message}
+												error={!!fieldError}
+												helperText={fieldError?.message}
 												disabled={isLoading}
 											/>
 										)}
@@ -197,15 +197,15 @@ export function LoginPage() {
 												message: '密碼至少需要6個字符',
 											},
 										}}
-										render={({ field, fieldState: { error } }) => (
+										render={({ field, fieldState: { error: fieldError } }) => (
 											<TextField
 												{...field}
 												label="密碼"
 												type={showPassword ? 'text' : 'password'}
 												variant="outlined"
 												fullWidth
-												error={!!error}
-												helperText={error?.message}
+												error={!!fieldError}
+												helperText={fieldError?.message}
 												disabled={isLoading}
 												InputProps={{
 													endAdornment: (

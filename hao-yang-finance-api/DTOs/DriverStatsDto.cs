@@ -5,11 +5,9 @@ namespace hao_yang_finance_api.DTOs
         public string DriverId { get; set; } = string.Empty;
         public string DriverName { get; set; } = string.Empty;
         public int TotalWaybills { get; set; }
-        public int PendingWaybills { get; set; }
         public int InvoicedWaybills { get; set; }
         public int NoInvoiceNeededWaybills { get; set; }
         public decimal TotalRevenue { get; set; }
-        public decimal PendingRevenue { get; set; }
         public decimal InvoicedRevenue { get; set; }
         public decimal NoInvoiceNeededRevenue { get; set; }
         public decimal AverageWaybillFee { get; set; }

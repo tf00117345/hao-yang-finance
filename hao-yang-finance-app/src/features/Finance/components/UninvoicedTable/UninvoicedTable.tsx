@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowDownward, ArrowUpward, UnfoldMore } from '@mui/icons-material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import DriveEtaIcon from '@mui/icons-material/DriveEta';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupIcon from '@mui/icons-material/Group';
 import PaymentIcon from '@mui/icons-material/Payment';
@@ -32,8 +33,8 @@ import {
 import { flexRender } from '@tanstack/react-table';
 
 import {
-	useMarkWaybillAsPendingPaymentMutation,
 	useMarkWaybillsAsNoInvoiceNeededBatchMutation,
+	useMarkWaybillsAsUnpaidWithTaxBatchMutation,
 } from '../../../Waybill/api/mutation';
 import { Waybill } from '../../../Waybill/types/waybill.types';
 import { useStickyFilterTop } from '../../hooks/useStickyFilterTop';
@@ -53,14 +54,14 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 	const [confirmNoInvoiceDialogOpen, setConfirmNoInvoiceDialogOpen] = useState(false);
 	const [processingNoInvoice, setProcessingNoInvoice] = useState(false);
 	const [pendingPaymentDialogOpen, setPendingPaymentDialogOpen] = useState(false);
-	const [pendingPaymentWaybill, setPendingPaymentWaybill] = useState<Waybill | null>(null);
+	const [pendingPaymentWaybills, setPendingPaymentWaybills] = useState<Waybill[]>([]);
 	const [pendingPaymentNotes, setPendingPaymentNotes] = useState('');
 	const [processingPendingPayment, setProcessingPendingPayment] = useState(false);
 	const { tableHeadRef, filterRowRef, filterTop } = useStickyFilterTop();
 
 	const { table, columnFilters, setColumnFilters } = useUninvoicedTable(waybills);
 	const markAsNoInvoiceNeededBatchMutation = useMarkWaybillsAsNoInvoiceNeededBatchMutation();
-	const markAsPendingPaymentMutation = useMarkWaybillAsPendingPaymentMutation();
+	const markAsUnpaidWithTaxBatchMutation = useMarkWaybillsAsUnpaidWithTaxBatchMutation();
 
 	// Track component mount status
 	useEffect(() => {
@@ -122,22 +123,17 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 		setConfirmNoInvoiceDialogOpen(true);
 	}, [table]);
 
-	// 處理標記為待收款
+	// 處理標記為未收款 - 支援批次操作
 	const handleOpenPendingPaymentDialog = useCallback(() => {
 		const selected = table.getSelectedRowModel().rows.map((row) => row.original);
 		if (selected.length === 0) {
 			// eslint-disable-next-line no-alert
-			alert('請先選擇一筆資料');
-			return;
-		}
-		if (selected.length > 1) {
-			// eslint-disable-next-line no-alert
-			alert('標記為待收款僅支援單筆操作，請只選擇一筆資料');
+			alert('請先選擇至少一筆資料');
 			return;
 		}
 
-		setPendingPaymentWaybill(selected[0]);
-		setPendingPaymentNotes(selected[0].notes || '');
+		setPendingPaymentWaybills(selected);
+		setPendingPaymentNotes('');
 		setPendingPaymentDialogOpen(true);
 	}, [table]);
 
@@ -164,26 +160,25 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 		}
 	};
 
-	// 確認標記為待收款
+	// 確認批次標記為未收款
 	const handleConfirmPendingPayment = async () => {
-		if (!pendingPaymentWaybill) return;
+		if (pendingPaymentWaybills.length === 0) return;
 
 		setProcessingPendingPayment(true);
 
 		try {
-			await markAsPendingPaymentMutation.mutateAsync({
-				waybillId: pendingPaymentWaybill.id,
-				notes: pendingPaymentNotes.trim(),
-			});
+			// 使用批次 API 一次處理所有託運單
+			const waybillIds = pendingPaymentWaybills.map((waybill) => waybill.id);
+			await markAsUnpaidWithTaxBatchMutation.mutateAsync(waybillIds);
 
 			// 處理完成後清理狀態
 			setPendingPaymentDialogOpen(false);
-			setPendingPaymentWaybill(null);
+			setPendingPaymentWaybills([]);
 			setPendingPaymentNotes('');
 			table.resetRowSelection();
 		} catch (error) {
 			// 錯誤處理已由 mutation 的 onError 處理
-			console.error('標記為待收款失敗:', error);
+			console.error('批次標記為未收款失敗:', error);
 		} finally {
 			setProcessingPendingPayment(false);
 		}
@@ -297,12 +292,12 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 			<Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
 				<Stack direction="row" spacing={1}>
 					<Typography sx={{ flex: '1 1 100%', px: 2 }} variant="h6" component="div">
-						未開立發票之貨運單
+						待處理之貨運單
 					</Typography>
 				</Stack>
 				<Stack direction="row" spacing={1}>
 					<Button
-						sx={{ width: '100px' }}
+						sx={{ width: '180px' }}
 						size="small"
 						variant="contained"
 						startIcon={<ReceiptIcon />}
@@ -312,18 +307,18 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 						開發票
 					</Button>
 					<Button
-						sx={{ width: '120px' }}
+						sx={{ width: '180px' }}
 						size="small"
 						color="warning"
 						variant="contained"
-						startIcon={<ReceiptIcon />}
+						startIcon={<DriveEtaIcon />}
 						onClick={handleOpenNoInvoiceDialog}
 						disabled={table.getSelectedRowModel().rows.length === 0}
 					>
-						無須開發票
+						歸類到司機收現金
 					</Button>
 					<Button
-						sx={{ width: '120px' }}
+						sx={{ width: '180px' }}
 						size="small"
 						color="error"
 						variant="contained"
@@ -514,10 +509,10 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 				aria-labelledby="confirm-no-invoice-dialog-title"
 				aria-describedby="confirm-no-invoice-dialog-description"
 			>
-				<DialogTitle id="confirm-no-invoice-dialog-title">確認無須開發票</DialogTitle>
+				<DialogTitle id="confirm-no-invoice-dialog-title">確認歸類到司機收現金</DialogTitle>
 				<DialogContent>
 					<DialogContentText id="confirm-no-invoice-dialog-description">
-						您確定要將選擇的 {selectedWaybills.length} 筆貨運單標記為「無須開發票」嗎？
+						您確定要將選擇的 {selectedWaybills.length} 筆貨運單標記為「司機收現金」嗎？
 					</DialogContentText>
 				</DialogContent>
 				<DialogActions>
@@ -526,11 +521,11 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 					</Button>
 					<Button
 						onClick={handleConfirmNoInvoice}
-						color="error"
+						color="primary"
 						variant="contained"
 						disabled={processingNoInvoice}
 					>
-						{processingNoInvoice ? <CircularProgress size={24} /> : '確認無須開發票'}
+						{processingNoInvoice ? <CircularProgress size={24} /> : '確認歸類到司機收現金'}
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -543,22 +538,43 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 				maxWidth="sm"
 				fullWidth
 			>
-				<DialogTitle id="pending-payment-dialog-title">標記為待收款 - {pendingPaymentWaybill?.id}</DialogTitle>
+				<DialogTitle id="pending-payment-dialog-title">
+					批次標記為未收款 - 已選擇 {pendingPaymentWaybills.length} 筆
+				</DialogTitle>
 				<DialogContent>
 					<DialogContentText sx={{ mb: 1 }}>
-						將此託運單標記為「待收款」狀態，表示不需要開發票但款項未收齊。
+						將選中的 {pendingPaymentWaybills.length} 筆託運單標記為「未收款」狀態，系統將自動為每筆計算 5%
+						稅額。
 					</DialogContentText>
+					{pendingPaymentWaybills.length > 0 && (
+						<Box sx={{ mb: 2, p: 1, bgcolor: 'grey.100', borderRadius: 1 }}>
+							<Typography variant="caption" color="text.secondary">
+								選中的託運單：
+							</Typography>
+							{pendingPaymentWaybills.slice(0, 5).map((waybill, index) => (
+								<Typography key={waybill.id} variant="body2">
+									{index + 1}. {waybill.companyName} - {waybill.date} - $
+									{waybill.fee.toLocaleString()}
+								</Typography>
+							))}
+							{pendingPaymentWaybills.length > 5 && (
+								<Typography variant="body2" color="text.secondary">
+									...還有 {pendingPaymentWaybills.length - 5} 筆
+								</Typography>
+							)}
+						</Box>
+					)}
 					<TextField
 						autoFocus
 						margin="dense"
-						label="收款備註"
+						label="收款備註（選填）"
 						fullWidth
 						multiline
 						rows={4}
 						variant="outlined"
 						value={pendingPaymentNotes}
 						onChange={(e) => setPendingPaymentNotes(e.target.value)}
-						placeholder="請輸入收款相關備註，如：部分收款金額、預計收款時間等..."
+						placeholder="可輸入收款相關備註，如：部分收款金額、預計收款時間等..."
 					/>
 				</DialogContent>
 				<DialogActions>
@@ -567,11 +583,15 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 					</Button>
 					<Button
 						onClick={handleConfirmPendingPayment}
-						color="error"
+						color="primary"
 						variant="contained"
 						disabled={processingPendingPayment}
 					>
-						{processingPendingPayment ? <CircularProgress size={24} /> : '確認標記'}
+						{processingPendingPayment ? (
+							<CircularProgress size={24} />
+						) : (
+							`確認標記 ${pendingPaymentWaybills.length} 筆`
+						)}
 					</Button>
 				</DialogActions>
 			</Dialog>

@@ -7,11 +7,14 @@ import {
 	insertWaybill,
 	updateWaybill,
 	markWaybillAsNoInvoiceNeeded,
-	markWaybillAsPendingPayment,
-	updateWaybillNotes,
+	markWaybillAsUnpaidWithTax,
+	markWaybillAsPaidWithTax,
+	togglePaymentStatus,
+	updatePaymentNotes,
 	restoreWaybill,
 	markWaybillsAsNoInvoiceNeededBatch,
 	restoreWaybillsBatch,
+	markWaybillsAsUnpaidWithTaxBatch,
 } from './api';
 
 // 更新託運單
@@ -79,15 +82,15 @@ export const useMarkWaybillAsNoInvoiceNeededMutation = () => {
 	});
 };
 
-// 標記為待收款
-export const useMarkWaybillAsPendingPaymentMutation = () => {
+// 標記為未收款
+export const useMarkWaybillAsUnpaidWithTaxMutation = () => {
 	const { notifySuccess, notifyError } = useNotifications();
 
 	return useMutation({
-		mutationFn: markWaybillAsPendingPayment,
+		mutationFn: markWaybillAsUnpaidWithTax,
 		onSuccess: () => {
 			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
-			notifySuccess('託運單已標記為待收款狀態');
+			notifySuccess('託運單已標記為未收款');
 		},
 		onError: (error) => {
 			notifyError(error);
@@ -95,16 +98,47 @@ export const useMarkWaybillAsPendingPaymentMutation = () => {
 	});
 };
 
-// 更新託運單備註
-export const useUpdateWaybillNotesMutation = () => {
+// 標記為已收款
+export const useMarkWaybillAsPaidWithTaxMutation = () => {
 	const { notifySuccess, notifyError } = useNotifications();
 
 	return useMutation({
-		mutationFn: ({ waybillId, notes }: { waybillId: string; notes: string }) =>
-			updateWaybillNotes(waybillId, notes),
+		mutationFn: markWaybillAsPaidWithTax,
 		onSuccess: () => {
 			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
-			notifySuccess('託運單備註已更新');
+			notifySuccess('託運單已標記為已收款');
+		},
+		onError: (error) => {
+			notifyError(error);
+		},
+	});
+};
+
+// 切換收款狀態
+export const useTogglePaymentStatusMutation = () => {
+	const { notifySuccess, notifyError } = useNotifications();
+
+	return useMutation({
+		mutationFn: togglePaymentStatus,
+		onSuccess: () => {
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			notifySuccess('收款狀態已切換');
+		},
+		onError: (error) => {
+			notifyError(error);
+		},
+	});
+};
+
+// 更新收款備註
+export const useUpdatePaymentNotesMutation = () => {
+	const { notifySuccess, notifyError } = useNotifications();
+
+	return useMutation({
+		mutationFn: updatePaymentNotes,
+		onSuccess: () => {
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			notifySuccess('收款備註已更新');
 		},
 		onError: (error) => {
 			notifyError(error);
@@ -155,6 +189,23 @@ export const useRestoreWaybillsBatchMutation = () => {
 			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
 			const { summary } = data;
 			notifySuccess(`批次還原完成：成功 ${summary.success} 筆，失敗 ${summary.failure} 筆`);
+		},
+		onError: (error) => {
+			notifyError(error);
+		},
+	});
+};
+
+// 批次標記為未收款
+export const useMarkWaybillsAsUnpaidWithTaxBatchMutation = () => {
+	const { notifySuccess, notifyError } = useNotifications();
+
+	return useMutation({
+		mutationFn: markWaybillsAsUnpaidWithTaxBatch,
+		onSuccess: (data) => {
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			const { summary } = data;
+			notifySuccess(`批次標記完成：成功 ${summary.success} 筆，失敗 ${summary.failure} 筆`);
 		},
 		onError: (error) => {
 			notifyError(error);

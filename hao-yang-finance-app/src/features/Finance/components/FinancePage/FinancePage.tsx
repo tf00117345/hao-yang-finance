@@ -8,12 +8,13 @@ import { DateRange } from '../../../../types/date-range';
 import { useDriversQuery } from '../../../Settings/api/query';
 import { Driver } from '../../../Settings/types/driver';
 import { useWaybillsByIdsQuery, useWaybillsQuery } from '../../../Waybill/api/query';
+import { WaybillStatus } from '../../../Waybill/types/waybill-status.types';
 import { useInvoicesQuery } from '../../api/query';
 import { Invoice } from '../../types/invoice.type';
+import { CashPaymentTable } from '../CashPaymentTable/CashPaymentTable';
 import { InvoiceDialog } from '../InvoiceDialog/InvoiceDialog';
 import { InvoicedTable } from '../InvoicedTable/InvoicedTable';
 import { NoInvoicedNeededTable } from '../NoInvoicedTable/NoInvoicedTable';
-import { PendingPaymentTable } from '../PendingPaymentTable/PendingPaymentTable';
 import { UninvoicedTable } from '../UninvoicedTable/UninvoicedTable';
 
 export default function FinancePage() {
@@ -36,9 +37,13 @@ export default function FinancePage() {
 	const { data: allWaybills = [], isPending: isWaybillsPending } = useWaybillsQuery(dateRange, selectedDriver?.id);
 
 	// 篩選未開立發票的waybills (PENDING狀態)
-	const uninvoicedWaybills = allWaybills.filter((waybill) => waybill.status === 'PENDING');
-	const noInvoicedNeededWaybills = allWaybills.filter((waybill) => waybill.status === 'NO_INVOICE_NEEDED');
-	const pendingPaymentWaybills = allWaybills.filter((waybill) => waybill.status === 'PENDING_PAYMENT');
+	const uninvoicedWaybills = allWaybills.filter((waybill) => waybill.status === WaybillStatus.PENDING);
+	const noInvoicedNeededWaybills = allWaybills.filter(
+		(waybill) => waybill.status === WaybillStatus.NO_INVOICE_NEEDED,
+	);
+	const cashPaymentWaybills = allWaybills.filter(
+		(waybill) => waybill.status === WaybillStatus.NEED_TAX_UNPAID || waybill.status === WaybillStatus.NEED_TAX_PAID,
+	);
 
 	// 獲取發票列表
 	const { data: invoices = [], isPending: isInvoicesPending } = useInvoicesQuery({
@@ -81,6 +86,7 @@ export default function FinancePage() {
 			<MonthPicker dateRange={dateRange} onDateChange={handleDateChange} />
 			<Stack direction="row" spacing={1}>
 				<Button
+					sx={{ height: '30px' }}
 					variant={selectedDriver === null ? 'contained' : 'outlined'}
 					color="primary"
 					onClick={() => setSelectedDriver(null)}
@@ -90,6 +96,7 @@ export default function FinancePage() {
 				{drivers.map((driver) => (
 					<Button
 						key={driver.id}
+						sx={{ height: '30px' }}
 						size="small"
 						variant={selectedDriver?.id === driver.id ? 'contained' : 'outlined'}
 						color="primary"
@@ -111,13 +118,13 @@ export default function FinancePage() {
 				}}
 			>
 				<Tabs value={tab} onChange={handleTabChange} sx={{ mb: 1 }}>
-					<Tab label="未開立發票之貨運單" />
-					<Tab label="現金待收款" />
-					<Tab label="無須開發票之貨運單" />
+					<Tab label="待處理之貨運單" />
+					<Tab label="公司應收款項之貨運單" />
+					<Tab label="司機收現金之貨運單" />
 					<Tab label="已開立發票" />
 				</Tabs>
 				{tab === 0 && <UninvoicedTable waybills={uninvoicedWaybills} />}
-				{tab === 1 && <PendingPaymentTable waybills={pendingPaymentWaybills} />}
+				{tab === 1 && <CashPaymentTable waybills={cashPaymentWaybills} />}
 				{tab === 2 && <NoInvoicedNeededTable waybills={noInvoicedNeededWaybills} />}
 				{tab === 3 && <InvoicedTable invoices={invoices} onEdit={handleEditInvoice} />}
 			</Box>

@@ -29,6 +29,7 @@ import { Company } from '../../../Settings/types/company';
 import { Driver } from '../../../Settings/types/driver';
 import { useDeleteWaybillMutation, useInsertWaybillMutation, useUpdateWaybillMutation } from '../../api/mutation';
 import { useWaybillsQuery } from '../../api/query';
+import { WaybillStatus } from '../../types/waybill-status.types';
 import { Waybill, WaybillFormData } from '../../types/waybill.types';
 import WaybillForm from '../WaybillForm/WaybillForm';
 import { WaybillGrid } from '../WaybillGrid/WaybillGrid';
@@ -48,7 +49,7 @@ const defaultWaybill: WaybillFormData = {
 	plateNumber: '',
 	notes: '',
 	extraExpenses: [],
-	status: 'PENDING',
+	status: WaybillStatus.PENDING,
 	tonnage: 10.4,
 	markAsNoInvoiceNeeded: false,
 };
@@ -99,6 +100,7 @@ export default function WaybillPage() {
 
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [deleteId, setDeleteId] = useState<string | null>(null);
+	const [performanceDialogOpen, setPerformanceDialogOpen] = useState(false);
 
 	const handleSelectWaybill = (waybill: Waybill) => {
 		setSelectedWaybill(waybill);
@@ -178,6 +180,49 @@ export default function WaybillPage() {
 		[],
 	);
 
+	// 計算司機業績統計
+	const performanceStats = useMemo(() => {
+		// 司機收現金業績（NO_INVOICE_NEEDED）
+		const driverCashRevenue = waybills
+			.filter((w) => w.status === WaybillStatus.NO_INVOICE_NEEDED)
+			.reduce((sum, w) => sum + (w.fee || 0), 0);
+
+		// 公司收的業績（其他狀態）
+		const companyRevenue = waybills
+			.filter((w) => w.status !== WaybillStatus.NO_INVOICE_NEEDED)
+			.reduce((sum, w) => sum + (w.fee || 0), 0);
+
+		// 總業績
+		const totalRevenue = driverCashRevenue + companyRevenue;
+
+		// 按司機分組統計
+		const byDriver = drivers.map((driver) => {
+			const driverWaybills = waybills.filter((w) => w.driverId === driver.id);
+			const driverCash = driverWaybills
+				.filter((w) => w.status === WaybillStatus.NO_INVOICE_NEEDED)
+				.reduce((sum, w) => sum + (w.fee || 0), 0);
+			const company = driverWaybills
+				.filter((w) => w.status !== WaybillStatus.NO_INVOICE_NEEDED)
+				.reduce((sum, w) => sum + (w.fee || 0), 0);
+			const total = driverCash + company;
+
+			return {
+				driverId: driver.id,
+				driverName: driver.name,
+				driverCashRevenue: driverCash,
+				companyRevenue: company,
+				totalRevenue: total,
+			};
+		});
+
+		return {
+			driverCashRevenue,
+			companyRevenue,
+			totalRevenue,
+			byDriver,
+		};
+	}, [waybills, drivers]);
+
 	const handleLocationSearchChange = (search: string) => {
 		setLocationSearchInput(search); // 立即更新輸入框顯示
 		debouncedSetLocationSearch(search); // 延遲更新API查詢狀態
@@ -222,10 +267,19 @@ export default function WaybillPage() {
 								>
 									新增託運單
 								</Button>
+								<Button
+									variant="outlined"
+									color="secondary"
+									onClick={() => setPerformanceDialogOpen(true)}
+									size="small"
+								>
+									查看業績
+								</Button>
 							</Stack>
 							<MonthPicker dateRange={dateRange} onDateChange={handleDateChange} />
 							<Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
 								<Button
+									sx={{ height: '30px' }}
 									variant={selectedDriver === null ? 'contained' : 'outlined'}
 									color="primary"
 									onClick={() => handleDriverChange(null)}
@@ -236,6 +290,7 @@ export default function WaybillPage() {
 								{drivers.map((driver) => (
 									<Button
 										key={driver.id}
+										sx={{ height: '30px' }}
 										variant={selectedDriver?.id === driver.id ? 'contained' : 'outlined'}
 										color="primary"
 										onClick={() => handleDriverChange(driver)}
@@ -295,6 +350,7 @@ export default function WaybillPage() {
 							<MonthPicker dateRange={dateRange} onDateChange={handleDateChange} />
 							<Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
 								<Button
+									sx={{ height: '30px' }}
 									variant={selectedDriver === null ? 'contained' : 'outlined'}
 									color="primary"
 									onClick={() => handleDriverChange(null)}
@@ -304,6 +360,7 @@ export default function WaybillPage() {
 								{drivers.map((driver) => (
 									<Button
 										key={driver.id}
+										sx={{ height: '30px' }}
 										variant={selectedDriver?.id === driver.id ? 'contained' : 'outlined'}
 										color="primary"
 										onClick={() => handleDriverChange(driver)}
@@ -334,14 +391,23 @@ export default function WaybillPage() {
 										sx={{ mt: 1, maxWidth: '300px' }}
 									/>
 								</Stack>
-								<Button
-									variant="contained"
-									color="primary"
-									onClick={handleNewWaybill}
-									startIcon={<AddIcon />}
-								>
-									新增託運單
-								</Button>
+								<Stack direction="row" spacing={1}>
+									<Button
+										variant="contained"
+										color="primary"
+										onClick={handleNewWaybill}
+										startIcon={<AddIcon />}
+									>
+										新增託運單
+									</Button>
+									<Button
+										variant="outlined"
+										color="secondary"
+										onClick={() => setPerformanceDialogOpen(true)}
+									>
+										查看業績
+									</Button>
+								</Stack>
 							</Stack>
 
 							{isPending ? (
@@ -361,7 +427,7 @@ export default function WaybillPage() {
 							onSave={handleSave}
 							onAddCompany={handleAddCompany}
 							initialData={selectedWaybill}
-							readonly={selectedWaybill?.status !== 'PENDING'}
+							readonly={selectedWaybill?.status !== WaybillStatus.PENDING}
 						/>
 					</Stack>
 				)}
@@ -406,7 +472,7 @@ export default function WaybillPage() {
 							}}
 							onAddCompany={handleAddCompany}
 							initialData={selectedWaybill}
-							readonly={selectedWaybill?.status !== 'PENDING'}
+							readonly={selectedWaybill?.status !== WaybillStatus.PENDING}
 							isMobile
 						/>
 					</Box>
@@ -421,6 +487,150 @@ export default function WaybillPage() {
 					<Button onClick={confirmDelete} color="error">
 						刪除
 					</Button>
+				</DialogActions>
+			</Dialog>
+
+			{/* 業績統計視窗 */}
+			<Dialog
+				open={performanceDialogOpen}
+				onClose={() => setPerformanceDialogOpen(false)}
+				maxWidth="md"
+				fullWidth
+			>
+				<DialogTitle>
+					司機業績統計
+					{selectedDriver && ` - ${selectedDriver.name}`}
+					<Typography variant="caption" display="block" sx={{ mt: 0.5, color: 'text.secondary' }}>
+						{format(dateRange.start, 'yyyy/MM/dd')} ~ {format(dateRange.end, 'yyyy/MM/dd')}
+					</Typography>
+				</DialogTitle>
+				<DialogContent>
+					<Stack spacing={3} sx={{ mt: 1 }}>
+						{/* 整體統計 */}
+						<Box>
+							<Typography variant="h6" gutterBottom>
+								整體統計
+							</Typography>
+							<Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
+								<Box sx={{ flex: '1 1 200px' }}>
+									<Typography variant="body2" color="text.secondary" gutterBottom>
+										司機收現金業績
+									</Typography>
+									<Typography variant="h6" color="success.main">
+										NT$ {performanceStats.driverCashRevenue.toLocaleString()}
+									</Typography>
+								</Box>
+
+								<Box sx={{ flex: '1 1 200px' }}>
+									<Typography variant="body2" color="text.secondary" gutterBottom>
+										公司收的業績
+									</Typography>
+									<Typography variant="h6" color="primary.main">
+										NT$ {performanceStats.companyRevenue.toLocaleString()}
+									</Typography>
+								</Box>
+
+								<Box
+									sx={{
+										flex: '1 1 200px',
+										p: 1.5,
+										bgcolor: 'action.hover',
+										borderRadius: 1,
+									}}
+								>
+									<Typography variant="body2" color="text.secondary" gutterBottom>
+										總業績
+									</Typography>
+									<Typography variant="h6" color="text.primary" fontWeight="bold">
+										NT$ {performanceStats.totalRevenue.toLocaleString()}
+									</Typography>
+								</Box>
+							</Stack>
+						</Box>
+
+						{/* 個別司機統計 */}
+						<Box>
+							<Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+								個別司機統計
+							</Typography>
+							<Stack spacing={2}>
+								{performanceStats.byDriver
+									.filter((d) => d.totalRevenue > 0)
+									.sort((a, b) => b.totalRevenue - a.totalRevenue)
+									.map((driverStat) => (
+										<Box
+											key={driverStat.driverId}
+											sx={{
+												p: 2,
+												border: 1,
+												borderColor:
+													selectedDriver?.id === driverStat.driverId
+														? 'primary.main'
+														: 'divider',
+												borderRadius: 1,
+												bgcolor:
+													selectedDriver?.id === driverStat.driverId
+														? 'action.selected'
+														: 'background.paper',
+											}}
+										>
+											<Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+												{driverStat.driverName}
+											</Typography>
+											<Stack direction="row" spacing={3} sx={{ mt: 1 }}>
+												<Box>
+													<Typography
+														variant="caption"
+														color="text.secondary"
+														display="block"
+													>
+														司機收現金
+													</Typography>
+													<Typography
+														variant="body1"
+														color="success.main"
+														fontWeight="medium"
+													>
+														NT$ {driverStat.driverCashRevenue.toLocaleString()}
+													</Typography>
+												</Box>
+												<Box>
+													<Typography
+														variant="caption"
+														color="text.secondary"
+														display="block"
+													>
+														公司收
+													</Typography>
+													<Typography
+														variant="body1"
+														color="primary.main"
+														fontWeight="medium"
+													>
+														NT$ {driverStat.companyRevenue.toLocaleString()}
+													</Typography>
+												</Box>
+												<Box>
+													<Typography
+														variant="caption"
+														color="text.secondary"
+														display="block"
+													>
+														總計
+													</Typography>
+													<Typography variant="body1" fontWeight="bold">
+														NT$ {driverStat.totalRevenue.toLocaleString()}
+													</Typography>
+												</Box>
+											</Stack>
+										</Box>
+									))}
+							</Stack>
+						</Box>
+					</Stack>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setPerformanceDialogOpen(false)}>關閉</Button>
 				</DialogActions>
 			</Dialog>
 		</>

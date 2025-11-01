@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using hao_yang_finance_api.Data;
-using hao_yang_finance_api.Models;
 using hao_yang_finance_api.DTOs;
+using hao_yang_finance_api.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace hao_yang_finance_api.Services
 {
@@ -14,10 +14,12 @@ namespace hao_yang_finance_api.Services
             _context = context;
         }
 
-        public async Task<List<DriverSettlementSummaryDto>> GetSettlementsAsync(string? targetMonth = null)
+        public async Task<List<DriverSettlementSummaryDto>> GetSettlementsAsync(
+            string? targetMonth = null
+        )
         {
-            var query = _context.DriverSettlements
-                .Include(ds => ds.Driver)
+            var query = _context
+                .DriverSettlements.Include(ds => ds.Driver)
                 .Include(ds => ds.Expenses)
                 .AsQueryable();
 
@@ -28,26 +30,28 @@ namespace hao_yang_finance_api.Services
 
             var settlements = await query.ToListAsync();
 
-            return settlements.Select(s => new DriverSettlementSummaryDto
-            {
-                SettlementId = s.SettlementId,
-                DriverId = s.DriverId,
-                DriverName = s.Driver.Name,
-                TargetMonth = s.TargetMonth,
-                Income = s.Income,
-                IncomeCash = s.IncomeCash,
-                TotalCompanyExpense = s.TotalCompanyExpense,
-                TotalPersonalExpense = s.TotalPersonalExpense,
-                ProfitShareRatio = s.ProfitShareRatio,
-                Bonus = s.Bonus,
-                FinalAmount = s.FinalAmount
-            }).ToList();
+            return settlements
+                .Select(s => new DriverSettlementSummaryDto
+                {
+                    SettlementId = s.SettlementId,
+                    DriverId = s.DriverId,
+                    DriverName = s.Driver.Name,
+                    TargetMonth = s.TargetMonth,
+                    Income = s.Income,
+                    IncomeCash = s.IncomeCash,
+                    TotalCompanyExpense = s.TotalCompanyExpense,
+                    TotalPersonalExpense = s.TotalPersonalExpense,
+                    ProfitShareRatio = s.ProfitShareRatio,
+                    Bonus = s.Bonus,
+                    FinalAmount = s.FinalAmount,
+                })
+                .ToList();
         }
 
         public async Task<DriverSettlementDto?> GetSettlementAsync(long settlementId)
         {
-            var settlement = await _context.DriverSettlements
-                .Include(ds => ds.Driver)
+            var settlement = await _context
+                .DriverSettlements.Include(ds => ds.Driver)
                 .Include(ds => ds.Expenses)
                 .ThenInclude(e => e.ExpenseType)
                 .FirstOrDefaultAsync(ds => ds.SettlementId == settlementId);
@@ -71,27 +75,34 @@ namespace hao_yang_finance_api.Services
                 CalculationVersion = settlement.CalculationVersion,
                 CreatedAt = settlement.CreatedAt,
                 UpdatedAt = settlement.UpdatedAt,
-                Expenses = settlement.Expenses.Select(e => new ExpenseDto
-                {
-                    ExpenseId = e.ExpenseId,
-                    Name = e.Name,
-                    Amount = e.Amount,
-                    Category = e.Category,
-                    ExpenseTypeId = e.ExpenseTypeId,
-                    CreatedAt = e.CreatedAt,
-                    UpdatedAt = e.UpdatedAt
-                }).ToList()
+                Expenses = settlement
+                    .Expenses.Select(e => new ExpenseDto
+                    {
+                        ExpenseId = e.ExpenseId,
+                        Name = e.Name,
+                        Amount = e.Amount,
+                        Category = e.Category,
+                        ExpenseTypeId = e.ExpenseTypeId,
+                        CreatedAt = e.CreatedAt,
+                        UpdatedAt = e.UpdatedAt,
+                    })
+                    .ToList(),
             };
         }
 
-        public async Task<DriverSettlementDto?> GetSettlementByDriverAndMonthAsync(string driverId, string targetMonth)
+        public async Task<DriverSettlementDto?> GetSettlementByDriverAndMonthAsync(
+            string driverId,
+            string targetMonth
+        )
         {
             // First check if settlement already exists
-            var existingSettlement = await _context.DriverSettlements
-                .Include(ds => ds.Driver)
+            var existingSettlement = await _context
+                .DriverSettlements.Include(ds => ds.Driver)
                 .Include(ds => ds.Expenses)
                 .ThenInclude(e => e.ExpenseType)
-                .FirstOrDefaultAsync(ds => ds.DriverId == driverId && ds.TargetMonth == targetMonth);
+                .FirstOrDefaultAsync(ds =>
+                    ds.DriverId == driverId && ds.TargetMonth == targetMonth
+                );
 
             if (existingSettlement != null)
             {
@@ -106,7 +117,10 @@ namespace hao_yang_finance_api.Services
 
             // Parse target month to DateTime for calculation
             var targetDate = DateTime.ParseExact(targetMonth, "yyyy-MM-dd", null);
-            var (invoiceIncome, cashIncome) = await CalculateMonthlyIncomeAsync(driverId, targetDate);
+            var (invoiceIncome, cashIncome) = await CalculateMonthlyIncomeAsync(
+                driverId,
+                targetDate
+            );
 
             // Return calculated settlement (not saved to database)
             return new DriverSettlementDto
@@ -125,27 +139,33 @@ namespace hao_yang_finance_api.Services
                 CalculationVersion = "1.0",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                Expenses = new List<ExpenseDto>() // Empty expenses list
+                Expenses = new List<ExpenseDto>(), // Empty expenses list
             };
         }
 
-        public async Task<DriverSettlementDto> CreateSettlementAsync(CreateDriverSettlementDto createDto,
-            string changedBy)
+        public async Task<DriverSettlementDto> CreateSettlementAsync(
+            CreateDriverSettlementDto createDto,
+            string changedBy
+        )
         {
             // Check if settlement already exists
-            var existingSettlement = await _context.DriverSettlements
-                .FirstOrDefaultAsync(ds =>
-                    ds.DriverId == createDto.DriverId && ds.TargetMonth == createDto.TargetMonth);
+            var existingSettlement = await _context.DriverSettlements.FirstOrDefaultAsync(ds =>
+                ds.DriverId == createDto.DriverId && ds.TargetMonth == createDto.TargetMonth
+            );
 
             if (existingSettlement != null)
             {
                 throw new InvalidOperationException(
-                    $"Settlement for driver {createDto.DriverId} in month {createDto.TargetMonth} already exists.");
+                    $"Settlement for driver {createDto.DriverId} in month {createDto.TargetMonth} already exists."
+                );
             }
 
             // Calculate income from waybills - parse the month string to DateTime for calculation
             var targetDate = DateTime.ParseExact(createDto.TargetMonth + "-01", "yyyy-MM-dd", null);
-            var (invoiceIncome, cashIncome) = await CalculateMonthlyIncomeAsync(createDto.DriverId, targetDate);
+            var (invoiceIncome, cashIncome) = await CalculateMonthlyIncomeAsync(
+                createDto.DriverId,
+                targetDate
+            );
 
             // Create settlement
             var settlement = new DriverSettlement
@@ -155,7 +175,7 @@ namespace hao_yang_finance_api.Services
                 Income = invoiceIncome,
                 IncomeCash = cashIncome,
                 ProfitShareRatio = createDto.ProfitShareRatio,
-                CalculationVersion = "1.0"
+                CalculationVersion = "1.0",
             };
 
             _context.DriverSettlements.Add(settlement);
@@ -167,27 +187,31 @@ namespace hao_yang_finance_api.Services
             // Add company expenses
             foreach (var expenseDto in createDto.CompanyExpenses)
             {
-                expenses.Add(new Expense
-                {
-                    SettlementId = settlement.SettlementId,
-                    ExpenseTypeId = expenseDto.ExpenseTypeId,
-                    Name = expenseDto.Name,
-                    Amount = expenseDto.Amount,
-                    Category = "company"
-                });
+                expenses.Add(
+                    new Expense
+                    {
+                        SettlementId = settlement.SettlementId,
+                        ExpenseTypeId = expenseDto.ExpenseTypeId,
+                        Name = expenseDto.Name,
+                        Amount = expenseDto.Amount,
+                        Category = "company",
+                    }
+                );
             }
 
             // Add personal expenses
             foreach (var expenseDto in createDto.PersonalExpenses)
             {
-                expenses.Add(new Expense
-                {
-                    SettlementId = settlement.SettlementId,
-                    ExpenseTypeId = expenseDto.ExpenseTypeId,
-                    Name = expenseDto.Name,
-                    Amount = expenseDto.Amount,
-                    Category = "personal"
-                });
+                expenses.Add(
+                    new Expense
+                    {
+                        SettlementId = settlement.SettlementId,
+                        ExpenseTypeId = expenseDto.ExpenseTypeId,
+                        Name = expenseDto.Name,
+                        Amount = expenseDto.Amount,
+                        Category = "personal",
+                    }
+                );
             }
 
             if (expenses.Any())
@@ -199,15 +223,18 @@ namespace hao_yang_finance_api.Services
             // Recalculate totals
             settlement = await RecalculateSettlementAsync(settlement.SettlementId);
 
-            return await GetSettlementAsync(settlement.SettlementId) ??
-                   throw new InvalidOperationException("Failed to retrieve created settlement");
+            return await GetSettlementAsync(settlement.SettlementId)
+                ?? throw new InvalidOperationException("Failed to retrieve created settlement");
         }
 
-        public async Task<DriverSettlementDto> UpdateSettlementAsync(long settlementId,
-            UpdateDriverSettlementDto updateDto, string changedBy)
+        public async Task<DriverSettlementDto> UpdateSettlementAsync(
+            long settlementId,
+            UpdateDriverSettlementDto updateDto,
+            string changedBy
+        )
         {
-            var settlement = await _context.DriverSettlements
-                .Include(ds => ds.Expenses)
+            var settlement = await _context
+                .DriverSettlements.Include(ds => ds.Expenses)
                 .FirstOrDefaultAsync(ds => ds.SettlementId == settlementId);
 
             if (settlement == null)
@@ -225,26 +252,30 @@ namespace hao_yang_finance_api.Services
 
             foreach (var expenseDto in updateDto.CompanyExpenses)
             {
-                expenses.Add(new Expense
-                {
-                    SettlementId = settlement.SettlementId,
-                    ExpenseTypeId = expenseDto.ExpenseTypeId,
-                    Name = expenseDto.Name,
-                    Amount = expenseDto.Amount,
-                    Category = "company"
-                });
+                expenses.Add(
+                    new Expense
+                    {
+                        SettlementId = settlement.SettlementId,
+                        ExpenseTypeId = expenseDto.ExpenseTypeId,
+                        Name = expenseDto.Name,
+                        Amount = expenseDto.Amount,
+                        Category = "company",
+                    }
+                );
             }
 
             foreach (var expenseDto in updateDto.PersonalExpenses)
             {
-                expenses.Add(new Expense
-                {
-                    SettlementId = settlement.SettlementId,
-                    ExpenseTypeId = expenseDto.ExpenseTypeId,
-                    Name = expenseDto.Name,
-                    Amount = expenseDto.Amount,
-                    Category = "personal"
-                });
+                expenses.Add(
+                    new Expense
+                    {
+                        SettlementId = settlement.SettlementId,
+                        ExpenseTypeId = expenseDto.ExpenseTypeId,
+                        Name = expenseDto.Name,
+                        Amount = expenseDto.Amount,
+                        Category = "personal",
+                    }
+                );
             }
 
             _context.Expenses.AddRange(expenses);
@@ -253,14 +284,15 @@ namespace hao_yang_finance_api.Services
             // Recalculate totals
             settlement = await RecalculateSettlementAsync(settlementId);
 
-            return await GetSettlementAsync(settlementId) ??
-                   throw new InvalidOperationException("Failed to retrieve updated settlement");
+            return await GetSettlementAsync(settlementId)
+                ?? throw new InvalidOperationException("Failed to retrieve updated settlement");
         }
 
         public async Task<bool> DeleteSettlementAsync(long settlementId, string changedBy)
         {
-            var settlement = await _context.DriverSettlements
-                .FirstOrDefaultAsync(ds => ds.SettlementId == settlementId);
+            var settlement = await _context.DriverSettlements.FirstOrDefaultAsync(ds =>
+                ds.SettlementId == settlementId
+            );
 
             if (settlement == null)
                 return false;
@@ -282,16 +314,18 @@ namespace hao_yang_finance_api.Services
 
             var expenseTypes = await query.OrderBy(et => et.Name).ToListAsync();
 
-            return expenseTypes.Select(et => new ExpenseTypeDto
-            {
-                ExpenseTypeId = et.ExpenseTypeId,
-                Category = et.Category,
-                Name = et.Name,
-                IsDefault = et.IsDefault,
-                DefaultAmount = et.DefaultAmount,
-                Formula = et.Formula,
-                CreatedAt = et.CreatedAt
-            }).ToList();
+            return expenseTypes
+                .Select(et => new ExpenseTypeDto
+                {
+                    ExpenseTypeId = et.ExpenseTypeId,
+                    Category = et.Category,
+                    Name = et.Name,
+                    IsDefault = et.IsDefault,
+                    DefaultAmount = et.DefaultAmount,
+                    Formula = et.Formula,
+                    CreatedAt = et.CreatedAt,
+                })
+                .ToList();
         }
 
         public async Task<List<ExpenseTypeDto>> GetDefaultExpenseTypesAsync(string category)
@@ -301,8 +335,9 @@ namespace hao_yang_finance_api.Services
 
         public async Task<ExpenseTypeDto?> GetExpenseTypeByIdAsync(int expenseTypeId)
         {
-            var expenseType = await _context.ExpenseTypes
-                .FirstOrDefaultAsync(et => et.ExpenseTypeId == expenseTypeId);
+            var expenseType = await _context.ExpenseTypes.FirstOrDefaultAsync(et =>
+                et.ExpenseTypeId == expenseTypeId
+            );
 
             if (expenseType == null)
                 return null;
@@ -315,23 +350,31 @@ namespace hao_yang_finance_api.Services
                 IsDefault = expenseType.IsDefault,
                 DefaultAmount = expenseType.DefaultAmount,
                 Formula = expenseType.Formula,
-                CreatedAt = expenseType.CreatedAt
+                CreatedAt = expenseType.CreatedAt,
             };
         }
 
-        public async Task<ExpenseTypeDto> CreateExpenseTypeAsync(CreateExpenseTypeDto createDto, string changedBy)
+        public async Task<ExpenseTypeDto> CreateExpenseTypeAsync(
+            CreateExpenseTypeDto createDto,
+            string changedBy
+        )
         {
             // Check if expense type with same name and category already exists
-            var existing = await _context.ExpenseTypes
-                .FirstOrDefaultAsync(et => et.Name == createDto.Name && et.Category == createDto.Category);
+            var existing = await _context.ExpenseTypes.FirstOrDefaultAsync(et =>
+                et.Name == createDto.Name && et.Category == createDto.Category
+            );
 
             if (existing != null)
             {
                 throw new InvalidOperationException(
-                    $"Expense type '{createDto.Name}' in category '{createDto.Category}' already exists.");
+                    $"Expense type '{createDto.Name}' in category '{createDto.Category}' already exists."
+                );
             }
 
-            var formula = ConvertFormulaTypeToFormula(createDto.FormulaType, createDto.FormulaValue);
+            var formula = ConvertFormulaTypeToFormula(
+                createDto.FormulaType,
+                createDto.FormulaValue
+            );
 
             var expenseType = new ExpenseType
             {
@@ -340,39 +383,47 @@ namespace hao_yang_finance_api.Services
                 IsDefault = createDto.IsDefault,
                 DefaultAmount = createDto.DefaultAmount,
                 Formula = formula,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
             };
 
             _context.ExpenseTypes.Add(expenseType);
             await _context.SaveChangesAsync();
 
-            return await GetExpenseTypeByIdAsync(expenseType.ExpenseTypeId) ??
-                   throw new InvalidOperationException("Failed to retrieve created expense type");
+            return await GetExpenseTypeByIdAsync(expenseType.ExpenseTypeId)
+                ?? throw new InvalidOperationException("Failed to retrieve created expense type");
         }
 
-        public async Task<ExpenseTypeDto> UpdateExpenseTypeAsync(int expenseTypeId, UpdateExpenseTypeDto updateDto,
-            string changedBy)
+        public async Task<ExpenseTypeDto> UpdateExpenseTypeAsync(
+            int expenseTypeId,
+            UpdateExpenseTypeDto updateDto,
+            string changedBy
+        )
         {
-            var expenseType = await _context.ExpenseTypes
-                .FirstOrDefaultAsync(et => et.ExpenseTypeId == expenseTypeId);
+            var expenseType = await _context.ExpenseTypes.FirstOrDefaultAsync(et =>
+                et.ExpenseTypeId == expenseTypeId
+            );
 
             if (expenseType == null)
                 throw new NotFoundException($"Expense type with ID {expenseTypeId} not found");
 
             // Check if name conflict (same name and category but different ID)
-            var conflict = await _context.ExpenseTypes
-                .FirstOrDefaultAsync(et =>
-                    et.Name == updateDto.Name &&
-                    et.Category == expenseType.Category &&
-                    et.ExpenseTypeId != expenseTypeId);
+            var conflict = await _context.ExpenseTypes.FirstOrDefaultAsync(et =>
+                et.Name == updateDto.Name
+                && et.Category == expenseType.Category
+                && et.ExpenseTypeId != expenseTypeId
+            );
 
             if (conflict != null)
             {
                 throw new InvalidOperationException(
-                    $"Expense type '{updateDto.Name}' in category '{expenseType.Category}' already exists.");
+                    $"Expense type '{updateDto.Name}' in category '{expenseType.Category}' already exists."
+                );
             }
 
-            var formula = ConvertFormulaTypeToFormula(updateDto.FormulaType, updateDto.FormulaValue);
+            var formula = ConvertFormulaTypeToFormula(
+                updateDto.FormulaType,
+                updateDto.FormulaValue
+            );
 
             expenseType.Name = updateDto.Name;
             expenseType.IsDefault = updateDto.IsDefault;
@@ -381,26 +432,27 @@ namespace hao_yang_finance_api.Services
 
             await _context.SaveChangesAsync();
 
-            return await GetExpenseTypeByIdAsync(expenseTypeId) ??
-                   throw new InvalidOperationException("Failed to retrieve updated expense type");
+            return await GetExpenseTypeByIdAsync(expenseTypeId)
+                ?? throw new InvalidOperationException("Failed to retrieve updated expense type");
         }
 
         public async Task<bool> DeleteExpenseTypeAsync(int expenseTypeId, string changedBy)
         {
-            var expenseType = await _context.ExpenseTypes
-                .FirstOrDefaultAsync(et => et.ExpenseTypeId == expenseTypeId);
+            var expenseType = await _context.ExpenseTypes.FirstOrDefaultAsync(et =>
+                et.ExpenseTypeId == expenseTypeId
+            );
 
             if (expenseType == null)
                 return false;
 
             // Check if expense type is being used by any expenses
-            var isUsed = await _context.Expenses
-                .AnyAsync(e => e.ExpenseTypeId == expenseTypeId);
+            var isUsed = await _context.Expenses.AnyAsync(e => e.ExpenseTypeId == expenseTypeId);
 
             if (isUsed)
             {
                 throw new InvalidOperationException(
-                    $"Cannot delete expense type '{expenseType.Name}' because it is being used in settlements.");
+                    $"Cannot delete expense type '{expenseType.Name}' because it is being used in settlements."
+                );
             }
 
             _context.ExpenseTypes.Remove(expenseType);
@@ -425,30 +477,38 @@ namespace hao_yang_finance_api.Services
                 "income_percentage" => $"income * {decimalValue}",
                 "income_cash_percentage" => $"income_cash * {decimalValue}",
                 "total_income_percentage" => $"(income + income_cash) * {decimalValue}",
-                _ => null
+                _ => null,
             };
         }
 
-        private async Task<(decimal invoiceIncome, decimal cashIncome)> CalculateMonthlyIncomeAsync(string driverId,
-            DateTime targetMonth)
+        private async Task<(decimal invoiceIncome, decimal cashIncome)> CalculateMonthlyIncomeAsync(
+            string driverId,
+            DateTime targetMonth
+        )
         {
             var monthStart = $"{targetMonth.Year:D4}-{targetMonth.Month:D2}-01";
             var nextMonth = targetMonth.AddMonths(1);
             var monthEnd = $"{nextMonth.Year:D4}-{nextMonth.Month:D2}-01";
 
             // Get waybills for the month
-            var waybills = await _context.Waybills
-                .Where(w => w.DriverId == driverId
-                            && w.Date.CompareTo(monthStart) >= 0
-                            && w.Date.CompareTo(monthEnd) < 0)
+            var waybills = await _context
+                .Waybills.Where(w =>
+                    w.DriverId == driverId
+                    && w.Date.CompareTo(monthStart) >= 0
+                    && w.Date.CompareTo(monthEnd) < 0
+                )
                 .ToListAsync();
 
             var invoiceIncome = waybills
-                .Where(w => w.Status is "INVOICED" or "PENDING")
+                .Where(w => w.Status == WaybillStatus.INVOICED.ToString() || w.Status == WaybillStatus.PENDING.ToString())
                 .Sum(w => w.Fee);
 
             var cashIncome = waybills
-                .Where(w => w.Status is "NO_INVOICE_NEEDED" or "PENDING_PAYMENT")
+                .Where(w =>
+                    w.Status == WaybillStatus.NO_INVOICE_NEEDED.ToString()
+                    || w.Status == WaybillStatus.NEED_TAX_UNPAID.ToString()
+                    || w.Status == WaybillStatus.NEED_TAX_PAID.ToString()
+                )
                 .Sum(w => w.Fee);
 
             return (invoiceIncome, cashIncome);
@@ -456,29 +516,31 @@ namespace hao_yang_finance_api.Services
 
         private async Task<DriverSettlement> RecalculateSettlementAsync(long settlementId)
         {
-            var settlement = await _context.DriverSettlements
-                .Include(ds => ds.Expenses)
+            var settlement = await _context
+                .DriverSettlements.Include(ds => ds.Expenses)
                 .FirstOrDefaultAsync(ds => ds.SettlementId == settlementId);
 
             if (settlement == null)
                 throw new NotFoundException($"Settlement with ID {settlementId} not found");
 
             // Calculate totals
-            settlement.TotalCompanyExpense = settlement.Expenses
-                .Where(e => e.Category == "company")
+            settlement.TotalCompanyExpense = settlement
+                .Expenses.Where(e => e.Category == "company")
                 .Sum(e => e.Amount);
 
-            settlement.TotalPersonalExpense = settlement.Expenses
-                .Where(e => e.Category == "personal")
+            settlement.TotalPersonalExpense = settlement
+                .Expenses.Where(e => e.Category == "personal")
                 .Sum(e => e.Amount);
 
             // Calculate bonus: (Total Income - Company Expenses - Personal Expenses) × Profit Share Ratio / 100
             var totalIncome = settlement.Income + settlement.IncomeCash;
-            var profitableAmount = totalIncome - settlement.TotalCompanyExpense - settlement.TotalPersonalExpense;
+            var profitableAmount =
+                totalIncome - settlement.TotalCompanyExpense - settlement.TotalPersonalExpense;
             settlement.Bonus = profitableAmount * (settlement.ProfitShareRatio / 100);
 
             // Calculate final amount: Bonus + Personal Expenses - Cash Income
-            settlement.FinalAmount = settlement.Bonus + settlement.TotalPersonalExpense - settlement.IncomeCash;
+            settlement.FinalAmount =
+                settlement.Bonus + settlement.TotalPersonalExpense - settlement.IncomeCash;
 
             settlement.UpdatedAt = DateTime.UtcNow;
 
@@ -489,8 +551,7 @@ namespace hao_yang_finance_api.Services
 
     public class NotFoundException : Exception
     {
-        public NotFoundException(string message) : base(message)
-        {
-        }
+        public NotFoundException(string message)
+            : base(message) { }
     }
 }

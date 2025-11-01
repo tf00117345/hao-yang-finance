@@ -61,6 +61,22 @@ namespace hao_yang_finance_api.Models
         [Column("invoice_id")]
         public string? InvoiceId { get; set; }
 
+        [Column("tax_amount")]
+        public decimal? TaxAmount { get; set; }
+
+        [Column("tax_rate")]
+        public decimal TaxRate { get; set; } = 0.05m;
+
+        [Column("payment_notes")]
+        public string? PaymentNotes { get; set; }
+
+        [Column("payment_received_at")]
+        public string? PaymentReceivedAt { get; set; }
+
+        [Column("payment_method")]
+        [MaxLength(20)]
+        public string? PaymentMethod { get; set; }
+
         [Column("created_at")]
         public string CreatedAt { get; set; } = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
 

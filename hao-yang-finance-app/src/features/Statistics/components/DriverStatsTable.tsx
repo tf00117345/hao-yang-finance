@@ -37,9 +37,10 @@ export function DriverStatsTable({ drivers }: DriverStatsTableProps) {
 					<TableRow>
 						<TableCell>排名</TableCell>
 						<TableCell>司機姓名</TableCell>
-						<TableCell align="right">託運單數</TableCell>
+						<TableCell align="right">總託運單數</TableCell>
+						<TableCell align="right">公司收入</TableCell>
+						<TableCell align="right">現金收入</TableCell>
 						<TableCell align="right">總收入</TableCell>
-						<TableCell align="right">平均單價</TableCell>
 						<TableCell align="center">狀態分佈</TableCell>
 					</TableRow>
 				</TableHead>
@@ -60,6 +61,8 @@ export function DriverStatsTable({ drivers }: DriverStatsTableProps) {
 								</Typography>
 							</TableCell>
 							<TableCell align="right">{driver.totalWaybills}</TableCell>
+							<TableCell align="right">{formatCurrency(driver.invoicedRevenue)}</TableCell>
+							<TableCell align="right">{formatCurrency(driver.noInvoiceNeededRevenue)}</TableCell>
 							<TableCell align="right">
 								<Typography
 									variant="body2"
@@ -69,17 +72,8 @@ export function DriverStatsTable({ drivers }: DriverStatsTableProps) {
 									{formatCurrency(driver.totalRevenue)}
 								</Typography>
 							</TableCell>
-							<TableCell align="right">{formatCurrency(driver.averageWaybillFee)}</TableCell>
 							<TableCell align="center">
 								<Stack direction="row" spacing={0.5} justifyContent="center" flexWrap="wrap">
-									{driver.pendingWaybills > 0 && (
-										<Chip
-											label={driver.pendingWaybills}
-											size="small"
-											color="warning"
-											variant="outlined"
-										/>
-									)}
 									{driver.invoicedWaybills > 0 && (
 										<Chip
 											label={driver.invoicedWaybills}

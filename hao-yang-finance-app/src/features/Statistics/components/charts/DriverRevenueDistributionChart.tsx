@@ -46,7 +46,7 @@ export function DriverRevenueDistributionChart({ data, title = '司機業績分�
 							dataKey="value"
 						>
 							{chartData.map((entry, index) => (
-								<Cell key={`cell-${entry.name}-${index}`} fill={getChartColor(index)} />
+								<Cell key={`cell-${entry.name}`} fill={getChartColor(index)} />
 							))}
 						</Pie>
 						<Tooltip formatter={(value: number) => formatCurrency(value)} />

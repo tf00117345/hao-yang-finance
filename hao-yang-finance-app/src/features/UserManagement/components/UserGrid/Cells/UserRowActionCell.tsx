@@ -13,20 +13,20 @@ import { UserListItem } from '../../../../../types/user-management.types';
 export default function UserRowActionCell(params: CustomCellRendererProps) {
 	const user = params.data as UserListItem;
 
-	const handleEditUser = (user: UserListItem) => {
-		params.context.handleEditUser(user);
+	const handleEditUser = (targetUser: UserListItem) => {
+		params.context.handleEditUser(targetUser);
 	};
 
-	const handleDeleteUser = (user: UserListItem) => {
-		params.context.handleDeleteUser(user);
+	const handleDeleteUser = (targetUser: UserListItem) => {
+		params.context.handleDeleteUser(targetUser);
 	};
 
-	const handleToggleUserStatus = async (user: UserListItem) => {
-		params.context.handleToggleUserStatus(user);
+	const handleToggleUserStatus = async (targetUser: UserListItem) => {
+		params.context.handleToggleUserStatus(targetUser);
 	};
 
-	const handleResetPassword = (user: UserListItem) => {
-		params.context.handleResetPassword(user);
+	const handleResetPassword = (targetUser: UserListItem) => {
+		params.context.handleResetPassword(targetUser);
 	};
 
 	return (

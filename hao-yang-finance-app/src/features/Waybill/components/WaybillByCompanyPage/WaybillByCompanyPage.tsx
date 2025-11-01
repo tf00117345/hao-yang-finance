@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -36,6 +36,67 @@ import { Company } from '../../../Settings/types/company';
 import { useWaybillsQuery } from '../../api/query';
 import { WaybillStatusColors, WaybillStatusLabels } from '../../types/waybill-status.types';
 import { Waybill } from '../../types/waybill.types';
+
+// 將 columnHelper 與狀態元件抽到模組層，避免於父元件內動態宣告
+const waybillColumnHelper = createColumnHelper<Waybill>();
+
+interface StatusChipProps {
+	status: Waybill['status'];
+}
+
+const StatusChip = memo(function StatusChip({ status }: StatusChipProps) {
+	return <Chip label={WaybillStatusLabels[status]} color={WaybillStatusColors[status]} size="small" />;
+});
+
+// 將欄位定義抽到模組層，避免於父元件內建立函式/元件
+const WAYBILL_COLUMNS = [
+	waybillColumnHelper.accessor('date', {
+		header: '日期',
+		cell: (info) => format(new Date(info.getValue()), 'yyyy-MM-dd'),
+		size: 120,
+	}),
+	waybillColumnHelper.accessor('item', {
+		header: '項目',
+		cell: (info) => info.getValue(),
+		size: 100,
+	}),
+	waybillColumnHelper.accessor('tonnage', {
+		header: '噸數',
+		cell: (info) => `${info.getValue()} 噸`,
+		size: 80,
+	}),
+	waybillColumnHelper.accessor('driverName', {
+		header: '司機',
+		cell: (info) => info.getValue(),
+		size: 100,
+	}),
+	waybillColumnHelper.accessor('fee', {
+		header: '金額',
+		cell: (info) => `$${info.getValue().toLocaleString()}`,
+		size: 100,
+	}),
+	waybillColumnHelper.accessor('status', {
+		header: '狀態',
+		cell: (info) => {
+			const status = info.getValue();
+			return <StatusChip status={status} />;
+		},
+		size: 120,
+	}),
+	waybillColumnHelper.accessor('loadingLocations', {
+		header: '裝卸點',
+		cell: (info) => {
+			const locations = info.getValue();
+			return locations.map((loc) => `${loc.from} → ${loc.to}`).join(', ');
+		},
+		size: 200,
+	}),
+	waybillColumnHelper.accessor('notes', {
+		header: '備註',
+		cell: (info) => info.getValue() || '-',
+		size: 150,
+	}),
+];
 
 // 為公司增加 waybill 列表的介面
 interface CompanyWithWaybills extends Company {
@@ -245,65 +306,9 @@ function WaybillTable({ waybills }: { waybills: Waybill[] }) {
 	// 預設按日期升序排序（由最舊到最新）
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'date', desc: false }]);
 
-	const columnHelper = createColumnHelper<Waybill>();
-
-	const columns = useMemo(
-		() => [
-			columnHelper.accessor('date', {
-				header: '日期',
-				cell: (info) => format(new Date(info.getValue()), 'yyyy-MM-dd'),
-				size: 120,
-			}),
-			columnHelper.accessor('item', {
-				header: '項目',
-				cell: (info) => info.getValue(),
-				size: 100,
-			}),
-			columnHelper.accessor('tonnage', {
-				header: '噸數',
-				cell: (info) => `${info.getValue()} 噸`,
-				size: 80,
-			}),
-			columnHelper.accessor('driverName', {
-				header: '司機',
-				cell: (info) => info.getValue(),
-				size: 100,
-			}),
-			columnHelper.accessor('fee', {
-				header: '金額',
-				cell: (info) => `$${info.getValue().toLocaleString()}`,
-				size: 100,
-			}),
-			columnHelper.accessor('status', {
-				header: '狀態',
-				cell: (info) => {
-					const status = info.getValue();
-					return (
-						<Chip label={WaybillStatusLabels[status]} color={WaybillStatusColors[status]} size="small" />
-					);
-				},
-				size: 120,
-			}),
-			columnHelper.accessor('loadingLocations', {
-				header: '裝卸點',
-				cell: (info) => {
-					const locations = info.getValue();
-					return locations.map((loc, idx) => `${loc.from} → ${loc.to}`).join(', ');
-				},
-				size: 200,
-			}),
-			columnHelper.accessor('notes', {
-				header: '備註',
-				cell: (info) => info.getValue() || '-',
-				size: 150,
-			}),
-		],
-		[columnHelper],
-	);
-
 	const table = useReactTable({
 		data: waybills,
-		columns,
+		columns: WAYBILL_COLUMNS,
 		state: {
 			sorting,
 		},

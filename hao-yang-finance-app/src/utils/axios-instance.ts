@@ -34,8 +34,16 @@ const removeStoredTokens = () => {
 axiosInstance.interceptors.request.use(
 	(config: InternalAxiosRequestConfig) => {
 		const token = getStoredToken();
-		if (token && config.headers) {
-			config.headers.Authorization = `Bearer ${token}`;
+		if (token) {
+			const updatedConfig: InternalAxiosRequestConfig = {
+				...config,
+				headers: {
+					...(config.headers || {}),
+					Authorization: `Bearer ${token}`,
+				},
+			} as InternalAxiosRequestConfig;
+
+			return updatedConfig;
 		}
 		return config;
 	},
@@ -50,11 +58,11 @@ axiosInstance.interceptors.response.use(
 		return response;
 	},
 	async (error: AxiosError) => {
-		const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+		const originalRequest = error.config as InternalAxiosRequestConfig & { retry?: boolean };
 
 		// Check if error is 401 and we haven't already tried to refresh
-		if (error.response?.status === 401 && !originalRequest._retry) {
-			originalRequest._retry = true;
+		if (error.response?.status === 401 && !originalRequest.retry) {
+			originalRequest.retry = true;
 
 			const refreshToken = getStoredRefreshToken();
 
@@ -70,9 +78,9 @@ axiosInstance.interceptors.response.use(
 			if (!isRefreshing) {
 				isRefreshing = true;
 
-				refreshPromise = new Promise(async (resolve, reject) => {
-					try {
-						const response = await axios.post(
+				refreshPromise = new Promise((resolve, reject) => {
+					axios
+						.post(
 							`${axiosInstance.defaults.baseURL}/auth/refresh-token`,
 							{ refreshToken },
 							{
@@ -80,31 +88,27 @@ axiosInstance.interceptors.response.use(
 									'Content-Type': 'application/json',
 								},
 							},
-						);
-
-						const { accessToken, refreshToken: newRefreshToken } = response.data;
-
-						// Update stored tokens
-						localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-						localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
-
-						// Dispatch custom event to notify auth context
-						window.dispatchEvent(
-							new CustomEvent('auth:token-refreshed', {
-								detail: { accessToken, refreshToken: newRefreshToken },
-							}),
-						);
-
-						resolve(accessToken);
-					} catch (refreshError) {
-						// Refresh failed, logout user
-						removeStoredTokens();
-						window.dispatchEvent(new CustomEvent('auth:logout'));
-						reject(refreshError);
-					} finally {
-						isRefreshing = false;
-						refreshPromise = null;
-					}
+						)
+						.then((response) => {
+							const { accessToken, refreshToken: newRefreshToken } = response.data as any;
+							localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+							localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
+							window.dispatchEvent(
+								new CustomEvent('auth:token-refreshed', {
+									detail: { accessToken, refreshToken: newRefreshToken },
+								}),
+							);
+							resolve(accessToken);
+						})
+						.catch((refreshError) => {
+							removeStoredTokens();
+							window.dispatchEvent(new CustomEvent('auth:logout'));
+							reject(refreshError);
+						})
+						.finally(() => {
+							isRefreshing = false;
+							refreshPromise = null;
+						});
 				});
 			}
 
@@ -112,11 +116,15 @@ axiosInstance.interceptors.response.use(
 				const newToken = await refreshPromise;
 
 				// Retry original request with new token
-				if (originalRequest.headers) {
-					originalRequest.headers.Authorization = `Bearer ${newToken}`;
-				}
+				const retriedRequest: InternalAxiosRequestConfig = {
+					...originalRequest,
+					headers: {
+						...(originalRequest.headers || {}),
+						Authorization: `Bearer ${newToken}`,
+					},
+				} as InternalAxiosRequestConfig;
 
-				return await axiosInstance(originalRequest);
+				return await axiosInstance(retriedRequest);
 			} catch (refreshError) {
 				return Promise.reject(refreshError);
 			}

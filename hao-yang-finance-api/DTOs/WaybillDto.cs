@@ -18,6 +18,11 @@ namespace hao_yang_finance_api.DTOs
         public string? Notes { get; set; }
         public string Status { get; set; } = "PENDING";
         public string? InvoiceId { get; set; }
+        public decimal? TaxAmount { get; set; }
+        public decimal TaxRate { get; set; } = 0.05m;
+        public string? PaymentNotes { get; set; }
+        public string? PaymentReceivedAt { get; set; }
+        public string? PaymentMethod { get; set; }
         public List<LoadingLocationDto> LoadingLocations { get; set; } = new List<LoadingLocationDto>();
         public List<ExtraExpenseDto> ExtraExpenses { get; set; } = new List<ExtraExpenseDto>();
         public string CreatedAt { get; set; } = string.Empty;
@@ -76,5 +81,27 @@ namespace hao_yang_finance_api.DTOs
         public string Item { get; set; } = string.Empty;
         public decimal Fee { get; set; }
         public string? Notes { get; set; }
+    }
+
+    public class MarkUnpaidWithTaxDto
+    {
+        public string? Notes { get; set; }
+    }
+
+    public class MarkPaidWithTaxDto
+    {
+        public string PaymentNotes { get; set; } = string.Empty;
+        public string PaymentDate { get; set; } = string.Empty;
+        public string PaymentMethod { get; set; } = string.Empty;
+    }
+
+    public class UpdatePaymentNotesDto
+    {
+        public string PaymentNotes { get; set; } = string.Empty;
+    }
+
+    public class BatchWaybillIdsDto
+    {
+        public List<string> WaybillIds { get; set; } = new List<string>();
     }
 }

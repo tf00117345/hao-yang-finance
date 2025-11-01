@@ -32,9 +32,7 @@ export function useUninvoicedTable(data: Waybill[]) {
 				enableGrouping: false,
 				enableColumnFilter: false,
 				enableResizing: false,
-				size: 60,
-				minSize: 60,
-				maxSize: 60,
+				size: 40,
 			},
 			columnHelper.accessor('companyName', {
 				header: '客戶名稱',

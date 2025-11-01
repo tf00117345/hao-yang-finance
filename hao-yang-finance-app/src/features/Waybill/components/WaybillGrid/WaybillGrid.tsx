@@ -27,6 +27,7 @@ import { Column, flexRender } from '@tanstack/react-table';
 
 import { StyledTableCell, StyledTableRow } from '../../../Finance/components/styles/styles';
 import { useWaybillTable } from '../../hooks/useWaybillTable';
+import { WaybillStatus } from '../../types/waybill-status.types';
 import { Waybill } from '../../types/waybill.types';
 
 interface WaybillGridProps {
@@ -95,20 +96,31 @@ export function WaybillGrid({ waybills, onDelete, onSelect, onView }: WaybillGri
 	const renderMobileCard = (waybill: Waybill) => {
 		const getStatusDisplay = (status: string) => {
 			switch (status) {
-				case 'PENDING':
+				case WaybillStatus.PENDING:
 					return { color: 'warning' as const, text: '待開發票' };
-				case 'INVOICED':
+				case WaybillStatus.INVOICED:
 					return { color: 'success' as const, text: '已開發票' };
-				case 'NO_INVOICE_NEEDED':
+				case WaybillStatus.NO_INVOICE_NEEDED:
 					return { color: 'default' as const, text: '不需開發票' };
-				case 'PENDING_PAYMENT':
-					return { color: 'error' as const, text: '待收款' };
+				case WaybillStatus.NEED_TAX_UNPAID:
+					return { color: 'error' as const, text: '未收款' };
+				case WaybillStatus.NEED_TAX_PAID:
+					return { color: 'success' as const, text: '已收款' };
 				default:
 					return { color: 'default' as const, text: '無狀態' };
 			}
 		};
 
 		const { color: statusColor, text: statusText } = getStatusDisplay(waybill.status);
+
+		const getFeeDisplay = () => {
+			if (waybill.fee == null) return '$0';
+			if (waybill.taxAmount) {
+				const totalWithTax = waybill.fee + waybill.taxAmount;
+				return `$${waybill.fee.toLocaleString()}`;
+			}
+			return `$${waybill.fee.toLocaleString()}`;
+		};
 
 		return (
 			<Card
@@ -139,12 +151,12 @@ export function WaybillGrid({ waybills, onDelete, onSelect, onView }: WaybillGri
 						<Box sx={{ textAlign: 'right' }}>
 							<Chip label={statusText} color={statusColor} size="small" sx={{ mb: 1 }} />
 							<Typography variant="h6" color="primary">
-								${waybill.fee?.toLocaleString()}
+								{getFeeDisplay()}
 							</Typography>
 						</Box>
 					</Stack>
 				</CardContent>
-				{waybill.status === 'PENDING' && (
+				{waybill.status === WaybillStatus.PENDING && (
 					<CardActions sx={{ pt: 0, justifyContent: 'flex-end' }}>
 						<IconButton
 							size="small"

@@ -221,6 +221,7 @@ function WaybillForm({
 			id: '',
 			date: format(new Date(), 'yyyy-MM-dd'),
 			item: '',
+			tonnage: 0,
 			companyName: '',
 			companyId: undefined,
 			loadingLocations: [{ from: '', to: '' }],
@@ -581,9 +582,9 @@ function WaybillForm({
 											name={`loadingLocations.${index}.from`}
 											control={control}
 											rules={{ required: '請輸入起點' }}
-											render={({ field }) => (
+											render={({ field: fieldProps }) => (
 												<StyledTextField
-													{...field}
+													{...fieldProps}
 													fullWidth
 													size="small"
 													error={!!errors.loadingLocations?.[index]?.from}
@@ -597,9 +598,9 @@ function WaybillForm({
 											name={`loadingLocations.${index}.to`}
 											control={control}
 											rules={{ required: '請輸入終點' }}
-											render={({ field }) => (
+											render={({ field: fieldProps }) => (
 												<StyledTextField
-													{...field}
+													{...fieldProps}
 													fullWidth
 													size="small"
 													placeholder="請輸入終點"
@@ -779,9 +780,9 @@ function WaybillForm({
 											name={`extraExpenses.${index}.item`}
 											control={control}
 											rules={{ required: '請輸入費用項目' }}
-											render={({ field }) => (
+											render={({ field: fieldProps }) => (
 												<StyledTextField
-													{...field}
+													{...fieldProps}
 													fullWidth
 													size="small"
 													error={!!errors.extraExpenses?.[index]?.item}
@@ -796,9 +797,9 @@ function WaybillForm({
 											rules={{
 												required: '請輸入費用',
 											}}
-											render={({ field }) => (
+											render={({ field: fieldProps }) => (
 												<StyledTextField
-													{...field}
+													{...fieldProps}
 													fullWidth
 													size="small"
 													type="number"
@@ -811,9 +812,9 @@ function WaybillForm({
 										<Controller
 											name={`extraExpenses.${index}.notes`}
 											control={control}
-											render={({ field }) => (
+											render={({ field: fieldProps }) => (
 												<StyledTextField
-													{...field}
+													{...fieldProps}
 													fullWidth
 													size="small"
 													placeholder="請輸入備註"

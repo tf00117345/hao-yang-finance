@@ -97,7 +97,7 @@ export function ExpenseTypeManagement() {
 	const handleOpenDialog = (category: 'company' | 'personal', item?: ExpenseType) => {
 		if (item) {
 			// Edit mode
-			const amountType = item.formula ? 'formula' : 'fixed';
+			const derivedAmountType = item.formula ? 'formula' : 'fixed';
 			let formulaType: FormulaType = 'fixed';
 			let formulaValue: number | undefined;
 
@@ -121,7 +121,7 @@ export function ExpenseTypeManagement() {
 			reset({
 				name: item.name,
 				isDefault: item.isDefault,
-				amountType,
+				amountType: derivedAmountType,
 				defaultAmount: item.defaultAmount || undefined,
 				formulaType,
 				formulaValue,

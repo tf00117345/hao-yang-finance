@@ -54,6 +54,11 @@ const transformWaybillFromApi = (apiWaybill: any): Waybill => {
 		extraExpenses: apiWaybill.extraExpenses,
 		status: apiWaybill.status,
 		invoiceId: apiWaybill.invoiceId,
+		taxAmount: apiWaybill.taxAmount,
+		taxRate: apiWaybill.taxRate,
+		paymentNotes: apiWaybill.paymentNotes,
+		paymentReceivedAt: apiWaybill.paymentReceivedAt,
+		paymentMethod: apiWaybill.paymentMethod,
 		createdAt: apiWaybill.createdAt,
 		updatedAt: apiWaybill.updatedAt,
 	};
@@ -120,13 +125,43 @@ export const markWaybillAsNoInvoiceNeeded = async (waybillId: string): Promise<v
 	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
 };
 
-export const markWaybillAsPendingPayment = async (params: { waybillId: string; notes?: string }): Promise<void> => {
-	await axiosInstance.put(`/waybill/${params.waybillId}/pending-payment`, { notes: params.notes });
+export const markWaybillAsUnpaidWithTax = async (params: { waybillId: string; notes?: string }): Promise<void> => {
+	await axiosInstance.put(`/waybill/${params.waybillId}/mark-unpaid-with-tax`, { notes: params.notes });
 	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
 };
 
-export const updateWaybillNotes = async (waybillId: string, notes: string): Promise<void> => {
-	await axiosInstance.put(`/waybill/${waybillId}/update-notes`, { notes });
+export const markWaybillAsPaidWithTax = async (params: {
+	waybillId: string;
+	paymentNotes: string;
+	paymentDate: string;
+	paymentMethod: string;
+}): Promise<void> => {
+	await axiosInstance.put(`/waybill/${params.waybillId}/mark-paid-with-tax`, {
+		paymentNotes: params.paymentNotes,
+		paymentDate: params.paymentDate,
+		paymentMethod: params.paymentMethod,
+	});
+	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
+};
+
+export const togglePaymentStatus = async (params: {
+	waybillId: string;
+	paymentNotes?: string;
+	paymentDate?: string;
+	paymentMethod?: string;
+}): Promise<void> => {
+	await axiosInstance.put(`/waybill/${params.waybillId}/toggle-payment-status`, {
+		paymentNotes: params.paymentNotes,
+		paymentDate: params.paymentDate,
+		paymentMethod: params.paymentMethod,
+	});
+	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
+};
+
+export const updatePaymentNotes = async (params: { waybillId: string; paymentNotes: string }): Promise<void> => {
+	await axiosInstance.put(`/waybill/${params.waybillId}/update-payment-notes`, {
+		paymentNotes: params.paymentNotes,
+	});
 	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
 };
 
@@ -145,6 +180,13 @@ export const markWaybillsAsNoInvoiceNeededBatch = async (waybillIds: string[]): 
 // 批次還原託運單
 export const restoreWaybillsBatch = async (waybillIds: string[]): Promise<any> => {
 	const response = await axiosInstance.put('/waybill/restore-batch', waybillIds);
+	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
+	return response.data;
+};
+
+// 批次標記為未收款
+export const markWaybillsAsUnpaidWithTaxBatch = async (waybillIds: string[]): Promise<any> => {
+	const response = await axiosInstance.put('/waybill/batch-mark-unpaid-with-tax', waybillIds);
 	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
 	return response.data;
 };

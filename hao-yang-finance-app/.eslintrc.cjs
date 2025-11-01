@@ -75,7 +75,9 @@ module.exports = {
 		'consistent-return': 'off',
 		'react/require-default-props': 0,
 		'react/no-unused-prop-types': 'warn',
-
+		'no-alert': 'off',
+		'no-confirm': 'off',
+		'no-window-confirm': 'off',
 		'react/prop-types': 0,
 		'react/destructuring-assignment': 0,
 		'react/static-property-placement': 0,

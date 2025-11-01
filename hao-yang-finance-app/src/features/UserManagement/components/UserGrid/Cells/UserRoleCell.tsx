@@ -7,8 +7,8 @@ import { getRoleDescription } from '../../../../../utils/permissionUtils';
 export default function UserRoleCell(params: CustomCellRendererProps) {
 	const role = params.value as UserRole;
 
-	const getRoleChipColor = (role: UserRole) => {
-		switch (role) {
+	const getRoleChipColor = (currentRole: UserRole) => {
+		switch (currentRole) {
 			case 'Admin':
 				return 'error';
 			case 'Manager':

@@ -45,6 +45,20 @@ export function Driver() {
 	const { mutate: updateDriver, isPending: isUpdatePending } = useUpdateDriverMutation();
 
 	// AG-Grid 列定義
+	const renderActions = useCallback(
+		(params: any) => (
+			<Box>
+				<IconButton onClick={() => handleEdit(params.data)} size="small">
+					<EditIcon />
+				</IconButton>
+				<IconButton onClick={() => handleDelete(params.data.id)} size="small">
+					<DeleteIcon />
+				</IconButton>
+			</Box>
+		),
+		[handleEdit, handleDelete],
+	);
+
 	const columnDefs = useMemo<ColDef[]>(
 		() => [
 			{
@@ -65,21 +79,10 @@ export function Driver() {
 				width: 120,
 				sortable: false,
 				filter: false,
-				cellRenderer: (params: any) => {
-					return (
-						<Box>
-							<IconButton onClick={() => handleEdit(params.data)} size="small">
-								<EditIcon />
-							</IconButton>
-							<IconButton onClick={() => handleDelete(params.data.id)} size="small">
-								<DeleteIcon />
-							</IconButton>
-						</Box>
-					);
-				},
+				cellRenderer: renderActions,
 			},
 		],
-		[],
+		[renderActions],
 	);
 
 	// AG-Grid 預設列配置
@@ -114,18 +117,24 @@ export function Driver() {
 	};
 
 	// 處理編輯
-	const handleEdit = (driver: DriverData) => {
-		reset(driver);
-		setIsEditing(true);
-		handleOpen();
-	};
+	const handleEdit = useCallback(
+		(driver: DriverData) => {
+			reset(driver);
+			setIsEditing(true);
+			setOpen(true);
+		},
+		[reset],
+	);
 
 	// 處理刪除
-	const handleDelete = (id: string) => {
-		if (window.confirm('確定要刪除這位駕駛嗎？')) {
-			deleteDriver(id);
-		}
-	};
+	const handleDelete = useCallback(
+		(id: string) => {
+			if (window.confirm('確定要刪除這位駕駛嗎？')) {
+				deleteDriver(id);
+			}
+		},
+		[deleteDriver],
+	);
 
 	return (
 		<>

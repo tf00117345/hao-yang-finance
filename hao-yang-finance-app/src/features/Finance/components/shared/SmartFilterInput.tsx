@@ -19,10 +19,11 @@ interface SmartFilterInputProps {
 	value: string;
 	onChange: (value: string) => void;
 	onClear: () => void;
+	entityType?: 'invoice' | 'waybill'; // 用於區分發票或託運單狀態
 }
 
-// 根據 columnId 判斷篩選類型
-const getFilterType = (columnId: string) => {
+// 根據 columnId 和 entityType 判斷篩選類型
+const getFilterType = (columnId: string, entityType?: 'invoice' | 'waybill') => {
 	switch (columnId) {
 		case 'date':
 		case 'issuedDate':
@@ -36,7 +37,8 @@ const getFilterType = (columnId: string) => {
 		case 'extraExpenses':
 			return 'expense';
 		case 'status':
-			return 'status';
+			// 根據 entityType 返回不同的篩選類型
+			return entityType === 'waybill' ? 'waybillStatus' : 'status';
 		case 'invoiceNumber':
 			return 'invoice';
 		default:
@@ -44,9 +46,16 @@ const getFilterType = (columnId: string) => {
 	}
 };
 
-export function SmartFilterInput({ columnId, columnHeader, value, onChange, onClear }: SmartFilterInputProps) {
+export function SmartFilterInput({
+	columnId,
+	columnHeader,
+	value,
+	onChange,
+	onClear,
+	entityType,
+}: SmartFilterInputProps) {
 	const [showTips, setShowTips] = useState(false);
-	const filterType = useMemo(() => getFilterType(columnId), [columnId]);
+	const filterType = useMemo(() => getFilterType(columnId, entityType), [columnId, entityType]);
 
 	// 獲取快速篩選選項
 	const quickFilters = useMemo(() => {
@@ -55,7 +64,12 @@ export function SmartFilterInput({ columnId, columnHeader, value, onChange, onCl
 				return [
 					{ label: '未收款', value: 'issued', color: 'error' },
 					{ label: '已收款', value: 'paid', color: 'success' },
-					{ label: '已作廢', value: 'void', color: 'warning' },
+					// { label: '已作廢', value: 'void', color: 'warning' },
+				];
+			case 'waybillStatus':
+				return [
+					{ label: '未收款', value: 'NEED_TAX_UNPAID', color: 'error' },
+					{ label: '已收款', value: 'NEED_TAX_PAID', color: 'success' },
 				];
 			default:
 				return [];
@@ -96,7 +110,14 @@ export function SmartFilterInput({ columnId, columnHeader, value, onChange, onCl
 					<Box sx={{ fontSize: '0.75rem', lineHeight: 1.2 }}>
 						<div>• 已開立：issued、開立</div>
 						<div>• 已收款：paid、收款</div>
-						<div>• 已作廢：void、作廢</div>
+						{/* <div>• 已作廢：void、作廢</div> */}
+					</Box>
+				);
+			case 'waybillStatus':
+				return (
+					<Box sx={{ fontSize: '0.75rem', lineHeight: 1.2 }}>
+						<div>• 未收款：NEED_TAX_UNPAID</div>
+						<div>• 已收款：NEED_TAX_PAID</div>
 					</Box>
 				);
 			case 'invoice':
@@ -122,6 +143,7 @@ export function SmartFilterInput({ columnId, columnHeader, value, onChange, onCl
 			case 'expense':
 				return <Receipt sx={{ fontSize: '1rem', color: 'text.disabled' }} />;
 			case 'status':
+			case 'waybillStatus':
 				return <Flag sx={{ fontSize: '1rem', color: 'text.disabled' }} />;
 			case 'invoice':
 				return <Assignment sx={{ fontSize: '1rem', color: 'text.disabled' }} />;
@@ -141,6 +163,8 @@ export function SmartFilterInput({ columnId, columnHeader, value, onChange, onCl
 				return '如：油料、>100、無';
 			case 'status':
 				return '如：已開立、paid、作廢';
+			case 'waybillStatus':
+				return '選擇收款狀態';
 			case 'invoice':
 				return '如：AA12345、123';
 			default:
@@ -151,7 +175,7 @@ export function SmartFilterInput({ columnId, columnHeader, value, onChange, onCl
 	return (
 		<Box sx={{ position: 'relative' }}>
 			{/* 狀態篩選：只顯示選擇式 Chip */}
-			{filterType === 'status' ? (
+			{filterType === 'status' || filterType === 'waybillStatus' ? (
 				<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
 					{quickFilters.map((filter) => (
 						<Chip
@@ -176,9 +200,6 @@ export function SmartFilterInput({ columnId, columnHeader, value, onChange, onCl
 								fontSize: '0.7rem',
 								height: '24px',
 								cursor: 'pointer',
-								'&:hover': {
-									backgroundColor: value === filter.value ? 'primary.dark' : 'action.hover',
-								},
 							}}
 						/>
 					))}

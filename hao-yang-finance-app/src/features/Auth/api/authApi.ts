@@ -28,8 +28,8 @@ export const refreshToken = async (data: RefreshTokenRequest): Promise<TokenResp
 };
 
 // 用戶登出
-export const logout = async (refreshToken: string): Promise<void> => {
-	await axiosInstance.post('/auth/logout', { refreshToken });
+export const logout = async (token: string): Promise<void> => {
+	await axiosInstance.post('/auth/logout', { refreshToken: token });
 };
 
 // 獲取當前用戶資料

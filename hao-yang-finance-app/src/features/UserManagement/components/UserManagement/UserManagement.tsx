@@ -70,8 +70,8 @@ function UserManagement() {
 			showSnackbar('使用者刪除成功', 'success');
 			setIsDeleteDialogOpen(false);
 			setSelectedUser(null);
-		} catch (error: any) {
-			showSnackbar(error.response?.data?.message || '刪除使用者時發生錯誤', 'error');
+		} catch (err: any) {
+			showSnackbar(err.response?.data?.message || '刪除使用者時發生錯誤', 'error');
 		}
 	};
 
@@ -82,8 +82,8 @@ function UserManagement() {
 				data: { isActive: !user.isActive },
 			});
 			showSnackbar(`使用者已${user.isActive ? '停用' : '啟用'}`, 'success');
-		} catch (error: any) {
-			showSnackbar(error.response?.data?.message || '變更使用者狀態時發生錯誤', 'error');
+		} catch (err: any) {
+			showSnackbar(err.response?.data?.message || '變更使用者狀態時發生錯誤', 'error');
 		}
 	};
 

@@ -27,6 +27,7 @@ import { Column, flexRender } from '@tanstack/react-table';
 
 import { StyledTableCell, StyledTableRow } from '../../../Finance/components/styles/styles';
 import { useWaybillTable } from '../../hooks/useWaybillTable';
+import { WaybillStatus } from '../../types/waybill-status.types';
 import { Waybill } from '../../types/waybill.types';
 
 interface WaybillGridProps {
@@ -95,13 +96,13 @@ export function WaybillGrid({ waybills, onDelete, onSelect, onView }: WaybillGri
 	const renderMobileCard = (waybill: Waybill) => {
 		const getStatusDisplay = (status: string) => {
 			switch (status) {
-				case 'PENDING':
+				case WaybillStatus.PENDING:
 					return { color: 'warning' as const, text: '待開發票' };
-				case 'INVOICED':
+				case WaybillStatus.INVOICED:
 					return { color: 'success' as const, text: '已開發票' };
-				case 'NO_INVOICE_NEEDED':
+				case WaybillStatus.NO_INVOICE_NEEDED:
 					return { color: 'default' as const, text: '不需開發票' };
-				case 'PENDING_PAYMENT':
+				case WaybillStatus.PENDING_PAYMENT:
 					return { color: 'error' as const, text: '待收款' };
 				default:
 					return { color: 'default' as const, text: '無狀態' };
@@ -144,7 +145,7 @@ export function WaybillGrid({ waybills, onDelete, onSelect, onView }: WaybillGri
 						</Box>
 					</Stack>
 				</CardContent>
-				{waybill.status === 'PENDING' && (
+				{waybill.status === WaybillStatus.PENDING && (
 					<CardActions sx={{ pt: 0, justifyContent: 'flex-end' }}>
 						<IconButton
 							size="small"

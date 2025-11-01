@@ -29,6 +29,7 @@ import { Company } from '../../../Settings/types/company';
 import { Driver } from '../../../Settings/types/driver';
 import { useDeleteWaybillMutation, useInsertWaybillMutation, useUpdateWaybillMutation } from '../../api/mutation';
 import { useWaybillsQuery } from '../../api/query';
+import { WaybillStatus } from '../../types/waybill-status.types';
 import { Waybill, WaybillFormData } from '../../types/waybill.types';
 import WaybillForm from '../WaybillForm/WaybillForm';
 import { WaybillGrid } from '../WaybillGrid/WaybillGrid';
@@ -48,7 +49,7 @@ const defaultWaybill: WaybillFormData = {
 	plateNumber: '',
 	notes: '',
 	extraExpenses: [],
-	status: 'PENDING',
+	status: WaybillStatus.PENDING,
 	tonnage: 10.4,
 	markAsNoInvoiceNeeded: false,
 };
@@ -361,7 +362,7 @@ export default function WaybillPage() {
 							onSave={handleSave}
 							onAddCompany={handleAddCompany}
 							initialData={selectedWaybill}
-							readonly={selectedWaybill?.status !== 'PENDING'}
+							readonly={selectedWaybill?.status !== WaybillStatus.PENDING}
 						/>
 					</Stack>
 				)}
@@ -406,7 +407,7 @@ export default function WaybillPage() {
 							}}
 							onAddCompany={handleAddCompany}
 							initialData={selectedWaybill}
-							readonly={selectedWaybill?.status !== 'PENDING'}
+							readonly={selectedWaybill?.status !== WaybillStatus.PENDING}
 							isMobile
 						/>
 					</Box>

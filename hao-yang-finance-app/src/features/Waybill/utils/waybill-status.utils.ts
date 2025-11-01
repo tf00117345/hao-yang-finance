@@ -121,10 +121,14 @@ export class WaybillStatusUtils {
 	 */
 	static canTransitionTo(fromStatus: WaybillStatus, toStatus: WaybillStatus): boolean {
 		const transitions = {
-			PENDING: ['INVOICED', 'NO_INVOICE_NEEDED', 'PENDING_PAYMENT'],
-			INVOICED: ['PENDING'], // 當發票被刪除/作廢時
-			NO_INVOICE_NEEDED: ['PENDING'], // 還原功能
-			PENDING_PAYMENT: ['PENDING'], // 還原功能
+			[WaybillStatus.PENDING]: [
+				WaybillStatus.INVOICED,
+				WaybillStatus.NO_INVOICE_NEEDED,
+				WaybillStatus.PENDING_PAYMENT,
+			],
+			[WaybillStatus.INVOICED]: [WaybillStatus.PENDING], // 當發票被刪除/作廢時
+			[WaybillStatus.NO_INVOICE_NEEDED]: [WaybillStatus.PENDING], // 還原功能
+			[WaybillStatus.PENDING_PAYMENT]: [WaybillStatus.PENDING], // 還原功能
 		};
 
 		return transitions[fromStatus]?.includes(toStatus) || false;

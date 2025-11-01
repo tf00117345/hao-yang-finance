@@ -5,7 +5,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupIcon from '@mui/icons-material/Group';
-import ReceiptIcon from '@mui/icons-material/Receipt';
+import RestoreIcon from '@mui/icons-material/Restore';
 import {
 	Box,
 	Button,
@@ -221,14 +221,14 @@ export function NoInvoicedNeededTable({ waybills }: NoInvoicedNeededTableProps) 
 				</Stack>
 				<Stack direction="row" spacing={1}>
 					<Button
-						sx={{ width: '120px' }}
+						sx={{ width: '150px' }}
 						size="small"
 						variant="contained"
-						startIcon={<ReceiptIcon />}
+						startIcon={<RestoreIcon />}
 						onClick={() => handleOpenNoInvoiceDialog()}
 						disabled={table.getSelectedRowModel().rows.length === 0}
 					>
-						還原貨運單
+						還原成未開發票
 					</Button>
 				</Stack>
 			</Stack>

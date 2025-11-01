@@ -364,7 +364,7 @@ export function PendingPaymentTable({ waybills }: PendingPaymentTableProps) {
 						onClick={handleOpenRestoreDialog}
 						disabled={table.getSelectedRowModel().rows.length === 0}
 					>
-						還原未開發票
+						還原成未開發票
 					</Button>
 					<Button
 						sx={{ width: '150px' }}

@@ -37,9 +37,10 @@ export function DriverStatsTable({ drivers }: DriverStatsTableProps) {
 					<TableRow>
 						<TableCell>排名</TableCell>
 						<TableCell>司機姓名</TableCell>
-						<TableCell align="right">託運單數</TableCell>
+						<TableCell align="right">總託運單數</TableCell>
+						<TableCell align="right">發票收入</TableCell>
+						<TableCell align="right">司機現金收入</TableCell>
 						<TableCell align="right">總收入</TableCell>
-						<TableCell align="right">平均單價</TableCell>
 						<TableCell align="center">狀態分佈</TableCell>
 					</TableRow>
 				</TableHead>
@@ -61,6 +62,10 @@ export function DriverStatsTable({ drivers }: DriverStatsTableProps) {
 							</TableCell>
 							<TableCell align="right">{driver.totalWaybills}</TableCell>
 							<TableCell align="right">
+								{formatCurrency(driver.invoicedRevenue + driver.pendingRevenue)}
+							</TableCell>
+							<TableCell align="right">{formatCurrency(driver.noInvoiceNeededRevenue)}</TableCell>
+							<TableCell align="right">
 								<Typography
 									variant="body2"
 									fontWeight={index < 3 ? 'bold' : 'normal'}
@@ -69,7 +74,6 @@ export function DriverStatsTable({ drivers }: DriverStatsTableProps) {
 									{formatCurrency(driver.totalRevenue)}
 								</Typography>
 							</TableCell>
-							<TableCell align="right">{formatCurrency(driver.averageWaybillFee)}</TableCell>
 							<TableCell align="center">
 								<Stack direction="row" spacing={0.5} justifyContent="center" flexWrap="wrap">
 									{driver.pendingWaybills > 0 && (

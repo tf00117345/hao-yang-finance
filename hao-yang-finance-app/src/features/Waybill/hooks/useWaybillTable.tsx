@@ -19,6 +19,7 @@ import {
 	useReactTable,
 } from '@tanstack/react-table';
 
+import { WaybillStatus } from '../types/waybill-status.types';
 import { ExtraExpense, Waybill } from '../types/waybill.types';
 
 const columnHelper = createColumnHelper<Waybill>();
@@ -126,13 +127,13 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 				enableGrouping: false,
 				cell: ({ getValue }) => {
 					let component: React.ReactNode;
-					if (getValue() === 'PENDING') {
+					if (getValue() === WaybillStatus.PENDING) {
 						component = <Chip label="待開發票" color="warning" size="small" variant="filled" />;
-					} else if (getValue() === 'NO_INVOICE_NEEDED') {
+					} else if (getValue() === WaybillStatus.NO_INVOICE_NEEDED) {
 						component = <Chip label="不需開發票" color="default" size="small" variant="filled" />;
-					} else if (getValue() === 'INVOICED') {
+					} else if (getValue() === WaybillStatus.INVOICED) {
 						component = <Chip label="已開發票" color="success" size="small" variant="filled" />;
-					} else if (getValue() === 'PENDING_PAYMENT') {
+					} else if (getValue() === WaybillStatus.PENDING_PAYMENT) {
 						component = <Chip label="待收款" color="error" size="small" variant="filled" />;
 					} else {
 						component = <Chip label="無狀態" color="info" size="small" variant="filled" />;
@@ -174,7 +175,7 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 					return (
 						<Stack direction="row" spacing={0.5}>
 							{/* PENDING 狀態：編輯、刪除 */}
-							{status === 'PENDING' && (
+							{status === WaybillStatus.PENDING && (
 								<>
 									<Tooltip title="編輯">
 										<IconButton size="small" onClick={() => onSelect(waybill)}>
@@ -194,7 +195,7 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 							)}
 
 							{/* 其他狀態：查看 */}
-							{status !== 'PENDING' && (
+							{status !== WaybillStatus.PENDING && (
 								<Tooltip title="查看詳情">
 									<IconButton size="small" onClick={() => onView(waybill)}>
 										<VisibilityIcon />

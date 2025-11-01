@@ -1,10 +1,10 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
-using hao_yang_finance_api.Data;
-using hao_yang_finance_api.Models;
-using hao_yang_finance_api.DTOs;
 using hao_yang_finance_api.Attributes;
+using hao_yang_finance_api.Data;
+using hao_yang_finance_api.DTOs;
+using hao_yang_finance_api.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace hao_yang_finance_api.Controllers
 {
@@ -29,10 +29,11 @@ namespace hao_yang_finance_api.Controllers
             [FromQuery] string? endDate,
             [FromQuery] string? companyId,
             [FromQuery] string? status,
-            [FromQuery] string? invoiceNumber)
+            [FromQuery] string? invoiceNumber
+        )
         {
-            var query = _context.Invoices
-                .Include(i => i.Company)
+            var query = _context
+                .Invoices.Include(i => i.Company)
                 .Include(i => i.InvoiceWaybills)
                 .ThenInclude(iw => iw.Waybill)
                 .ThenInclude(w => w.Driver)
@@ -83,68 +84,76 @@ namespace hao_yang_finance_api.Controllers
                 .ThenByDescending(i => i.CreatedAt)
                 .ToListAsync();
 
-            var result = invoices.Select(i => new InvoiceDto
-            {
-                Id = i.Id,
-                InvoiceNumber = i.InvoiceNumber,
-                Date = i.Date,
-                CompanyId = i.CompanyId,
-                CompanyName = i.Company.Name,
-                Subtotal = i.Subtotal,
-                TaxRate = i.TaxRate,
-                ExtraExpensesIncludeTax = i.ExtraExpensesIncludeTax,
-                Tax = i.Tax,
-                Total = i.Total,
-                Status = i.Status,
-                PaymentMethod = i.PaymentMethod,
-                PaymentNote = i.PaymentNote,
-                Notes = i.Notes,
-                CreatedAt = i.CreatedAt,
-                UpdatedAt = i.UpdatedAt,
-                PaidAt = i.PaidAt,
-                Waybills = i.InvoiceWaybills
-                    .Select(iw => new InvoiceWaybillDto
-                    {
-                        WaybillId = iw.WaybillId,
-                        // WaybillNumber = iw.Waybill.WaybillNumber,
-                        Date = iw.Waybill.Date,
-                        Item = iw.Waybill.Item,
-                        Fee = iw.Waybill.Fee,
-                        DriverName = iw.Waybill.Driver?.Name ?? "",
-                        WaybillCompanyId = iw.Waybill.CompanyId,
-                        WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
-                        LoadingLocations = iw.Waybill.LoadingLocations
-                            .OrderBy(ll => ll.SequenceOrder)
-                            .Select(ll => new LoadingLocationDto
-                            {
-                                From = ll.FromLocation,
-                                To = ll.ToLocation
-                            }).ToList(),
-                        ExtraExpensesIncludeTax = i.ExtraExpensesIncludeTax,
-                        ExtraExpenses = i.InvoiceExtraExpenses
-                            .Where(iee => iee.ExtraExpense.WaybillId == iw.WaybillId)
-                            .Select(iee => new InvoiceExtraExpenseDto
-                            {
-                                ExtraExpenseId = iee.ExtraExpenseId,
-                                Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
-                                Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
-                                Notes = iee.ExtraExpense.Notes,
-                                // WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber,
-                                IsSelected = iee.IsSelected,
-                            }).ToList()
-                    })
-                    .OrderBy(x => x.WaybillNumber)
-                    .ToList(),
-                ExtraExpenses = i.InvoiceExtraExpenses.Select(iee => new InvoiceExtraExpenseDto
+            var result = invoices
+                .Select(i => new InvoiceDto
                 {
-                    ExtraExpenseId = iee.ExtraExpenseId,
-                    Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
-                    Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
-                    Notes = iee.ExtraExpense.Notes,
-                    // WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber,
-                    IsSelected = iee.IsSelected,
-                }).ToList()
-            }).ToList();
+                    Id = i.Id,
+                    InvoiceNumber = i.InvoiceNumber,
+                    Date = i.Date,
+                    CompanyId = i.CompanyId,
+                    CompanyName = i.Company.Name,
+                    Subtotal = i.Subtotal,
+                    TaxRate = i.TaxRate,
+                    ExtraExpensesIncludeTax = i.ExtraExpensesIncludeTax,
+                    Tax = i.Tax,
+                    Total = i.Total,
+                    Status = i.Status,
+                    PaymentMethod = i.PaymentMethod,
+                    PaymentNote = i.PaymentNote,
+                    Notes = i.Notes,
+                    CreatedAt = i.CreatedAt,
+                    UpdatedAt = i.UpdatedAt,
+                    PaidAt = i.PaidAt,
+                    Waybills = i
+                        .InvoiceWaybills.Select(iw => new InvoiceWaybillDto
+                        {
+                            WaybillId = iw.WaybillId,
+                            // WaybillNumber = iw.Waybill.WaybillNumber,
+                            Date = iw.Waybill.Date,
+                            Item = iw.Waybill.Item,
+                            Fee = iw.Waybill.Fee,
+                            DriverName = iw.Waybill.Driver?.Name ?? "",
+                            WaybillCompanyId = iw.Waybill.CompanyId,
+                            WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
+                            LoadingLocations = iw
+                                .Waybill.LoadingLocations.OrderBy(ll => ll.SequenceOrder)
+                                .Select(ll => new LoadingLocationDto
+                                {
+                                    From = ll.FromLocation,
+                                    To = ll.ToLocation,
+                                })
+                                .ToList(),
+                            ExtraExpensesIncludeTax = i.ExtraExpensesIncludeTax,
+                            ExtraExpenses = i
+                                .InvoiceExtraExpenses.Where(iee =>
+                                    iee.ExtraExpense.WaybillId == iw.WaybillId
+                                )
+                                .Select(iee => new InvoiceExtraExpenseDto
+                                {
+                                    ExtraExpenseId = iee.ExtraExpenseId,
+                                    Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
+                                    Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
+                                    Notes = iee.ExtraExpense.Notes,
+                                    // WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber,
+                                    IsSelected = iee.IsSelected,
+                                })
+                                .ToList(),
+                        })
+                        .OrderBy(x => x.WaybillNumber)
+                        .ToList(),
+                    ExtraExpenses = i
+                        .InvoiceExtraExpenses.Select(iee => new InvoiceExtraExpenseDto
+                        {
+                            ExtraExpenseId = iee.ExtraExpenseId,
+                            Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
+                            Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
+                            Notes = iee.ExtraExpense.Notes,
+                            // WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber,
+                            IsSelected = iee.IsSelected,
+                        })
+                        .ToList(),
+                })
+                .ToList();
 
             return Ok(result);
         }
@@ -154,8 +163,8 @@ namespace hao_yang_finance_api.Controllers
         [RequirePermission(Permission.InvoiceRead)]
         public async Task<ActionResult<InvoiceDto>> GetInvoice(string id)
         {
-            var invoice = await _context.Invoices
-                .Include(i => i.Company)
+            var invoice = await _context
+                .Invoices.Include(i => i.Company)
                 .Include(i => i.InvoiceWaybills)
                 .ThenInclude(iw => iw.Waybill)
                 .ThenInclude(w => w.Driver)
@@ -191,36 +200,42 @@ namespace hao_yang_finance_api.Controllers
                 CreatedAt = invoice.CreatedAt,
                 UpdatedAt = invoice.UpdatedAt,
                 PaidAt = invoice.PaidAt,
-                Waybills = invoice.InvoiceWaybills.Select(iw => new InvoiceWaybillDto
-                {
-                    WaybillId = iw.WaybillId,
-                    // WaybillNumber = iw.Waybill.WaybillNumber,
-                    Date = iw.Waybill.Date,
-                    Item = iw.Waybill.Item,
-                    Fee = iw.Waybill.Fee,
-                    DriverName = iw.Waybill.Driver?.Name ?? "",
-                    WaybillCompanyId = iw.Waybill.CompanyId,
-                    WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
-                    LoadingLocations = iw.Waybill.LoadingLocations
-                        .OrderBy(ll => ll.SequenceOrder)
-                        .Select(ll => new LoadingLocationDto
-                        {
-                            From = ll.FromLocation,
-                            To = ll.ToLocation
-                        }).ToList(),
-                    ExtraExpensesIncludeTax = invoice.ExtraExpensesIncludeTax,
-                    ExtraExpenses = invoice.InvoiceExtraExpenses
-                        .Where(iee => iee.ExtraExpense.WaybillId == iw.WaybillId)
-                        .Select(iee => new InvoiceExtraExpenseDto
-                        {
-                            ExtraExpenseId = iee.ExtraExpenseId,
-                            Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
-                            Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
-                            Notes = iee.ExtraExpense.Notes,
-                            // WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber,
-                            IsSelected = iee.IsSelected,
-                        }).ToList()
-                }).ToList(),
+                Waybills = invoice
+                    .InvoiceWaybills.Select(iw => new InvoiceWaybillDto
+                    {
+                        WaybillId = iw.WaybillId,
+                        // WaybillNumber = iw.Waybill.WaybillNumber,
+                        Date = iw.Waybill.Date,
+                        Item = iw.Waybill.Item,
+                        Fee = iw.Waybill.Fee,
+                        DriverName = iw.Waybill.Driver?.Name ?? "",
+                        WaybillCompanyId = iw.Waybill.CompanyId,
+                        WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
+                        LoadingLocations = iw
+                            .Waybill.LoadingLocations.OrderBy(ll => ll.SequenceOrder)
+                            .Select(ll => new LoadingLocationDto
+                            {
+                                From = ll.FromLocation,
+                                To = ll.ToLocation,
+                            })
+                            .ToList(),
+                        ExtraExpensesIncludeTax = invoice.ExtraExpensesIncludeTax,
+                        ExtraExpenses = invoice
+                            .InvoiceExtraExpenses.Where(iee =>
+                                iee.ExtraExpense.WaybillId == iw.WaybillId
+                            )
+                            .Select(iee => new InvoiceExtraExpenseDto
+                            {
+                                ExtraExpenseId = iee.ExtraExpenseId,
+                                Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
+                                Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
+                                Notes = iee.ExtraExpense.Notes,
+                                // WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber,
+                                IsSelected = iee.IsSelected,
+                            })
+                            .ToList(),
+                    })
+                    .ToList(),
                 // ExtraExpenses = invoice.InvoiceExtraExpenses.Select(iee => new InvoiceExtraExpenseDto
                 // {
                 //     ExtraExpenseId = iee.ExtraExpenseId,
@@ -241,8 +256,9 @@ namespace hao_yang_finance_api.Controllers
         {
             // 驗證發票號碼唯一性
             var normalizedInvoiceNumber = createInvoiceDto.InvoiceNumber.Trim().ToUpperInvariant();
-            var existingInvoice = await _context.Invoices
-                .FirstOrDefaultAsync(i => i.InvoiceNumber == normalizedInvoiceNumber);
+            var existingInvoice = await _context.Invoices.FirstOrDefaultAsync(i =>
+                i.InvoiceNumber == normalizedInvoiceNumber
+            );
 
             if (existingInvoice != null)
             {
@@ -257,8 +273,8 @@ namespace hao_yang_finance_api.Controllers
             }
 
             // 驗證託運單存在且狀態為 PENDING
-            var waybills = await _context.Waybills
-                .Where(w => createInvoiceDto.WaybillIds.Contains(w.Id))
+            var waybills = await _context
+                .Waybills.Where(w => createInvoiceDto.WaybillIds.Contains(w.Id))
                 .ToListAsync();
 
             if (waybills.Count != createInvoiceDto.WaybillIds.Count)
@@ -277,9 +293,11 @@ namespace hao_yang_finance_api.Controllers
             var extraExpenses = new List<ExtraExpense>();
             if (createInvoiceDto.ExtraExpenseIds.Any())
             {
-                extraExpenses = await _context.ExtraExpenses
-                    .Where(ee => createInvoiceDto.ExtraExpenseIds.Contains(ee.Id) &&
-                                 createInvoiceDto.WaybillIds.Contains(ee.WaybillId))
+                extraExpenses = await _context
+                    .ExtraExpenses.Where(ee =>
+                        createInvoiceDto.ExtraExpenseIds.Contains(ee.Id)
+                        && createInvoiceDto.WaybillIds.Contains(ee.WaybillId)
+                    )
                     .ToListAsync();
 
                 if (extraExpenses.Count != createInvoiceDto.ExtraExpenseIds.Count)
@@ -292,7 +310,9 @@ namespace hao_yang_finance_api.Controllers
             var waybillAmount = waybills.Sum(w => w.Fee);
             var extraExpenseAmount = extraExpenses.Sum(ee => ee.Fee ?? ee.Amount);
 
-            decimal subtotal, tax, total;
+            decimal subtotal,
+                tax,
+                total;
 
             if (createInvoiceDto.ExtraExpensesIncludeTax)
             {
@@ -321,7 +341,7 @@ namespace hao_yang_finance_api.Controllers
                 Tax = tax,
                 Total = total,
                 Status = "issued",
-                Notes = createInvoiceDto.Notes?.Trim()
+                Notes = createInvoiceDto.Notes?.Trim(),
             };
 
             _context.Invoices.Add(invoice);
@@ -333,7 +353,7 @@ namespace hao_yang_finance_api.Controllers
                 var invoiceWaybill = new InvoiceWaybill
                 {
                     InvoiceId = invoice.Id,
-                    WaybillId = waybillId
+                    WaybillId = waybillId,
                 };
                 _context.InvoiceWaybills.Add(invoiceWaybill);
             }
@@ -345,7 +365,7 @@ namespace hao_yang_finance_api.Controllers
                 {
                     InvoiceId = invoice.Id,
                     ExtraExpenseId = extraExpenseId,
-                    IsSelected = true
+                    IsSelected = true,
                 };
                 _context.InvoiceExtraExpenses.Add(invoiceExtraExpense);
             }
@@ -353,7 +373,7 @@ namespace hao_yang_finance_api.Controllers
             // 更新託運單狀態為 INVOICED
             foreach (var waybill in waybills)
             {
-                waybill.Status = "INVOICED";
+                waybill.Status = WaybillStatus.INVOICED.ToString();
                 waybill.InvoiceId = invoice.Id;
                 waybill.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
             }
@@ -361,8 +381,8 @@ namespace hao_yang_finance_api.Controllers
             await _context.SaveChangesAsync();
 
             // 重新載入完整資料
-            var createdInvoice = await _context.Invoices
-                .Include(i => i.Company)
+            var createdInvoice = await _context
+                .Invoices.Include(i => i.Company)
                 .Include(i => i.InvoiceWaybills)
                 .ThenInclude(iw => iw.Waybill)
                 .ThenInclude(w => w.Driver)
@@ -390,36 +410,43 @@ namespace hao_yang_finance_api.Controllers
                 CreatedAt = createdInvoice.CreatedAt,
                 UpdatedAt = createdInvoice.UpdatedAt,
                 PaidAt = createdInvoice.PaidAt,
-                Waybills = createdInvoice.InvoiceWaybills.Select(iw => new InvoiceWaybillDto
-                {
-                    WaybillId = iw.WaybillId,
-                    // WaybillNumber = iw.Waybill.WaybillNumber,
-                    Date = iw.Waybill.Date,
-                    Item = iw.Waybill.Item,
-                    Fee = iw.Waybill.Fee,
-                    DriverName = iw.Waybill.Driver?.Name ?? "",
-                    WaybillCompanyId = iw.Waybill.CompanyId,
-                    WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
-                    ExtraExpensesIncludeTax = createdInvoice.ExtraExpensesIncludeTax,
-                    ExtraExpenses = createdInvoice.InvoiceExtraExpenses
-                        .Where(iee => iee.ExtraExpense.WaybillId == iw.WaybillId)
-                        .Select(iee => new InvoiceExtraExpenseDto
-                        {
-                            ExtraExpenseId = iee.ExtraExpenseId,
-                            Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
-                            Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
-                            Notes = iee.ExtraExpense.Notes,
-                            // WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber
-                        }).ToList()
-                }).ToList(),
-                ExtraExpenses = createdInvoice.InvoiceExtraExpenses.Select(iee => new InvoiceExtraExpenseDto
-                {
-                    ExtraExpenseId = iee.ExtraExpenseId,
-                    Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
-                    Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
-                    Notes = iee.ExtraExpense.Notes,
-                    // WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber
-                }).ToList()
+                Waybills = createdInvoice
+                    .InvoiceWaybills.Select(iw => new InvoiceWaybillDto
+                    {
+                        WaybillId = iw.WaybillId,
+                        // WaybillNumber = iw.Waybill.WaybillNumber,
+                        Date = iw.Waybill.Date,
+                        Item = iw.Waybill.Item,
+                        Fee = iw.Waybill.Fee,
+                        DriverName = iw.Waybill.Driver?.Name ?? "",
+                        WaybillCompanyId = iw.Waybill.CompanyId,
+                        WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
+                        ExtraExpensesIncludeTax = createdInvoice.ExtraExpensesIncludeTax,
+                        ExtraExpenses = createdInvoice
+                            .InvoiceExtraExpenses.Where(iee =>
+                                iee.ExtraExpense.WaybillId == iw.WaybillId
+                            )
+                            .Select(iee => new InvoiceExtraExpenseDto
+                            {
+                                ExtraExpenseId = iee.ExtraExpenseId,
+                                Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
+                                Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
+                                Notes = iee.ExtraExpense.Notes,
+                                // WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber
+                            })
+                            .ToList(),
+                    })
+                    .ToList(),
+                ExtraExpenses = createdInvoice
+                    .InvoiceExtraExpenses.Select(iee => new InvoiceExtraExpenseDto
+                    {
+                        ExtraExpenseId = iee.ExtraExpenseId,
+                        Item = iee.ExtraExpense.Item ?? iee.ExtraExpense.Description,
+                        Fee = iee.ExtraExpense.Fee ?? iee.ExtraExpense.Amount,
+                        Notes = iee.ExtraExpense.Notes,
+                        // WaybillNumber = iee.ExtraExpense.Waybill.WaybillNumber
+                    })
+                    .ToList(),
             };
 
             return CreatedAtAction(nameof(GetInvoice), new { id = invoice.Id }, response);
@@ -430,8 +457,8 @@ namespace hao_yang_finance_api.Controllers
         [RequirePermission(Permission.InvoiceUpdate)]
         public async Task<IActionResult> UpdateInvoice(string id, UpdateInvoiceDto updateInvoiceDto)
         {
-            var invoice = await _context.Invoices
-                .Include(i => i.InvoiceWaybills)
+            var invoice = await _context
+                .Invoices.Include(i => i.InvoiceWaybills)
                 .Include(i => i.InvoiceExtraExpenses)
                 .FirstOrDefaultAsync(i => i.Id == id);
 
@@ -443,13 +470,19 @@ namespace hao_yang_finance_api.Controllers
             // 檢查狀態：只有 issued 狀態可以編輯
             if (invoice.Status != "issued")
             {
-                return BadRequest(new { message = $"無法編輯狀態為 '{invoice.Status}' 的發票，只有 'issued' 狀態的發票可以編輯" });
+                return BadRequest(
+                    new
+                    {
+                        message = $"無法編輯狀態為 '{invoice.Status}' 的發票，只有 'issued' 狀態的發票可以編輯",
+                    }
+                );
             }
 
             // 驗證發票號碼唯一性（排除當前發票）
             var normalizedInvoiceNumber = updateInvoiceDto.InvoiceNumber.Trim().ToUpperInvariant();
-            var existingInvoice = await _context.Invoices
-                .FirstOrDefaultAsync(i => i.InvoiceNumber == normalizedInvoiceNumber && i.Id != id);
+            var existingInvoice = await _context.Invoices.FirstOrDefaultAsync(i =>
+                i.InvoiceNumber == normalizedInvoiceNumber && i.Id != id
+            );
 
             if (existingInvoice != null)
             {
@@ -457,8 +490,8 @@ namespace hao_yang_finance_api.Controllers
             }
 
             // 驗證託運單存在且狀態為 PENDING 或 INVOICED（且關聯到當前發票）
-            var waybills = await _context.Waybills
-                .Where(w => updateInvoiceDto.WaybillIds.Contains(w.Id))
+            var waybills = await _context
+                .Waybills.Where(w => updateInvoiceDto.WaybillIds.Contains(w.Id))
                 .ToListAsync();
 
             if (waybills.Count != updateInvoiceDto.WaybillIds.Count)
@@ -466,9 +499,12 @@ namespace hao_yang_finance_api.Controllers
                 return BadRequest(new { message = "部分託運單不存在" });
             }
 
-            var invalidWaybills = waybills.Where(w =>
-                w.Status != "PENDING" &&
-                !(w.Status == "INVOICED" && w.InvoiceId == id)).ToList();
+            var invalidWaybills = waybills
+                .Where(w =>
+                    w.Status != WaybillStatus.PENDING.ToString()
+                    && !(w.Status == WaybillStatus.INVOICED.ToString() && w.InvoiceId == id)
+                )
+                .ToList();
 
             if (invalidWaybills.Any())
             {
@@ -480,9 +516,11 @@ namespace hao_yang_finance_api.Controllers
             var extraExpenses = new List<ExtraExpense>();
             if (updateInvoiceDto.ExtraExpenseIds.Any())
             {
-                extraExpenses = await _context.ExtraExpenses
-                    .Where(ee => updateInvoiceDto.ExtraExpenseIds.Contains(ee.Id) &&
-                                 updateInvoiceDto.WaybillIds.Contains(ee.WaybillId))
+                extraExpenses = await _context
+                    .ExtraExpenses.Where(ee =>
+                        updateInvoiceDto.ExtraExpenseIds.Contains(ee.Id)
+                        && updateInvoiceDto.WaybillIds.Contains(ee.WaybillId)
+                    )
                     .ToListAsync();
 
                 if (extraExpenses.Count != updateInvoiceDto.ExtraExpenseIds.Count)
@@ -495,7 +533,9 @@ namespace hao_yang_finance_api.Controllers
             var waybillAmount = waybills.Sum(w => w.Fee);
             var extraExpenseAmount = extraExpenses.Sum(ee => ee.Fee ?? ee.Amount);
 
-            decimal subtotal, tax, total;
+            decimal subtotal,
+                tax,
+                total;
 
             if (updateInvoiceDto.ExtraExpensesIncludeTax)
             {
@@ -515,13 +555,11 @@ namespace hao_yang_finance_api.Controllers
             _context.InvoiceExtraExpenses.RemoveRange(invoice.InvoiceExtraExpenses);
 
             // 重置原本關聯託運單的狀態為 PENDING
-            var oldWaybills = await _context.Waybills
-                .Where(w => w.InvoiceId == id)
-                .ToListAsync();
+            var oldWaybills = await _context.Waybills.Where(w => w.InvoiceId == id).ToListAsync();
 
             foreach (var oldWaybill in oldWaybills)
             {
-                oldWaybill.Status = "PENDING";
+                oldWaybill.Status = WaybillStatus.PENDING.ToString();
                 oldWaybill.InvoiceId = null;
                 oldWaybill.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
             }
@@ -543,7 +581,7 @@ namespace hao_yang_finance_api.Controllers
                 var invoiceWaybill = new InvoiceWaybill
                 {
                     InvoiceId = invoice.Id,
-                    WaybillId = waybillId
+                    WaybillId = waybillId,
                 };
                 _context.InvoiceWaybills.Add(invoiceWaybill);
             }
@@ -553,7 +591,7 @@ namespace hao_yang_finance_api.Controllers
                 var invoiceExtraExpense = new InvoiceExtraExpense
                 {
                     InvoiceId = invoice.Id,
-                    ExtraExpenseId = extraExpenseId
+                    ExtraExpenseId = extraExpenseId,
                 };
                 _context.InvoiceExtraExpenses.Add(invoiceExtraExpense);
             }
@@ -561,7 +599,7 @@ namespace hao_yang_finance_api.Controllers
             // 更新新託運單狀態為 INVOICED
             foreach (var waybill in waybills)
             {
-                waybill.Status = "INVOICED";
+                waybill.Status = WaybillStatus.INVOICED.ToString();
                 waybill.InvoiceId = invoice.Id;
                 waybill.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
             }
@@ -576,8 +614,8 @@ namespace hao_yang_finance_api.Controllers
         [RequirePermission(Permission.InvoiceDelete)]
         public async Task<IActionResult> DeleteInvoice(string id)
         {
-            var invoice = await _context.Invoices
-                .Include(i => i.InvoiceWaybills)
+            var invoice = await _context
+                .Invoices.Include(i => i.InvoiceWaybills)
                 .Include(i => i.InvoiceExtraExpenses)
                 .FirstOrDefaultAsync(i => i.Id == id);
 
@@ -587,16 +625,15 @@ namespace hao_yang_finance_api.Controllers
             }
 
             // 檢查狀態：只有 issued 和 void 狀態可以刪除
-            if (invoice.Status is not ("issued" or "void")) return BadRequest(new { message = $"只有作廢和未收款狀態的發票可以刪除" });
+            if (invoice.Status is not ("issued" or "void"))
+                return BadRequest(new { message = $"只有作廢和未收款狀態的發票可以刪除" });
 
             // 恢復關聯託運單的狀態為 PENDING
-            var waybills = await _context.Waybills
-                .Where(w => w.InvoiceId == id)
-                .ToListAsync();
+            var waybills = await _context.Waybills.Where(w => w.InvoiceId == id).ToListAsync();
 
             foreach (var waybill in waybills)
             {
-                waybill.Status = "PENDING";
+                waybill.Status = WaybillStatus.PENDING.ToString();
                 waybill.InvoiceId = null;
                 waybill.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
             }
@@ -627,7 +664,12 @@ namespace hao_yang_finance_api.Controllers
             // 檢查狀態：只有 issued 狀態可以標記為已收款
             if (invoice.Status != "issued")
             {
-                return BadRequest(new { message = $"無法標記狀態為 '{invoice.Status}' 的發票為已收款，只有 'issued' 狀態的發票可以標記" });
+                return BadRequest(
+                    new
+                    {
+                        message = $"無法標記狀態為 '{invoice.Status}' 的發票為已收款，只有 'issued' 狀態的發票可以標記",
+                    }
+                );
             }
 
             invoice.Status = "paid";
@@ -660,13 +702,11 @@ namespace hao_yang_finance_api.Controllers
             }
 
             // 恢復關聯託運單的狀態為 PENDING
-            var waybills = await _context.Waybills
-                .Where(w => w.InvoiceId == id)
-                .ToListAsync();
+            var waybills = await _context.Waybills.Where(w => w.InvoiceId == id).ToListAsync();
 
             foreach (var waybill in waybills)
             {
-                waybill.Status = "PENDING";
+                waybill.Status = WaybillStatus.PENDING.ToString();
                 waybill.InvoiceId = null;
                 waybill.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
             }
@@ -698,13 +738,11 @@ namespace hao_yang_finance_api.Controllers
             invoice.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
             // 恢復關聯託運單的狀態為 INVOICED
-            var waybills = await _context.Waybills
-                .Where(w => w.InvoiceId == id)
-                .ToListAsync();
+            var waybills = await _context.Waybills.Where(w => w.InvoiceId == id).ToListAsync();
 
             foreach (var waybill in waybills)
             {
-                waybill.Status = "INVOICED";
+                waybill.Status = WaybillStatus.INVOICED.ToString();
                 waybill.InvoiceId = invoice.Id;
                 waybill.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
             }
@@ -719,7 +757,8 @@ namespace hao_yang_finance_api.Controllers
         [RequirePermission(Permission.StatisticsRead)]
         public async Task<ActionResult<InvoiceStatsDto>> GetInvoiceStats(
             [FromQuery] string? startDate,
-            [FromQuery] string? endDate)
+            [FromQuery] string? endDate
+        )
         {
             var query = _context.Invoices.AsQueryable();
 
@@ -746,20 +785,19 @@ namespace hao_yang_finance_api.Controllers
                 VoidInvoices = invoices.Count(i => i.Status == "void"),
                 TotalAmount = invoices.Where(i => i.Status != "void").Sum(i => i.Total),
                 PaidAmount = invoices.Where(i => i.Status == "paid").Sum(i => i.Total),
-                UnpaidAmount = invoices.Where(i => i.Status == "issued").Sum(i => i.Total)
+                UnpaidAmount = invoices.Where(i => i.Status == "issued").Sum(i => i.Total),
             };
 
             return Ok(stats);
         }
-        
-        
+
         // GET: api/Invoice/last-invoice-number
         [HttpGet("last-invoice-number")]
         [RequirePermission(Permission.InvoiceRead)]
         public async Task<ActionResult<string>> GetLastInvoiceNumber()
         {
-            var lastInvoiceNumber = await _context.Invoices
-                .OrderByDescending(i => i.InvoiceNumber)
+            var lastInvoiceNumber = await _context
+                .Invoices.OrderByDescending(i => i.InvoiceNumber)
                 .Select(i => i.InvoiceNumber)
                 .FirstOrDefaultAsync();
 
@@ -768,7 +806,11 @@ namespace hao_yang_finance_api.Controllers
                 return "AA00000001";
             }
 
-            if (lastInvoiceNumber.Length != 10 || !char.IsLetter(lastInvoiceNumber[0]) || !char.IsLetter(lastInvoiceNumber[1]))
+            if (
+                lastInvoiceNumber.Length != 10
+                || !char.IsLetter(lastInvoiceNumber[0])
+                || !char.IsLetter(lastInvoiceNumber[1])
+            )
             {
                 throw new InvalidOperationException("Invalid invoice number format");
             }
@@ -782,12 +824,12 @@ namespace hao_yang_finance_api.Controllers
             }
 
             number++;
-            
+
             if (number > 99999999)
             {
                 char lastChar = prefix[1];
                 char nextChar = (char)(lastChar + 1);
-                
+
                 if (nextChar > 'Z')
                 {
                     char firstChar = prefix[0];
@@ -797,7 +839,7 @@ namespace hao_yang_finance_api.Controllers
                 {
                     prefix = prefix[0] + nextChar.ToString();
                 }
-                
+
                 number = 1;
             }
 

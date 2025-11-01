@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowDownward, ArrowUpward, UnfoldMore } from '@mui/icons-material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import DriveEtaIcon from '@mui/icons-material/DriveEta';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupIcon from '@mui/icons-material/Group';
 import PaymentIcon from '@mui/icons-material/Payment';
@@ -302,7 +303,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 				</Stack>
 				<Stack direction="row" spacing={1}>
 					<Button
-						sx={{ width: '100px' }}
+						sx={{ width: '180px' }}
 						size="small"
 						variant="contained"
 						startIcon={<ReceiptIcon />}
@@ -312,18 +313,18 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 						開發票
 					</Button>
 					<Button
-						sx={{ width: '120px' }}
+						sx={{ width: '180px' }}
 						size="small"
 						color="warning"
 						variant="contained"
-						startIcon={<ReceiptIcon />}
+						startIcon={<DriveEtaIcon />}
 						onClick={handleOpenNoInvoiceDialog}
 						disabled={table.getSelectedRowModel().rows.length === 0}
 					>
-						無須開發票
+						歸類到司機收現金
 					</Button>
 					<Button
-						sx={{ width: '120px' }}
+						sx={{ width: '180px' }}
 						size="small"
 						color="error"
 						variant="contained"
@@ -514,10 +515,10 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 				aria-labelledby="confirm-no-invoice-dialog-title"
 				aria-describedby="confirm-no-invoice-dialog-description"
 			>
-				<DialogTitle id="confirm-no-invoice-dialog-title">確認無須開發票</DialogTitle>
+				<DialogTitle id="confirm-no-invoice-dialog-title">確認歸類到司機收現金</DialogTitle>
 				<DialogContent>
 					<DialogContentText id="confirm-no-invoice-dialog-description">
-						您確定要將選擇的 {selectedWaybills.length} 筆貨運單標記為「無須開發票」嗎？
+						您確定要將選擇的 {selectedWaybills.length} 筆貨運單標記為「司機收現金」嗎？
 					</DialogContentText>
 				</DialogContent>
 				<DialogActions>
@@ -526,11 +527,11 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 					</Button>
 					<Button
 						onClick={handleConfirmNoInvoice}
-						color="error"
+						color="primary"
 						variant="contained"
 						disabled={processingNoInvoice}
 					>
-						{processingNoInvoice ? <CircularProgress size={24} /> : '確認無須開發票'}
+						{processingNoInvoice ? <CircularProgress size={24} /> : '確認歸類到司機收現金'}
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -567,7 +568,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 					</Button>
 					<Button
 						onClick={handleConfirmPendingPayment}
-						color="error"
+						color="primary"
 						variant="contained"
 						disabled={processingPendingPayment}
 					>

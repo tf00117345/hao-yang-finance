@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { Chip, Stack, Tooltip, Typography } from '@mui/material';
 import {
 	ColumnFiltersState,
 	ColumnResizeDirection,
@@ -11,12 +12,12 @@ import {
 	getGroupedRowModel,
 	getSortedRowModel,
 	GroupingState,
+	RowSelectionState,
 	SortingState,
 	useReactTable,
-	RowSelectionState,
 } from '@tanstack/react-table';
 
-import { Waybill, ExtraExpense } from '../../Waybill/types/waybill.types';
+import { ExtraExpense, Waybill } from '../../Waybill/types/waybill.types';
 
 const columnHelper = createColumnHelper<Waybill>();
 
@@ -93,17 +94,57 @@ export function useUninvoicedTable(data: Waybill[]) {
 					});
 				},
 			}),
-			columnHelper.accessor('item', {
-				header: '貨物',
-				cell: (info) => info.getValue(),
-				enableSorting: true,
-				enableGrouping: true,
-				enableColumnFilter: true,
+			columnHelper.accessor('loadingLocations', {
+				header: '地點',
+				enableGrouping: false,
+				enableSorting: false,
+				enableColumnFilter: false,
 				enableResizing: true,
-				filterFn: 'includesString',
-				size: 120,
-				minSize: 100,
-				maxSize: 200,
+				size: 160,
+				minSize: 120,
+				maxSize: 250,
+				cell: ({ getValue }) => {
+					const locations = (getValue() as Array<{ id?: string; from: string; to: string }>).filter(
+						(loc) => loc.from !== '空白' && loc.to !== '空白',
+					);
+
+					const MAX_VISIBLE = 2;
+					const visible = locations.slice(0, MAX_VISIBLE);
+					const remaining = locations.length - visible.length;
+
+					return (
+						<Stack direction="row" flexWrap="wrap" gap={0.5}>
+							{visible.map((loc, idx) => (
+								<Chip
+									key={loc.id ?? `${loc.from}-${loc.to}-${idx}`}
+									label={`${loc.from} → ${loc.to}`}
+									size="small"
+									variant="outlined"
+								/>
+							))}
+							{remaining > 0 && (
+								<Tooltip
+									title={
+										<Stack sx={{ maxWidth: 360, p: 0.5 }}>
+											{locations.map((loc, idx) => (
+												<Typography
+													key={`full-${loc.id ?? `${loc.from}-${loc.to}-${idx}`}`}
+													variant="body2"
+												>
+													{loc.from} → {loc.to}
+												</Typography>
+											))}
+										</Stack>
+									}
+									arrow
+									placement="top"
+								>
+									<Chip label={`+${remaining}`} size="small" color="primary" />
+								</Tooltip>
+							)}
+						</Stack>
+					);
+				},
 			}),
 			columnHelper.accessor('fee', {
 				header: '金額',
@@ -133,19 +174,19 @@ export function useUninvoicedTable(data: Waybill[]) {
 					// 處理範圍搜尋
 					if (cleanValue.startsWith('>=')) {
 						const minValue = parseFloat(cleanValue.slice(2));
-						return !isNaN(minValue) && fee >= minValue;
+						return !Number.isNaN(minValue) && fee >= minValue;
 					}
 					if (cleanValue.startsWith('>')) {
 						const minValue = parseFloat(cleanValue.slice(1));
-						return !isNaN(minValue) && fee > minValue;
+						return !Number.isNaN(minValue) && fee > minValue;
 					}
 					if (cleanValue.startsWith('<=')) {
 						const maxValue = parseFloat(cleanValue.slice(2));
-						return !isNaN(maxValue) && fee <= maxValue;
+						return !Number.isNaN(maxValue) && fee <= maxValue;
 					}
 					if (cleanValue.startsWith('<')) {
 						const maxValue = parseFloat(cleanValue.slice(1));
-						return !isNaN(maxValue) && fee < maxValue;
+						return !Number.isNaN(maxValue) && fee < maxValue;
 					}
 
 					// 處理區間搜尋
@@ -154,12 +195,12 @@ export function useUninvoicedTable(data: Waybill[]) {
 						const [, minStr, maxStr] = rangeMatch;
 						const minValue = parseFloat(minStr);
 						const maxValue = parseFloat(maxStr);
-						return !isNaN(minValue) && !isNaN(maxValue) && fee >= minValue && fee <= maxValue;
+						return !Number.isNaN(minValue) && !Number.isNaN(maxValue) && fee >= minValue && fee <= maxValue;
 					}
 
 					// 精確數字搜尋或包含搜尋
 					const numericValue = parseFloat(cleanValue);
-					if (!isNaN(numericValue)) {
+					if (!Number.isNaN(numericValue)) {
 						return fee === numericValue;
 					}
 
@@ -211,19 +252,19 @@ export function useUninvoicedTable(data: Waybill[]) {
 						// 處理範圍搜尋
 						if (cleanValue.startsWith('>=')) {
 							const minValue = parseFloat(cleanValue.slice(2));
-							return !isNaN(minValue) && totalFee >= minValue;
+							return !Number.isNaN(minValue) && totalFee >= minValue;
 						}
 						if (cleanValue.startsWith('>')) {
 							const minValue = parseFloat(cleanValue.slice(1));
-							return !isNaN(minValue) && totalFee > minValue;
+							return !Number.isNaN(minValue) && totalFee > minValue;
 						}
 						if (cleanValue.startsWith('<=')) {
 							const maxValue = parseFloat(cleanValue.slice(2));
-							return !isNaN(maxValue) && totalFee <= maxValue;
+							return !Number.isNaN(maxValue) && totalFee <= maxValue;
 						}
 						if (cleanValue.startsWith('<')) {
 							const maxValue = parseFloat(cleanValue.slice(1));
-							return !isNaN(maxValue) && totalFee < maxValue;
+							return !Number.isNaN(maxValue) && totalFee < maxValue;
 						}
 
 						// 處理區間搜尋
@@ -232,12 +273,17 @@ export function useUninvoicedTable(data: Waybill[]) {
 							const [, minStr, maxStr] = rangeMatch;
 							const minValue = parseFloat(minStr);
 							const maxValue = parseFloat(maxStr);
-							return !isNaN(minValue) && !isNaN(maxValue) && totalFee >= minValue && totalFee <= maxValue;
+							return (
+								!Number.isNaN(minValue) &&
+								!Number.isNaN(maxValue) &&
+								totalFee >= minValue &&
+								totalFee <= maxValue
+							);
 						}
 
 						// 精確數字搜尋
 						const numericValue = parseFloat(cleanValue);
-						if (!isNaN(numericValue)) {
+						if (!Number.isNaN(numericValue)) {
 							return totalFee === numericValue;
 						}
 

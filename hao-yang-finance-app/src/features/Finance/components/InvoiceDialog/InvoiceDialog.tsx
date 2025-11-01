@@ -5,6 +5,7 @@ import {
 	Box,
 	Button,
 	Checkbox,
+	Chip,
 	Dialog,
 	DialogActions,
 	DialogContent,
@@ -20,6 +21,7 @@ import {
 	TableHead,
 	TableRow,
 	TextField,
+	Tooltip,
 	Typography,
 } from '@mui/material';
 import { format } from 'date-fns';
@@ -532,21 +534,67 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 										<TableRow>
 											<TableCell>公司名稱</TableCell>
 											<TableCell>日期</TableCell>
-											<TableCell>品項</TableCell>
+											<TableCell>地點</TableCell>
 											<TableCell>司機</TableCell>
 											<TableCell align="right">費用</TableCell>
 										</TableRow>
 									</TableHead>
 									<TableBody>
-										{waybillList.map((waybill) => (
-											<TableRow key={waybill.id}>
-												<TableCell>{waybill.companyName}</TableCell>
-												<TableCell>{waybill.date}</TableCell>
-												<TableCell>{waybill.item}</TableCell>
-												<TableCell>{waybill.driverName}</TableCell>
-												<TableCell align="right">${waybill.fee?.toLocaleString()}</TableCell>
-											</TableRow>
-										))}
+										{waybillList.map((waybill) => {
+											const locations = (waybill.loadingLocations || []).filter(
+												(loc) => loc.from !== '空白' && loc.to !== '空白',
+											);
+											const MAX_VISIBLE = 2;
+											const visible = locations.slice(0, MAX_VISIBLE);
+											const remaining = locations.length - visible.length;
+
+											return (
+												<TableRow key={waybill.id}>
+													<TableCell>{waybill.companyName}</TableCell>
+													<TableCell>{waybill.date}</TableCell>
+													<TableCell>
+														<Stack direction="row" flexWrap="wrap" gap={0.5}>
+															{visible.map((loc, idx) => (
+																<Chip
+																	key={`-${`${loc.from}-${loc.to}-${idx}`}`}
+																	label={`${loc.from} → ${loc.to}`}
+																	size="small"
+																	variant="outlined"
+																/>
+															))}
+															{remaining > 0 && (
+																<Tooltip
+																	title={
+																		<Stack sx={{ maxWidth: 360, p: 0.5 }}>
+																			{locations.map((loc, idx) => (
+																				<Typography
+																					key={`full-${`${loc.from}-${loc.to}-${idx}`}`}
+																					variant="body2"
+																				>
+																					{loc.from} → {loc.to}
+																				</Typography>
+																			))}
+																		</Stack>
+																	}
+																	arrow
+																	placement="top"
+																>
+																	<Chip
+																		label={`+${remaining}`}
+																		size="small"
+																		color="primary"
+																	/>
+																</Tooltip>
+															)}
+														</Stack>
+													</TableCell>
+													<TableCell>{waybill.driverName}</TableCell>
+													<TableCell align="right">
+														${waybill.fee?.toLocaleString()}
+													</TableCell>
+												</TableRow>
+											);
+										})}
 									</TableBody>
 								</Table>
 							</TableContainer>
@@ -600,41 +648,87 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 											<TableRow>
 												<TableCell padding="checkbox" />
 												<TableCell>日期</TableCell>
-												<TableCell>品項</TableCell>
+												<TableCell>地點</TableCell>
 												<TableCell>司機</TableCell>
 												<TableCell align="right">費用</TableCell>
 											</TableRow>
 										</TableHead>
 										<TableBody>
-											{filteredSuggestedWaybills.map((waybill) => (
-												<TableRow
-													key={waybill.id}
-													hover
-													onClick={() => {
-														const waybillId = waybill.id || '';
-														if (selectedSuggestedIds.includes(waybillId)) {
-															setSelectedSuggestedIds((prev) =>
-																prev.filter((id) => id !== waybillId),
-															);
-														} else {
-															setSelectedSuggestedIds((prev) => [...prev, waybillId]);
-														}
-													}}
-													sx={{ cursor: 'pointer' }}
-												>
-													<TableCell padding="checkbox">
-														<Checkbox
-															checked={selectedSuggestedIds.includes(waybill.id || '')}
-														/>
-													</TableCell>
-													<TableCell>{waybill.date}</TableCell>
-													<TableCell>{waybill.item}</TableCell>
-													<TableCell>{waybill.driverName}</TableCell>
-													<TableCell align="right">
-														${waybill.fee?.toLocaleString()}
-													</TableCell>
-												</TableRow>
-											))}
+											{filteredSuggestedWaybills.map((waybill) => {
+												const locations = (waybill.loadingLocations || []).filter(
+													(loc) => loc.from !== '空白' && loc.to !== '空白',
+												);
+												const MAX_VISIBLE = 2;
+												const visible = locations.slice(0, MAX_VISIBLE);
+												const remaining = locations.length - visible.length;
+
+												return (
+													<TableRow
+														key={waybill.id}
+														hover
+														onClick={() => {
+															const waybillId = waybill.id || '';
+															if (selectedSuggestedIds.includes(waybillId)) {
+																setSelectedSuggestedIds((prev) =>
+																	prev.filter((id) => id !== waybillId),
+																);
+															} else {
+																setSelectedSuggestedIds((prev) => [...prev, waybillId]);
+															}
+														}}
+														sx={{ cursor: 'pointer' }}
+													>
+														<TableCell padding="checkbox">
+															<Checkbox
+																checked={selectedSuggestedIds.includes(
+																	waybill.id || '',
+																)}
+															/>
+														</TableCell>
+														<TableCell>{waybill.date}</TableCell>
+														<TableCell>
+															<Stack direction="row" flexWrap="wrap" gap={0.5}>
+																{visible.map((loc, idx) => (
+																	<Chip
+																		key={`chip-${`${loc.from}-${loc.to}-${idx}`}`}
+																		label={`${loc.from} → ${loc.to}`}
+																		size="small"
+																		variant="outlined"
+																	/>
+																))}
+																{remaining > 0 && (
+																	<Tooltip
+																		title={
+																			<Stack sx={{ maxWidth: 360, p: 0.5 }}>
+																				{locations.map((loc, idx) => (
+																					<Typography
+																						key={`full-${`${loc.from}-${loc.to}-${idx}`}`}
+																						variant="body2"
+																					>
+																						{loc.from} → {loc.to}
+																					</Typography>
+																				))}
+																			</Stack>
+																		}
+																		arrow
+																		placement="top"
+																	>
+																		<Chip
+																			label={`+${remaining}`}
+																			size="small"
+																			color="primary"
+																		/>
+																	</Tooltip>
+																)}
+															</Stack>
+														</TableCell>
+														<TableCell>{waybill.driverName}</TableCell>
+														<TableCell align="right">
+															${waybill.fee?.toLocaleString()}
+														</TableCell>
+													</TableRow>
+												);
+											})}
 										</TableBody>
 									</Table>
 								</TableContainer>

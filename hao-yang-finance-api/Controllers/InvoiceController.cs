@@ -39,6 +39,9 @@ namespace hao_yang_finance_api.Controllers
                 .Include(i => i.InvoiceWaybills)
                 .ThenInclude(iw => iw.Waybill)
                 .ThenInclude(w => w.Company)
+                .Include(i => i.InvoiceWaybills)
+                .ThenInclude(iw => iw.Waybill)
+                .ThenInclude(w => w.LoadingLocations)
                 .Include(i => i.InvoiceExtraExpenses)
                 .ThenInclude(iee => iee.ExtraExpense)
                 .ThenInclude(ee => ee.Waybill)
@@ -110,6 +113,13 @@ namespace hao_yang_finance_api.Controllers
                         DriverName = iw.Waybill.Driver?.Name ?? "",
                         WaybillCompanyId = iw.Waybill.CompanyId,
                         WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
+                        LoadingLocations = iw.Waybill.LoadingLocations
+                            .OrderBy(ll => ll.SequenceOrder)
+                            .Select(ll => new LoadingLocationDto
+                            {
+                                From = ll.FromLocation,
+                                To = ll.ToLocation
+                            }).ToList(),
                         ExtraExpensesIncludeTax = i.ExtraExpensesIncludeTax,
                         ExtraExpenses = i.InvoiceExtraExpenses
                             .Where(iee => iee.ExtraExpense.WaybillId == iw.WaybillId)
@@ -149,6 +159,9 @@ namespace hao_yang_finance_api.Controllers
                 .Include(i => i.InvoiceWaybills)
                 .ThenInclude(iw => iw.Waybill)
                 .ThenInclude(w => w.Driver)
+                .Include(i => i.InvoiceWaybills)
+                .ThenInclude(iw => iw.Waybill)
+                .ThenInclude(w => w.LoadingLocations)
                 .Include(i => i.InvoiceExtraExpenses)
                 .ThenInclude(iee => iee.ExtraExpense)
                 .ThenInclude(ee => ee.Waybill)
@@ -188,6 +201,13 @@ namespace hao_yang_finance_api.Controllers
                     DriverName = iw.Waybill.Driver?.Name ?? "",
                     WaybillCompanyId = iw.Waybill.CompanyId,
                     WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
+                    LoadingLocations = iw.Waybill.LoadingLocations
+                        .OrderBy(ll => ll.SequenceOrder)
+                        .Select(ll => new LoadingLocationDto
+                        {
+                            From = ll.FromLocation,
+                            To = ll.ToLocation
+                        }).ToList(),
                     ExtraExpensesIncludeTax = invoice.ExtraExpensesIncludeTax,
                     ExtraExpenses = invoice.InvoiceExtraExpenses
                         .Where(iee => iee.ExtraExpense.WaybillId == iw.WaybillId)

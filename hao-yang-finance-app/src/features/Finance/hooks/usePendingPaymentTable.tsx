@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { Chip, Stack, Tooltip, Typography } from '@mui/material';
 import {
 	ColumnFiltersState,
 	ColumnResizeDirection,
@@ -11,12 +12,12 @@ import {
 	getGroupedRowModel,
 	getSortedRowModel,
 	GroupingState,
+	RowSelectionState,
 	SortingState,
 	useReactTable,
-	RowSelectionState,
 } from '@tanstack/react-table';
 
-import { Waybill, ExtraExpense } from '../../Waybill/types/waybill.types';
+import { Waybill } from '../../Waybill/types/waybill.types';
 
 const columnHelper = createColumnHelper<Waybill>();
 
@@ -85,18 +86,6 @@ export function usePendingPaymentTable(data: Waybill[]) {
 					});
 				},
 			}),
-			columnHelper.accessor('item', {
-				header: '貨物',
-				cell: (info) => info.getValue(),
-				enableSorting: true,
-				enableGrouping: true,
-				enableColumnFilter: true,
-				enableResizing: true,
-				filterFn: 'includesString',
-				size: 120,
-				minSize: 100,
-				maxSize: 200,
-			}),
 			// columnHelper.accessor('waybillNumber', {
 			// 	header: '託運單號',
 			// 	cell: (info) => info.getValue(),
@@ -121,33 +110,59 @@ export function usePendingPaymentTable(data: Waybill[]) {
 				minSize: 80,
 				maxSize: 150,
 			}),
-			columnHelper.accessor((row) => row.loadingLocations?.map((loc) => loc.location).join(', ') || '', {
-				id: 'loadingLocations',
-				header: '取貨地點',
-				cell: (info) => info.getValue(),
-				enableSorting: false,
+			columnHelper.accessor('loadingLocations', {
+				header: '地點',
 				enableGrouping: false,
-				enableColumnFilter: true,
+				enableSorting: false,
+				enableColumnFilter: false,
 				enableResizing: true,
-				filterFn: 'includesString',
-				size: 150,
+				size: 160,
 				minSize: 120,
 				maxSize: 250,
+				cell: ({ getValue }) => {
+					const locations = (getValue() as Array<{ id?: string; from: string; to: string }>).filter(
+						(loc) => loc.from !== '空白' && loc.to !== '空白',
+					);
+
+					const MAX_VISIBLE = 2;
+					const visible = locations.slice(0, MAX_VISIBLE);
+					const remaining = locations.length - visible.length;
+
+					return (
+						<Stack direction="row" flexWrap="wrap" gap={0.5}>
+							{visible.map((loc, idx) => (
+								<Chip
+									key={loc.id ?? `${loc.from}-${loc.to}-${idx}`}
+									label={`${loc.from} → ${loc.to}`}
+									size="small"
+									variant="outlined"
+								/>
+							))}
+							{remaining > 0 && (
+								<Tooltip
+									title={
+										<Stack sx={{ maxWidth: 360, p: 0.5 }}>
+											{locations.map((loc, idx) => (
+												<Typography
+													key={`full-${loc.id ?? `${loc.from}-${loc.to}-${idx}`}`}
+													variant="body2"
+												>
+													{loc.from} → {loc.to}
+												</Typography>
+											))}
+										</Stack>
+									}
+									arrow
+									placement="top"
+								>
+									<Chip label={`+${remaining}`} size="small" color="primary" />
+								</Tooltip>
+							)}
+						</Stack>
+					);
+				},
 			}),
-			columnHelper.accessor((row) => row.deliveryLocations?.map((loc) => loc.location).join(', ') || '', {
-				id: 'deliveryLocations',
-				header: '送貨地點',
-				cell: (info) => info.getValue(),
-				enableSorting: false,
-				enableGrouping: false,
-				enableColumnFilter: true,
-				enableResizing: true,
-				filterFn: 'includesString',
-				size: 150,
-				minSize: 120,
-				maxSize: 250,
-			}),
-			columnHelper.accessor('amount', {
+			columnHelper.accessor('fee', {
 				header: '金額',
 				cell: (info) => {
 					const value = info.getValue();

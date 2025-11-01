@@ -49,7 +49,6 @@ interface PendingPaymentTableProps {
 
 export function PendingPaymentTable({ waybills }: PendingPaymentTableProps) {
 	const isMountedRef = useRef(false);
-	const [selectedWaybills, setSelectedWaybills] = useState<Waybill[]>([]);
 	const [confirmCompleteDialogOpen, setConfirmCompleteDialogOpen] = useState(false);
 	const [completeNotesDialogOpen, setCompleteNotesDialogOpen] = useState(false);
 	const [editNotesDialogOpen, setEditNotesDialogOpen] = useState(false);

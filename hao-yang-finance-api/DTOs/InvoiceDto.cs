@@ -102,6 +102,7 @@ namespace hao_yang_finance_api.DTOs
         public string DriverName { get; set; } = string.Empty;
         public string WaybillCompanyId { get; set; } = string.Empty;
         public string WaybillCompanyName { get; set; } = string.Empty;
+        public List<LoadingLocationDto> LoadingLocations { get; set; } = new List<LoadingLocationDto>();
 
         public bool? ExtraExpensesIncludeTax { get; set; }
         public List<InvoiceExtraExpenseDto>? ExtraExpenses { get; set; }

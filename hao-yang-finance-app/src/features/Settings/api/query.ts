@@ -1,16 +1,16 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { getCompanies, getDrivers } from './api';
 
 export const useCompaniesQuery = () => {
-	return useSuspenseQuery({
+	return useQuery({
 		queryKey: ['companies'],
 		queryFn: getCompanies,
 	});
 };
 
 export const useDriversQuery = () => {
-	return useSuspenseQuery({
+	return useQuery({
 		queryKey: ['drivers'],
 		queryFn: getDrivers,
 	});

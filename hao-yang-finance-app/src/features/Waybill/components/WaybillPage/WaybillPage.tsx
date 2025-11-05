@@ -5,13 +5,13 @@ import CloseIcon from '@mui/icons-material/Close';
 import {
 	Box,
 	Button,
+	CircularProgress,
 	Dialog,
 	DialogActions,
 	DialogContent,
 	DialogTitle,
 	Drawer,
 	IconButton,
-	Skeleton,
 	Stack,
 	TextField,
 	Typography,
@@ -321,9 +321,23 @@ export default function WaybillPage() {
 								/>
 							</Stack>
 						</Box>
-						<Box sx={{ flex: 1, overflow: 'auto' }}>
+						<Box sx={{ flex: 1, overflow: 'auto', position: 'relative' }}>
 							{isPending ? (
-								<Skeleton variant="rectangular" height={500} />
+								<Box
+									sx={{
+										display: 'flex',
+										flexDirection: 'column',
+										alignItems: 'center',
+										justifyContent: 'center',
+										height: '100%',
+										gap: 2,
+									}}
+								>
+									<CircularProgress size={48} />
+									<Typography variant="body2" color="text.secondary">
+										載入中...
+									</Typography>
+								</Box>
 							) : (
 								<WaybillGrid
 									waybills={waybills || []}
@@ -410,16 +424,32 @@ export default function WaybillPage() {
 								</Stack>
 							</Stack>
 
-							{isPending ? (
-								<Skeleton variant="rectangular" height={500} />
-							) : (
-								<WaybillGrid
-									waybills={waybills || []}
-									onDelete={handleDelete}
-									onSelect={handleSelectWaybill}
-									onView={handleViewWaybill}
-								/>
-							)}
+							<Box sx={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+								{isPending ? (
+									<Box
+										sx={{
+											display: 'flex',
+											flexDirection: 'column',
+											alignItems: 'center',
+											justifyContent: 'center',
+											height: '100%',
+											gap: 2,
+										}}
+									>
+										<CircularProgress size={48} />
+										<Typography variant="body2" color="text.secondary">
+											載入中...
+										</Typography>
+									</Box>
+								) : (
+									<WaybillGrid
+										waybills={waybills || []}
+										onDelete={handleDelete}
+										onSelect={handleSelectWaybill}
+										onView={handleViewWaybill}
+									/>
+								)}
+							</Box>
 						</Stack>
 						<WaybillForm
 							companies={companies}

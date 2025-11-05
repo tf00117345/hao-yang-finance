@@ -28,75 +28,6 @@ export function Company() {
 	const { mutate: insertCompany, isPending: isInsertPending } = useInsertCompanyMutation();
 	const { mutate: updateCompany, isPending: isUpdatePending } = useUpdateCompanyMutation();
 
-	// cell renderers
-	const renderPhone = useCallback((params: any) => {
-		return params.value?.join(', ') || '';
-	}, []);
-
-	const renderActions = useCallback(
-		(params: any) => (
-			<Box>
-				<IconButton onClick={() => handleEdit(params.data)} size="small">
-					<EditIcon />
-				</IconButton>
-				<IconButton onClick={() => handleDelete(params.data.id)} size="small">
-					<DeleteIcon />
-				</IconButton>
-			</Box>
-		),
-		[handleEdit, handleDelete],
-	);
-
-	// AG-Grid 列定義
-	const columnDefs = useMemo<ColDef[]>(
-		() => [
-			{
-				field: 'id',
-				headerName: 'ID',
-				flex: 1,
-				hide: true,
-			},
-			{
-				field: 'name',
-				headerName: '公司名稱',
-				flex: 1,
-				sortable: true,
-				filter: true,
-			},
-			{
-				field: 'taxId',
-				headerName: '統一編號',
-				flex: 1,
-				sortable: true,
-				filter: true,
-			},
-			{
-				field: 'address',
-				headerName: '地址',
-				flex: 2,
-				sortable: true,
-				filter: true,
-			},
-			{
-				field: 'phone',
-				headerName: '電話',
-				flex: 1,
-				sortable: true,
-				filter: true,
-				// 自定義渲染phone array
-				cellRenderer: renderPhone,
-			},
-			{
-				headerName: '操作',
-				width: 120,
-				sortable: false,
-				filter: false,
-				cellRenderer: renderActions,
-			},
-		],
-		[renderPhone, renderActions],
-	);
-
 	// AG-Grid 預設列配置
 	const defaultColDef = useMemo(
 		() => ({
@@ -151,6 +82,70 @@ export function Company() {
 			gridApi.current.setGridOption('quickFilterText', searchText);
 		}
 	}, []);
+
+	// AG-Grid 列定義
+	const columnDefs = useMemo<ColDef[]>(
+		() => [
+			{
+				field: 'id',
+				headerName: 'ID',
+				flex: 1,
+				hide: true,
+			},
+			{
+				field: 'name',
+				headerName: '公司名稱',
+				flex: 1,
+				sortable: true,
+				filter: true,
+			},
+			{
+				field: 'taxId',
+				headerName: '統一編號',
+				flex: 1,
+				sortable: true,
+				filter: true,
+			},
+			{
+				field: 'address',
+				headerName: '地址',
+				flex: 2,
+				sortable: true,
+				filter: true,
+			},
+			{
+				field: 'phone',
+				headerName: '電話',
+				flex: 1,
+				sortable: true,
+				filter: true,
+				// 自定義渲染phone array
+				cellRenderer: (params: any) => {
+					return params.value?.join(', ') || '';
+				},
+			},
+			{
+				headerName: '操作',
+				width: 120,
+				sortable: false,
+				filter: false,
+				// eslint-disable-next-line react/no-unstable-nested-components
+				cellRenderer: (params: any) => {
+					return (
+						<Box>
+							<IconButton onClick={() => handleEdit(params.data)} size="small">
+								<EditIcon />
+							</IconButton>
+							<IconButton onClick={() => handleDelete(params.data.id)} size="small">
+								<DeleteIcon />
+							</IconButton>
+						</Box>
+					);
+				},
+			},
+		],
+		[handleDelete, handleEdit],
+	);
 
 	return (
 		<>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Box, Button, Stack, Tab, Tabs } from '@mui/material';
+import { Box, Button, CircularProgress, Stack, Tab, Tabs, Typography } from '@mui/material';
 import { endOfMonth, format, startOfMonth } from 'date-fns';
 
 import MonthPicker from '../../../../component/MonthPicker/MonthPicker';
@@ -123,10 +123,51 @@ export default function FinancePage() {
 					<Tab label="司機收現金之貨運單" />
 					<Tab label="已開立發票" />
 				</Tabs>
-				{tab === 0 && <UninvoicedTable waybills={uninvoicedWaybills} />}
-				{tab === 1 && <CashPaymentTable waybills={cashPaymentWaybills} />}
-				{tab === 2 && <NoInvoicedNeededTable waybills={noInvoicedNeededWaybills} />}
-				{tab === 3 && <InvoicedTable invoices={invoices} onEdit={handleEditInvoice} />}
+				<Box sx={{ flex: 1, position: 'relative', overflow: 'auto' }}>
+					{/* Tab 0-2: 顯示 waybills loading */}
+					{tab >= 0 && tab <= 2 && isWaybillsPending && (
+						<Box
+							sx={{
+								display: 'flex',
+								flexDirection: 'column',
+								alignItems: 'center',
+								justifyContent: 'center',
+								height: '100%',
+								gap: 2,
+							}}
+						>
+							<CircularProgress size={48} />
+							<Typography variant="body2" color="text.secondary">
+								載入中...
+							</Typography>
+						</Box>
+					)}
+					{/* Tab 3: 顯示 invoices loading */}
+					{tab === 3 && isInvoicesPending && (
+						<Box
+							sx={{
+								display: 'flex',
+								flexDirection: 'column',
+								alignItems: 'center',
+								justifyContent: 'center',
+								height: '100%',
+								gap: 2,
+							}}
+						>
+							<CircularProgress size={48} />
+							<Typography variant="body2" color="text.secondary">
+								載入中...
+							</Typography>
+						</Box>
+					)}
+					{/* 顯示內容 */}
+					{!isWaybillsPending && tab === 0 && <UninvoicedTable waybills={uninvoicedWaybills} />}
+					{!isWaybillsPending && tab === 1 && <CashPaymentTable waybills={cashPaymentWaybills} />}
+					{!isWaybillsPending && tab === 2 && <NoInvoicedNeededTable waybills={noInvoicedNeededWaybills} />}
+					{!isInvoicesPending && tab === 3 && (
+						<InvoicedTable invoices={invoices} onEdit={handleEditInvoice} />
+					)}
+				</Box>
 			</Box>
 
 			{/* 編輯發票對話框 */}

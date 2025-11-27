@@ -31,8 +31,8 @@ import { flexRender } from '@tanstack/react-table';
 
 import { useRestoreWaybillsBatchMutation } from '../../../Waybill/api/mutation';
 import { Waybill } from '../../../Waybill/types/waybill.types';
+import { usePendingWaybillTable } from '../../hooks/usePendingWaybillTable';
 import { useStickyFilterTop } from '../../hooks/useStickyFilterTop';
-import { useUninvoicedTable } from '../../hooks/useUninvoicedTable';
 import { SmartFilterInput } from '../shared/SmartFilterInput';
 import { StyledTableCell, StyledTableRow } from '../styles/styles';
 
@@ -47,7 +47,7 @@ export function NoInvoicedNeededTable({ waybills }: NoInvoicedNeededTableProps) 
 	const [processingNoInvoice, setProcessingNoInvoice] = useState(false);
 	const { tableHeadRef, filterRowRef, filterTop } = useStickyFilterTop();
 
-	const { table, columnFilters, setColumnFilters } = useUninvoicedTable(waybills);
+	const { table, columnFilters, setColumnFilters } = usePendingWaybillTable(waybills);
 	const restoreWaybillsBatchMutation = useRestoreWaybillsBatchMutation();
 
 	// Track component mount status

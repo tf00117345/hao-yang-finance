@@ -21,6 +21,7 @@ export interface Waybill {
 	extraExpenses: ExtraExpense[];
 	status: WaybillStatus; // 替代 isInvoiceIssued
 	invoiceId?: string;
+	collectionRequestId?: string;
 	taxAmount?: number;
 	taxRate?: number;
 	paymentNotes?: string;

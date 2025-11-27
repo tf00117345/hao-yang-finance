@@ -23,6 +23,7 @@ namespace hao_yang_finance_api.Data
         public DbSet<ExpenseType> ExpenseTypes { get; set; }
         public DbSet<DriverSettlement> DriverSettlements { get; set; }
         public DbSet<Expense> Expenses { get; set; }
+        public DbSet<CollectionRequest> CollectionRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -141,6 +142,32 @@ namespace hao_yang_finance_api.Data
             {
                 entity.Property(et => et.DefaultAmount)
                     .HasPrecision(12, 2);
+            });
+
+            // Configure CollectionRequest
+            modelBuilder.Entity<CollectionRequest>(entity =>
+            {
+                entity.HasMany(cr => cr.Waybills)
+                    .WithOne(w => w.CollectionRequest)
+                    .HasForeignKey(w => w.CollectionRequestId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(cr => cr.Company)
+                    .WithMany()
+                    .HasForeignKey(cr => cr.CompanyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(cr => cr.TotalAmount)
+                    .HasPrecision(12, 2);
+
+                entity.Property(cr => cr.Subtotal)
+                    .HasPrecision(12, 2);
+
+                entity.Property(cr => cr.TaxAmount)
+                    .HasPrecision(12, 2);
+
+                entity.Property(cr => cr.TaxRate)
+                    .HasPrecision(5, 4);
             });
         }
     }

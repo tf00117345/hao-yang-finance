@@ -21,7 +21,7 @@ import { ExtraExpense, Waybill } from '../../Waybill/types/waybill.types';
 
 const columnHelper = createColumnHelper<Waybill>();
 
-export function useUninvoicedTable(data: Waybill[]) {
+export function usePendingWaybillTable(data: Waybill[]) {
 	const columns = useMemo(
 		() => [
 			{

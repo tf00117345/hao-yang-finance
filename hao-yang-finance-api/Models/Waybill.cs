@@ -77,6 +77,9 @@ namespace hao_yang_finance_api.Models
         [MaxLength(20)]
         public string? PaymentMethod { get; set; }
 
+        [Column("collection_request_id")]
+        public string? CollectionRequestId { get; set; }
+
         [Column("created_at")]
         public string CreatedAt { get; set; } = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
@@ -87,6 +90,7 @@ namespace hao_yang_finance_api.Models
         public virtual Company Company { get; set; } = null!;
         public virtual Driver Driver { get; set; } = null!;
         public virtual Invoice? Invoice { get; set; }
+        public virtual CollectionRequest? CollectionRequest { get; set; }
         public virtual ICollection<LoadingLocation> LoadingLocations { get; set; } = new List<LoadingLocation>();
         public virtual ICollection<ExtraExpense> ExtraExpenses { get; set; } = new List<ExtraExpense>();
     }

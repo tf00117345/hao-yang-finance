@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ArrowDownward, ArrowUpward, UnfoldMore } from '@mui/icons-material';
+import BusinessIcon from '@mui/icons-material/Business';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DriveEtaIcon from '@mui/icons-material/DriveEta';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupIcon from '@mui/icons-material/Group';
-import PaymentIcon from '@mui/icons-material/Payment';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import {
 	Box,
@@ -27,41 +27,40 @@ import {
 	TableContainer,
 	TableHead,
 	TableRow,
-	TextField,
 	Typography,
 } from '@mui/material';
 import { flexRender } from '@tanstack/react-table';
 
-import {
-	useMarkWaybillsAsNoInvoiceNeededBatchMutation,
-	useMarkWaybillsAsUnpaidWithTaxBatchMutation,
-} from '../../../Waybill/api/mutation';
+import { useMarkWaybillsAsNoInvoiceNeededBatchMutation } from '../../../Waybill/api/mutation';
 import { Waybill } from '../../../Waybill/types/waybill.types';
+import { usePendingWaybillTable } from '../../hooks/usePendingWaybillTable';
 import { useStickyFilterTop } from '../../hooks/useStickyFilterTop';
-import { useUninvoicedTable } from '../../hooks/useUninvoicedTable';
+import { CreateCollectionRequestDialog } from '../CreateCollectionRequestDialog/CreateCollectionRequestDialog';
 import { InvoiceDialog } from '../InvoiceDialog/InvoiceDialog';
 import { SmartFilterInput } from '../shared/SmartFilterInput';
 import { StyledTableCell, StyledTableRow } from '../styles/styles';
 
-interface UninvoicedTableProps {
+interface PendingWaybillTableProps {
 	waybills: Waybill[];
 }
 
-export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
+export function PendingWaybillTable({ waybills }: PendingWaybillTableProps) {
 	const isMountedRef = useRef(false);
 	const [selectedWaybills, setSelectedWaybills] = useState<Waybill[]>([]);
 	const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
 	const [confirmNoInvoiceDialogOpen, setConfirmNoInvoiceDialogOpen] = useState(false);
 	const [processingNoInvoice, setProcessingNoInvoice] = useState(false);
-	const [pendingPaymentDialogOpen, setPendingPaymentDialogOpen] = useState(false);
-	const [pendingPaymentWaybills, setPendingPaymentWaybills] = useState<Waybill[]>([]);
-	const [pendingPaymentNotes, setPendingPaymentNotes] = useState('');
-	const [processingPendingPayment, setProcessingPendingPayment] = useState(false);
+	// const [pendingPaymentDialogOpen, setPendingPaymentDialogOpen] = useState(false);
+	// const [pendingPaymentWaybills, setPendingPaymentWaybills] = useState<Waybill[]>([]);
+	// const [pendingPaymentNotes, setPendingPaymentNotes] = useState('');
+	// const [processingPendingPayment, setProcessingPendingPayment] = useState(false);
+	const [collectionRequestDialogOpen, setCollectionRequestDialogOpen] = useState(false);
+	const [collectionRequestWaybills, setCollectionRequestWaybills] = useState<Waybill[]>([]);
 	const { tableHeadRef, filterRowRef, filterTop } = useStickyFilterTop();
 
-	const { table, columnFilters, setColumnFilters } = useUninvoicedTable(waybills);
+	const { table, columnFilters, setColumnFilters } = usePendingWaybillTable(waybills);
 	const markAsNoInvoiceNeededBatchMutation = useMarkWaybillsAsNoInvoiceNeededBatchMutation();
-	const markAsUnpaidWithTaxBatchMutation = useMarkWaybillsAsUnpaidWithTaxBatchMutation();
+	// const markAsUnpaidWithTaxBatchMutation = useMarkWaybillsAsUnpaidWithTaxBatchMutation();
 
 	// Track component mount status
 	useEffect(() => {
@@ -124,18 +123,18 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 	}, [table]);
 
 	// 處理標記為未收款 - 支援批次操作
-	const handleOpenPendingPaymentDialog = useCallback(() => {
-		const selected = table.getSelectedRowModel().rows.map((row) => row.original);
-		if (selected.length === 0) {
-			// eslint-disable-next-line no-alert
-			alert('請先選擇至少一筆資料');
-			return;
-		}
+	// const handleOpenPendingPaymentDialog = useCallback(() => {
+	// 	const selected = table.getSelectedRowModel().rows.map((row) => row.original);
+	// 	if (selected.length === 0) {
+	// 		// eslint-disable-next-line no-alert
+	// 		alert('請先選擇至少一筆資料');
+	// 		return;
+	// 	}
 
-		setPendingPaymentWaybills(selected);
-		setPendingPaymentNotes('');
-		setPendingPaymentDialogOpen(true);
-	}, [table]);
+	// 	setPendingPaymentWaybills(selected);
+	// 	setPendingPaymentNotes('');
+	// 	setPendingPaymentDialogOpen(true);
+	// }, [table]);
 
 	// 確認標記為無須開發票
 	const handleConfirmNoInvoice = async () => {
@@ -161,28 +160,47 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 	};
 
 	// 確認批次標記為未收款
-	const handleConfirmPendingPayment = async () => {
-		if (pendingPaymentWaybills.length === 0) return;
+	// const handleConfirmPendingPayment = async () => {
+	// 	if (pendingPaymentWaybills.length === 0) return;
 
-		setProcessingPendingPayment(true);
+	// 	setProcessingPendingPayment(true);
 
-		try {
-			// 使用批次 API 一次處理所有託運單
-			const waybillIds = pendingPaymentWaybills.map((waybill) => waybill.id);
-			await markAsUnpaidWithTaxBatchMutation.mutateAsync(waybillIds);
+	// 	try {
+	// 		// 使用批次 API 一次處理所有託運單
+	// 		const waybillIds = pendingPaymentWaybills.map((waybill) => waybill.id);
+	// 		await markAsUnpaidWithTaxBatchMutation.mutateAsync(waybillIds);
 
-			// 處理完成後清理狀態
-			setPendingPaymentDialogOpen(false);
-			setPendingPaymentWaybills([]);
-			setPendingPaymentNotes('');
-			table.resetRowSelection();
-		} catch (error) {
-			// 錯誤處理已由 mutation 的 onError 處理
-			console.error('批次標記為未收款失敗:', error);
-		} finally {
-			setProcessingPendingPayment(false);
+	// 		// 處理完成後清理狀態
+	// 		setPendingPaymentDialogOpen(false);
+	// 		setPendingPaymentWaybills([]);
+	// 		setPendingPaymentNotes('');
+	// 		table.resetRowSelection();
+	// 	} catch (error) {
+	// 		// 錯誤處理已由 mutation 的 onError 處理
+	// 		console.error('批次標記為未收款失敗:', error);
+	// 	} finally {
+	// 		setProcessingPendingPayment(false);
+	// 	}
+	// };
+
+	// 處理批量請款
+	const handleOpenCollectionRequestDialog = useCallback(() => {
+		const selected = table.getSelectedRowModel().rows.map((row) => row.original);
+		if (selected.length === 0) {
+			alert('請先選擇至少一筆資料');
+			return;
 		}
-	};
+
+		setCollectionRequestWaybills(selected);
+		setCollectionRequestDialogOpen(true);
+	}, [table]);
+
+	// 批量請款成功後的處理
+	const handleCollectionRequestCreated = useCallback(() => {
+		setCollectionRequestDialogOpen(false);
+		setCollectionRequestWaybills([]);
+		table.resetRowSelection();
+	}, [table]);
 
 	// 開立發票成功後的處理
 	const handleInvoiceCreated = useCallback(() => {
@@ -309,6 +327,17 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 					<Button
 						sx={{ width: '180px' }}
 						size="small"
+						color="secondary"
+						variant="contained"
+						startIcon={<BusinessIcon />}
+						onClick={handleOpenCollectionRequestDialog}
+						disabled={table.getSelectedRowModel().rows.length === 0}
+					>
+						向公司請款
+					</Button>
+					<Button
+						sx={{ width: '180px' }}
+						size="small"
 						color="warning"
 						variant="contained"
 						startIcon={<DriveEtaIcon />}
@@ -317,7 +346,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 					>
 						歸類到司機收現金
 					</Button>
-					<Button
+					{/* <Button
 						sx={{ width: '180px' }}
 						size="small"
 						color="error"
@@ -327,7 +356,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 						disabled={table.getSelectedRowModel().rows.length === 0}
 					>
 						標記待收款
-					</Button>
+					</Button> */}
 				</Stack>
 			</Stack>
 			<TableContainer
@@ -531,7 +560,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 			</Dialog>
 
 			{/* 標記待收款對話框 */}
-			<Dialog
+			{/* <Dialog
 				open={pendingPaymentDialogOpen}
 				onClose={() => setPendingPaymentDialogOpen(false)}
 				aria-labelledby="pending-payment-dialog-title"
@@ -579,7 +608,7 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={() => setPendingPaymentDialogOpen(false)} color="primary">
-						取消
+						取消 
 					</Button>
 					<Button
 						onClick={handleConfirmPendingPayment}
@@ -594,7 +623,15 @@ export function UninvoicedTable({ waybills }: UninvoicedTableProps) {
 						)}
 					</Button>
 				</DialogActions>
-			</Dialog>
+			</Dialog> */}
+
+			{/* 批量請款對話框 */}
+			<CreateCollectionRequestDialog
+				open={collectionRequestDialogOpen}
+				waybills={collectionRequestWaybills}
+				onClose={() => setCollectionRequestDialogOpen(false)}
+				onSuccess={handleCollectionRequestCreated}
+			/>
 		</Stack>
 	);
 }

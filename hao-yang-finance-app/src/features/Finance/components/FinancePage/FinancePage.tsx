@@ -11,11 +11,11 @@ import { useWaybillsByIdsQuery, useWaybillsQuery } from '../../../Waybill/api/qu
 import { WaybillStatus } from '../../../Waybill/types/waybill-status.types';
 import { useInvoicesQuery } from '../../api/query';
 import { Invoice } from '../../types/invoice.type';
-import { CashPaymentTable } from '../CashPaymentTable/CashPaymentTable';
+import { CollectionRequestTable } from '../CollectionRequestTable/CollectionRequestTable';
 import { InvoiceDialog } from '../InvoiceDialog/InvoiceDialog';
 import { InvoicedTable } from '../InvoicedTable/InvoicedTable';
 import { NoInvoicedNeededTable } from '../NoInvoicedTable/NoInvoicedTable';
-import { UninvoicedTable } from '../UninvoicedTable/UninvoicedTable';
+import { PendingWaybillTable } from '../PendingWaybillTable/PendingWaybillTable';
 
 export default function FinancePage() {
 	const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
@@ -37,12 +37,9 @@ export default function FinancePage() {
 	const { data: allWaybills = [], isPending: isWaybillsPending } = useWaybillsQuery(dateRange, selectedDriver?.id);
 
 	// 篩選未開立發票的waybills (PENDING狀態)
-	const uninvoicedWaybills = allWaybills.filter((waybill) => waybill.status === WaybillStatus.PENDING);
+	const pendingWaybills = allWaybills.filter((waybill) => waybill.status === WaybillStatus.PENDING);
 	const noInvoicedNeededWaybills = allWaybills.filter(
 		(waybill) => waybill.status === WaybillStatus.NO_INVOICE_NEEDED,
-	);
-	const cashPaymentWaybills = allWaybills.filter(
-		(waybill) => waybill.status === WaybillStatus.NEED_TAX_UNPAID || waybill.status === WaybillStatus.NEED_TAX_PAID,
 	);
 
 	// 獲取發票列表
@@ -119,13 +116,14 @@ export default function FinancePage() {
 			>
 				<Tabs value={tab} onChange={handleTabChange} sx={{ mb: 1 }}>
 					<Tab label="待處理之貨運單" />
-					<Tab label="公司應收款項之貨運單" />
+					<Tab label="公司應收款項管理" />
+					{/* <Tab label="公司應收款項之貨運單" /> */}
 					<Tab label="司機收現金之貨運單" />
 					<Tab label="已開立發票" />
 				</Tabs>
 				<Box sx={{ flex: 1, position: 'relative', overflow: 'auto' }}>
-					{/* Tab 0-2: 顯示 waybills loading */}
-					{tab >= 0 && tab <= 2 && isWaybillsPending && (
+					{/* Tab 0,2,3: 顯示 waybills loading */}
+					{(tab === 0 || tab === 2 || tab === 3) && isWaybillsPending && (
 						<Box
 							sx={{
 								display: 'flex',
@@ -142,8 +140,8 @@ export default function FinancePage() {
 							</Typography>
 						</Box>
 					)}
-					{/* Tab 3: 顯示 invoices loading */}
-					{tab === 3 && isInvoicesPending && (
+					{/* Tab 4: 顯示 invoices loading */}
+					{tab === 4 && isInvoicesPending && (
 						<Box
 							sx={{
 								display: 'flex',
@@ -161,8 +159,8 @@ export default function FinancePage() {
 						</Box>
 					)}
 					{/* 顯示內容 */}
-					{!isWaybillsPending && tab === 0 && <UninvoicedTable waybills={uninvoicedWaybills} />}
-					{!isWaybillsPending && tab === 1 && <CashPaymentTable waybills={cashPaymentWaybills} />}
+					{!isWaybillsPending && tab === 0 && <PendingWaybillTable waybills={pendingWaybills} />}
+					{tab === 1 && <CollectionRequestTable startDate={startDate} endDate={endDate} />}
 					{!isWaybillsPending && tab === 2 && <NoInvoicedNeededTable waybills={noInvoicedNeededWaybills} />}
 					{!isInvoicesPending && tab === 3 && (
 						<InvoicedTable invoices={invoices} onEdit={handleEditInvoice} />

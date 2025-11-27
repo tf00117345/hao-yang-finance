@@ -1162,114 +1162,114 @@ namespace hao_yang_finance_api.Controllers
         }
 
         // PUT: api/Waybill/batch-mark-unpaid-with-tax
-        [HttpPut("batch-mark-unpaid-with-tax")]
-        [RequirePermission(Permission.WaybillUpdate)]
-        public async Task<IActionResult> BatchMarkAsUnpaidWithTax(
-            [FromBody] List<string> waybillIds
-        )
-        {
-            if (waybillIds == null || !waybillIds.Any())
-            {
-                return BadRequest(new { message = "請提供要標記的託運單ID列表" });
-            }
-
-            var results = new List<object>();
-            var successCount = 0;
-            var failureCount = 0;
-
-            // 批量查詢所有託運單
-            var waybills = await _context
-                .Waybills.Where(w => waybillIds.Contains(w.Id))
-                .ToListAsync();
-
-            var foundWaybillIds = waybills.Select(w => w.Id).ToHashSet();
-            var notFoundIds = waybillIds.Where(id => !foundWaybillIds.Contains(id)).ToList();
-
-            // 處理找不到的託運單
-            foreach (var notFoundId in notFoundIds)
-            {
-                results.Add(
-                    new
-                    {
-                        id = notFoundId,
-                        success = false,
-                        message = "找不到指定的託運單",
-                    }
-                );
-                failureCount++;
-            }
-
-            // 處理找到的託運單
-            foreach (var waybill in waybills)
-            {
-                try
-                {
-                    // 檢查狀態：只有 PENDING 狀態可以標記
-                    if (waybill.Status != WaybillStatus.PENDING.ToString())
-                    {
-                        results.Add(
-                            new
-                            {
-                                id = waybill.Id,
-                                success = false,
-                                message = $"無法標記狀態為 '{waybill.Status}' 的託運單，只有 'PENDING' 狀態的託運單可以標記",
-                            }
-                        );
-                        failureCount++;
-                        continue;
-                    }
-
-                    // 計算稅額並更新狀態
-                    waybill.TaxAmount = waybill.Fee * 0.05m;
-                    waybill.TaxRate = 0.05m;
-                    waybill.Status = WaybillStatus.NEED_TAX_UNPAID.ToString();
-                    waybill.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
-
-                    results.Add(
-                        new
-                        {
-                            id = waybill.Id,
-                            success = true,
-                            message = "成功標記為未收款",
-                        }
-                    );
-                    successCount++;
-                }
-                catch (Exception ex)
-                {
-                    results.Add(
-                        new
-                        {
-                            id = waybill.Id,
-                            success = false,
-                            message = $"標記失敗：{ex.Message}",
-                        }
-                    );
-                    failureCount++;
-                }
-            }
-
-            // 批量保存變更
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(
-                    500,
-                    new { message = $"批量標記時發生錯誤：{ex.Message}", details = results }
-                );
-            }
-
-            return Ok(
-                new
-                {
-                    message = $"批量標記完成：成功 {successCount} 筆，失敗 {failureCount} 筆",
-                    summary = new { total = waybillIds.Count, success = successCount, failure = failureCount },
-                    details = results,
-                }
-            );
-        }
+        // [HttpPut("batch-mark-unpaid-with-tax")]
+        // [RequirePermission(Permission.WaybillUpdate)]
+        // public async Task<IActionResult> BatchMarkAsUnpaidWithTax(
+        //     [FromBody] List<string> waybillIds
+        // )
+        // {
+        //     if (waybillIds == null || !waybillIds.Any())
+        //     {
+        //         return BadRequest(new { message = "請提供要標記的託運單ID列表" });
+        //     }
+        //
+        //     var results = new List<object>();
+        //     var successCount = 0;
+        //     var failureCount = 0;
+        //
+        //     // 批量查詢所有託運單
+        //     var waybills = await _context
+        //         .Waybills.Where(w => waybillIds.Contains(w.Id))
+        //         .ToListAsync();
+        //
+        //     var foundWaybillIds = waybills.Select(w => w.Id).ToHashSet();
+        //     var notFoundIds = waybillIds.Where(id => !foundWaybillIds.Contains(id)).ToList();
+        //
+        //     // 處理找不到的託運單
+        //     foreach (var notFoundId in notFoundIds)
+        //     {
+        //         results.Add(
+        //             new
+        //             {
+        //                 id = notFoundId,
+        //                 success = false,
+        //                 message = "找不到指定的託運單",
+        //             }
+        //         );
+        //         failureCount++;
+        //     }
+        //
+        //     // 處理找到的託運單
+        //     foreach (var waybill in waybills)
+        //     {
+        //         try
+        //         {
+        //             // 檢查狀態：只有 PENDING 狀態可以標記
+        //             if (waybill.Status != WaybillStatus.PENDING.ToString())
+        //             {
+        //                 results.Add(
+        //                     new
+        //                     {
+        //                         id = waybill.Id,
+        //                         success = false,
+        //                         message = $"無法標記狀態為 '{waybill.Status}' 的託運單，只有 'PENDING' 狀態的託運單可以標記",
+        //                     }
+        //                 );
+        //                 failureCount++;
+        //                 continue;
+        //             }
+        //
+        //             // 計算稅額並更新狀態
+        //             waybill.TaxAmount = waybill.Fee * 0.05m;
+        //             waybill.TaxRate = 0.05m;
+        //             waybill.Status = WaybillStatus.NEED_TAX_UNPAID.ToString();
+        //             waybill.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+        //
+        //             results.Add(
+        //                 new
+        //                 {
+        //                     id = waybill.Id,
+        //                     success = true,
+        //                     message = "成功標記為未收款",
+        //                 }
+        //             );
+        //             successCount++;
+        //         }
+        //         catch (Exception ex)
+        //         {
+        //             results.Add(
+        //                 new
+        //                 {
+        //                     id = waybill.Id,
+        //                     success = false,
+        //                     message = $"標記失敗：{ex.Message}",
+        //                 }
+        //             );
+        //             failureCount++;
+        //         }
+        //     }
+        //
+        //     // 批量保存變更
+        //     try
+        //     {
+        //         await _context.SaveChangesAsync();
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return StatusCode(
+        //             500,
+        //             new { message = $"批量標記時發生錯誤：{ex.Message}", details = results }
+        //         );
+        //     }
+        //
+        //     return Ok(
+        //         new
+        //         {
+        //             message = $"批量標記完成：成功 {successCount} 筆，失敗 {failureCount} 筆",
+        //             summary = new { total = waybillIds.Count, success = successCount, failure = failureCount },
+        //             details = results,
+        //         }
+        //     );
+        // }
     }
 }

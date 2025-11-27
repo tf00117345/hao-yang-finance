@@ -19,11 +19,11 @@ interface SmartFilterInputProps {
 	value: string;
 	onChange: (value: string) => void;
 	onClear: () => void;
-	entityType?: 'invoice' | 'waybill'; // 用於區分發票或託運單狀態
+	entityType?: 'invoice' | 'waybill' | 'collectionRequest'; // 用於區分發票或託運單狀態
 }
 
 // 根據 columnId 和 entityType 判斷篩選類型
-const getFilterType = (columnId: string, entityType?: 'invoice' | 'waybill') => {
+const getFilterType = (columnId: string, entityType?: 'invoice' | 'waybill' | 'collectionRequest') => {
 	switch (columnId) {
 		case 'date':
 		case 'issuedDate':
@@ -38,7 +38,13 @@ const getFilterType = (columnId: string, entityType?: 'invoice' | 'waybill') => 
 			return 'expense';
 		case 'status':
 			// 根據 entityType 返回不同的篩選類型
-			return entityType === 'waybill' ? 'waybillStatus' : 'status';
+			if (entityType === 'collectionRequest') {
+				return 'collectionRequestStatus';
+			}
+			if (entityType === 'waybill') {
+				return 'waybillStatus';
+			}
+			return 'status';
 		case 'invoiceNumber':
 			return 'invoice';
 		default:
@@ -64,12 +70,16 @@ export function SmartFilterInput({
 				return [
 					{ label: '未收款', value: 'issued', color: 'error' },
 					{ label: '已收款', value: 'paid', color: 'success' },
-					// { label: '已作廢', value: 'void', color: 'warning' },
 				];
 			case 'waybillStatus':
 				return [
 					{ label: '未收款', value: 'NEED_TAX_UNPAID', color: 'error' },
 					{ label: '已收款', value: 'NEED_TAX_PAID', color: 'success' },
+				];
+			case 'collectionRequestStatus':
+				return [
+					{ label: '已請款', value: 'requested', color: 'warning' },
+					{ label: '已收款', value: 'paid', color: 'success' },
 				];
 			default:
 				return [];
@@ -120,6 +130,13 @@ export function SmartFilterInput({
 						<div>• 已收款：NEED_TAX_PAID</div>
 					</Box>
 				);
+			case 'collectionRequestStatus':
+				return (
+					<Box sx={{ fontSize: '0.75rem', lineHeight: 1.2 }}>
+						<div>• 已請款：requested</div>
+						<div>• 已收款：paid</div>
+					</Box>
+				);
 			case 'invoice':
 				return (
 					<Box sx={{ fontSize: '0.75rem', lineHeight: 1.2 }}>
@@ -144,6 +161,7 @@ export function SmartFilterInput({
 				return <Receipt sx={{ fontSize: '1rem', color: 'text.disabled' }} />;
 			case 'status':
 			case 'waybillStatus':
+			case 'collectionRequestStatus':
 				return <Flag sx={{ fontSize: '1rem', color: 'text.disabled' }} />;
 			case 'invoice':
 				return <Assignment sx={{ fontSize: '1rem', color: 'text.disabled' }} />;
@@ -165,6 +183,8 @@ export function SmartFilterInput({
 				return '如：已開立、paid、作廢';
 			case 'waybillStatus':
 				return '選擇收款狀態';
+			case 'collectionRequestStatus':
+				return '選擇請款狀態';
 			case 'invoice':
 				return '如：AA12345、123';
 			default:
@@ -175,7 +195,7 @@ export function SmartFilterInput({
 	return (
 		<Box sx={{ position: 'relative' }}>
 			{/* 狀態篩選：只顯示選擇式 Chip */}
-			{filterType === 'status' || filterType === 'waybillStatus' ? (
+			{filterType === 'status' || filterType === 'waybillStatus' || filterType === 'collectionRequestStatus' ? (
 				<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
 					{quickFilters.map((filter) => (
 						<Chip

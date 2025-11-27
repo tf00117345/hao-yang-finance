@@ -31,7 +31,8 @@
       "WebFetch(domain:docs.railway.com)",
       "Bash(railway up:*)",
       "Bash(npm run dev)",
-      "Bash(yarn prettier:*)"
+      "Bash(yarn prettier:*)",
+      "Bash(yarn lint:fix:*)"
     ],
     "deny": []
   }

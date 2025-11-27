@@ -8,18 +8,22 @@
 
 ## 一、生命週期概覽
 
-託運單在系統中有 **4 種狀態**，從建立開始，根據業務需求和操作選擇，會經歷不同的狀態轉換路徑。
+託運單在系統中有 **6 種狀態**，從建立開始，根據業務需求和操作選擇，會經歷不同的狀態轉換路徑。
 
 ### 狀態定義
 
-| 狀態                | 說明                           | 可編輯 | 可刪除 |
-| ------------------- | ------------------------------ | ------ | ------ |
-| `PENDING`           | 待處理，等待決定是否開發票     | ✅     | ✅     |
-| `INVOICED`          | 已開立發票                     | ❌     | ❌     |
-| `NO_INVOICE_NEEDED` | 不需開發票且已收款             | ❌     | ❌     |
-| `PENDING_PAYMENT`   | 不需開發票但尚未收款（待收款） | ⚠️ 註  | ❌     |
+| 狀態                    | 說明                               | 可編輯 | 可刪除 | 稅額計算 |
+| ----------------------- | ---------------------------------- | ------ | ------ | -------- |
+| `PENDING`               | 待處理，等待決定是否開發票         | ✅     | ✅     | -        |
+| `INVOICED`              | 已開立發票                         | ❌     | ❌     | -        |
+| `NO_INVOICE_NEEDED`     | 不需開發票且已收款                 | ❌     | ❌     | -        |
+| `COLLECTION_REQUESTED`  | 已加入請款單，等待收款             | ❌     | ❌     | 5%       |
+| `NEED_TAX_UNPAID`       | 需繳稅但尚未收款（單筆）           | ⚠️ 註  | ❌     | 5%       |
+| `NEED_TAX_PAID`         | 需繳稅且已收款                     | ⚠️ 註  | ❌     | 5%       |
 
-**註**: `PENDING_PAYMENT` 狀態僅可編輯備註欄位，其他欄位不可修改。
+**註**:
+- `NEED_TAX_UNPAID` 和 `NEED_TAX_PAID` 狀態僅可編輯收款備註欄位，其他欄位不可修改。系統會自動計算 5% 稅額。
+- `COLLECTION_REQUESTED` 狀態的託運單必須透過取消請款單才能還原為 `PENDING`，不能直接還原。
 
 ---
 
@@ -36,12 +40,16 @@ graph TD
 
     Decision1 -->|選項 A:<br/>開立發票| Invoice[開立發票操作]
     Decision1 -->|選項 B:<br/>不需開發票<br/>且已收款| MarkNoInv[標記不需開發票]
-    Decision1 -->|選項 C:<br/>不需開發票<br/>但尚未收款| MarkPending[標記待收款]
-    Decision1 -->|選項 D:<br/>直接刪除| Delete1([刪除託運單])
+    Decision1 -->|選項 C:<br/>批量請款| CollectionReq[建立請款單<br/>計算5%稅額]
+    Decision1 -->|選項 D:<br/>單筆未收款| MarkUnpaid[標記未收款<br/>計算5%稅額]
+    Decision1 -->|選項 E:<br/>單筆已收款| MarkPaid[標記已收款<br/>計算5%稅額]
+    Decision1 -->|選項 F:<br/>直接刪除| Delete1([刪除託運單])
 
     Invoice --> INVOICED[INVOICED<br/>已開發票]
     MarkNoInv --> NO_INV
-    MarkPending --> PEND_PAY[PENDING_PAYMENT<br/>待收款]
+    CollectionReq --> COLLECTION_REQ[COLLECTION_REQUESTED<br/>已請款]
+    MarkUnpaid --> UNPAID[NEED_TAX_UNPAID<br/>未收款]
+    MarkPaid --> PAID[NEED_TAX_PAID<br/>已收款]
 
     INVOICED --> InvoiceDecision{發票狀態變化}
 
@@ -60,30 +68,55 @@ graph TD
 
     Restore1 --> PENDING
 
-    PEND_PAY --> Decision3{決策點 3:<br/>收款狀態}
-    Decision3 -->|已收款| UpdateToNoInv[標記不需開發票]
-    Decision3 -->|仍未收款| EditNotes[編輯備註<br/>記錄追蹤資訊]
+    UNPAID --> Decision3{決策點 3:<br/>收款狀態}
+    Decision3 -->|已收款| ToggleToPaid[切換為已收款]
+    Decision3 -->|編輯備註| EditUnpaidNotes[編輯收款備註]
     Decision3 -->|需要還原| Restore2[執行還原操作]
 
-    UpdateToNoInv --> NO_INV
-    EditNotes --> PEND_PAY
+    ToggleToPaid --> PAID
+    EditUnpaidNotes --> UNPAID
     Restore2 --> PENDING
+
+    PAID --> Decision4{決策點 4:<br/>收款管理}
+    Decision4 -->|切換為未收款| ToggleToUnpaid[切換為未收款]
+    Decision4 -->|編輯備註| EditPaidNotes[編輯收款備註]
+    Decision4 -->|需要還原| Restore3[執行還原操作]
+
+    ToggleToUnpaid --> UNPAID
+    EditPaidNotes --> PAID
+    Restore3 --> PENDING
+
+    COLLECTION_REQ --> CollectionDecision{請款單狀態}
+    CollectionDecision -->|請款單已收款| CollectionPaid[標記為已收款]
+    CollectionDecision -->|請款單取消| CollectionCancelled[取消請款單]
+
+    CollectionPaid --> PAID
+    CollectionCancelled --> PENDING
 
     StayInvoiced --> End1([流程結束:<br/>已開發票])
     StayNoInv --> End2([流程結束:<br/>不需開發票])
     Delete1 --> End3([流程結束:<br/>已刪除])
+    UNPAID --> End4([流程結束:<br/>未收款待追蹤])
+    PAID --> End5([流程結束:<br/>已收款完成])
+    COLLECTION_REQ --> End6([流程結束:<br/>等待請款單處理])
 
     style Start fill:#e1f5ff
     style PENDING fill:#fff3cd
     style INVOICED fill:#d4edda
     style NO_INV fill:#e2e3e5
-    style PEND_PAY fill:#f8d7da
+    style COLLECTION_REQ fill:#cce5ff
+    style UNPAID fill:#f8d7da
+    style PAID fill:#d1ecf1
     style End1 fill:#d4edda
     style End2 fill:#e2e3e5
     style End3 fill:#f8d7da
+    style End4 fill:#f8d7da
+    style End5 fill:#d1ecf1
+    style End6 fill:#cce5ff
     style Decision1 fill:#fff3cd
     style Decision2 fill:#e2e3e5
     style Decision3 fill:#f8d7da
+    style Decision4 fill:#d1ecf1
 ```
 
 ---
@@ -132,19 +165,41 @@ graph TD
 - **狀態變化**: `PENDING` → `NO_INVOICE_NEEDED`
 - **後續**: 託運單標記為已完成，無需後續處理
 
-#### 選項 C：標記待收款（未收款）
+#### 選項 C：標記未收款（需繳稅）
 
 - **業務場景**:
-  - 客戶欠款但不需要正式發票
+  - 客戶需繳稅但尚未付款
   - 月結客戶，先記錄應收款項
-  - 需要追蹤但不走發票流程
-- **操作**: 點擊「標記待收款」按鈕
-- **API**: `PUT /api/waybill/{id}/pending-payment`
-- **狀態變化**: `PENDING` → `PENDING_PAYMENT`
+  - 需要追蹤收款但不走發票流程
+- **操作**: 點擊「標記未收款」按鈕
+- **API**: `PUT /api/waybill/{id}/mark-unpaid-with-tax`
+- **狀態變化**: `PENDING` → `NEED_TAX_UNPAID`
+- **稅額計算**: 系統自動計算 5% 稅額 (TaxAmount = Fee × 0.05)
 - **可選操作**: 同時更新備註，記錄收款相關資訊
-- **後續**: 可持續編輯備註追蹤收款進度
+- **後續**: 可持續編輯收款備註追蹤收款進度，或切換為已收款狀態
 
-#### 選項 D：直接刪除
+#### 選項 D：標記已收款（需繳稅）
+
+- **業務場景**:
+  - 客戶需繳稅且已付款
+  - 直接從待開發票跳到已收款
+  - 不需要發票但需要記錄稅額
+- **操作**: 點擊「標記已收款」按鈕
+- **API**: `PUT /api/waybill/{id}/mark-paid-with-tax`
+- **請求 Body**:
+  ```json
+  {
+    "paymentNotes": "收款備註",
+    "paymentDate": "2024-01-01",
+    "paymentMethod": "現金"
+  }
+  ```
+- **狀態變化**: `PENDING` → `NEED_TAX_PAID`
+- **稅額計算**: 系統自動計算 5% 稅額
+- **記錄資訊**: PaymentNotes、PaymentReceivedAt、PaymentMethod
+- **後續**: 可編輯收款備註，或切換回未收款狀態
+
+#### 選項 E：直接刪除
 
 - **業務場景**:
   - 錄入錯誤，需要刪除重建
@@ -181,40 +236,181 @@ graph TD
 
 ---
 
-### 決策點 3：PENDING_PAYMENT 狀態的處理
+### 決策點 3：NEED_TAX_UNPAID 狀態的處理
 
-**時機**: 託運單處於 `PENDING_PAYMENT` 狀態時
+**時機**: 託運單處於 `NEED_TAX_UNPAID` 狀態時
 
 **選擇**:
 
-#### 選項 A：已收款，標記為不需開發票
+#### 選項 A：切換為已收款
 
-- **業務場景**: 客戶已付款，結案
-- **操作**: 先還原為 `PENDING`，再標記為 `NO_INVOICE_NEEDED`
-- **API 流程**:
-  1. `PUT /api/waybill/{id}/restore` (還原)
-  2. `PUT /api/waybill/{id}/no-invoice` (標記不需開發票)
-- **狀態變化**: `PENDING_PAYMENT` → `PENDING` → `NO_INVOICE_NEEDED`
+- **業務場景**: 客戶已付款，需更新收款狀態
+- **操作**: 點擊「切換收款狀態」或「標記已收款」按鈕
+- **API**: `PUT /api/waybill/{id}/toggle-payment-status` 或 `PUT /api/waybill/{id}/mark-paid-with-tax`
+- **請求 Body**:
+  ```json
+  {
+    "paymentNotes": "收款備註",
+    "paymentDate": "2024-01-01",
+    "paymentMethod": "現金/轉帳/支票"
+  }
+  ```
+- **狀態變化**: `NEED_TAX_UNPAID` → `NEED_TAX_PAID`
+- **記錄資訊**: 收款備註、收款日期、付款方式
 
-#### 選項 B：持續追蹤，編輯備註
+#### 選項 B：編輯收款備註
 
 - **業務場景**:
   - 客戶尚未付款，持續追蹤
   - 更新收款進度或備註資訊
-- **操作**: 點擊「編輯備註」按鈕
-- **API**: `PUT /api/waybill/{id}/update-notes`
-- **狀態變化**: 保持 `PENDING_PAYMENT`
-- **限制**: 僅能修改 `notes` 欄位
+- **操作**: 點擊「編輯收款備註」按鈕
+- **API**: `PUT /api/waybill/{id}/update-payment-notes`
+- **請求 Body**:
+  ```json
+  {
+    "paymentNotes": "更新的備註內容"
+  }
+  ```
+- **狀態變化**: 保持 `NEED_TAX_UNPAID`
+- **限制**: 僅能修改 `PaymentNotes` 欄位
 
 #### 選項 C：還原為 PENDING
 
 - **業務場景**:
   - 客戶決定改為需要發票
   - 需要全面修改託運單資料
+  - 標記錯誤需要重新處理
 - **操作**: 點擊「還原」按鈕
 - **API**: `PUT /api/waybill/{id}/restore`
-- **狀態變化**: `PENDING_PAYMENT` → `PENDING`
+- **狀態變化**: `NEED_TAX_UNPAID` → `PENDING`
+- **清除資料**: TaxAmount、TaxRate、PaymentNotes、PaymentReceivedAt、PaymentMethod
 - **後續**: 恢復完整編輯權限
+
+---
+
+### 決策點 4：NEED_TAX_PAID 狀態的處理
+
+**時機**: 託運單處於 `NEED_TAX_PAID` 狀態時
+
+**選擇**:
+
+#### 選項 A：切換為未收款
+
+- **業務場景**:
+  - 收款記錄錯誤，客戶實際未付款
+  - 付款被退回或取消
+- **操作**: 點擊「切換收款狀態」按鈕
+- **API**: `PUT /api/waybill/{id}/toggle-payment-status`
+- **狀態變化**: `NEED_TAX_PAID` → `NEED_TAX_UNPAID`
+- **清除資料**: PaymentNotes、PaymentReceivedAt、PaymentMethod (保留稅額)
+
+#### 選項 B：編輯收款備註
+
+- **業務場景**:
+  - 更新收款相關資訊
+  - 補充付款細節
+- **操作**: 點擊「編輯收款備註」按鈕
+- **API**: `PUT /api/waybill/{id}/update-payment-notes`
+- **請求 Body**:
+  ```json
+  {
+    "paymentNotes": "更新的備註內容"
+  }
+  ```
+- **狀態變化**: 保持 `NEED_TAX_PAID`
+- **限制**: 僅能修改 `PaymentNotes` 欄位
+
+#### 選項 C：還原為 PENDING
+
+- **業務場景**:
+  - 整個流程需要重新開始
+  - 客戶決定改為開立發票
+  - 需要修改託運單基本資料
+- **操作**: 點擊「還原」按鈕
+- **API**: `PUT /api/waybill/{id}/restore`
+- **狀態變化**: `NEED_TAX_PAID` → `PENDING`
+- **清除資料**: TaxAmount、TaxRate、PaymentNotes、PaymentReceivedAt、PaymentMethod
+- **後續**: 恢復完整編輯權限，可重新選擇處理方式
+
+---
+
+### 決策點 5：COLLECTION_REQUESTED 狀態的處理
+
+**時機**: 託運單處於 `COLLECTION_REQUESTED` 狀態（已加入請款單）
+
+**特性**:
+- 此狀態的託運單不能直接還原
+- 必須透過請款單操作來變更狀態
+- 託運單會隨請款單狀態變化而自動更新
+
+#### 選項 A：請款單標記為已收款
+
+- **業務場景**: 客戶已支付整批請款金額
+- **操作**: 在請款單管理介面標記為已收款
+- **API**: `POST /api/CollectionRequest/{id}/mark-paid`
+- **請求 Body**:
+  ```json
+  {
+    "paymentReceivedAt": "2024-12-20",
+    "paymentMethod": "轉帳",
+    "paymentNotes": "收款備註"
+  }
+  ```
+- **狀態變化**: `COLLECTION_REQUESTED` → `NEED_TAX_PAID`
+- **批量更新**: 請款單中所有託運單同時更新
+
+#### 選項 B：取消請款單
+
+- **業務場景**:
+  - 請款單建立錯誤
+  - 需要重新組合託運單
+  - 客戶要求分批請款
+- **操作**: 在請款單管理介面取消請款
+- **API**: `POST /api/CollectionRequest/{id}/cancel`
+- **請求 Body** (可選):
+  ```json
+  {
+    "cancelReason": "取消原因"
+  }
+  ```
+- **狀態變化**: `COLLECTION_REQUESTED` → `PENDING`
+- **批量更新**: 請款單中所有託運單還原為 `PENDING`
+- **後續**: 託運單可重新進行任何操作
+
+---
+
+### 批量請款流程（新功能）
+
+**目的**: 將多筆 `PENDING` 狀態的託運單批量請款，統一管理收款
+
+#### 建立請款單
+
+- **前提條件**:
+  - 所有託運單必須是 `PENDING` 狀態
+  - 所有託運單必須屬於同一公司
+- **操作**: 選擇多筆託運單，建立請款單
+- **API**: `POST /api/CollectionRequest`
+- **請求 Body**:
+  ```json
+  {
+    "requestDate": "2024-12-20",
+    "companyId": "company-uuid",
+    "waybillIds": ["waybill-id-1", "waybill-id-2", "..."],
+    "notes": "請款備註"
+  }
+  ```
+- **自動處理**:
+  - 計算小計（所有託運單費用總和）
+  - 計算稅額（小計 × 5%）
+  - 計算總額（小計 + 稅額）
+  - 產生請款單號（自動或手動指定）
+- **狀態變化**: 所有託運單 `PENDING` → `COLLECTION_REQUESTED`
+
+#### 請款單管理
+
+- **查詢請款單列表**: `GET /api/CollectionRequest`
+- **查詢請款單詳情**: `GET /api/CollectionRequest/{id}`
+- **刪除請款單**: `DELETE /api/CollectionRequest/{id}` (僅限已取消狀態)
 
 ---
 
@@ -304,20 +500,22 @@ graph TD
 
 ---
 
-### 場景 3：月結客戶流程
+### 場景 3：需繳稅未收款追蹤流程
 
 ```
 創建託運單 (PENDING)
     ↓
-客戶月結，先不開票
+客戶需繳稅但尚未付款
     ↓
-標記待收款 (PENDING_PAYMENT)
+標記未收款 (NEED_TAX_UNPAID)
+系統自動計算 5% 稅額
     ↓
-持續追蹤，更新備註
+持續追蹤，更新收款備註
     ↓
 月底確認已收款
     ↓
-還原 → 標記不需開發票 (NO_INVOICE_NEEDED)
+切換為已收款 (NEED_TAX_PAID)
+記錄收款資訊
     ↓
 流程結束
 ```
@@ -325,10 +523,38 @@ graph TD
 **API 調用順序**:
 
 1. `POST /api/waybill` → 創建託運單
-2. `PUT /api/waybill/{id}/pending-payment` → 標記待收款
-3. `PUT /api/waybill/{id}/update-notes` → 更新備註（可多次）
-4. `PUT /api/waybill/{id}/restore` → 還原為 PENDING
-5. `PUT /api/waybill/{id}/no-invoice` → 標記不需開發票
+2. `PUT /api/waybill/{id}/mark-unpaid-with-tax` → 標記未收款（自動計算 5% 稅額）
+   ```json
+   {
+     "notes": "月結客戶，預計月底收款"
+   }
+   ```
+3. `PUT /api/waybill/{id}/update-payment-notes` → 更新收款備註（可多次）
+   ```json
+   {
+     "paymentNotes": "已聯絡客戶，預計 1/15 轉帳"
+   }
+   ```
+4. `PUT /api/waybill/{id}/toggle-payment-status` → 切換為已收款
+   ```json
+   {
+     "paymentNotes": "已收款",
+     "paymentDate": "2024-01-15",
+     "paymentMethod": "轉帳"
+   }
+   ```
+
+**替代流程（直接標記已收款）**:
+
+1. `POST /api/waybill` → 創建託運單
+2. `PUT /api/waybill/{id}/mark-paid-with-tax` → 直接標記已收款
+   ```json
+   {
+     "paymentNotes": "現場收款",
+     "paymentDate": "2024-01-10",
+     "paymentMethod": "現金"
+   }
+   ```
 
 ---
 
@@ -395,8 +621,31 @@ graph TD
 
 **處理邏輯**:
 
-- 逐筆檢查狀態（必須為 `PENDING` 或 `PENDING_PAYMENT`）
+- 逐筆檢查狀態（必須為 `PENDING`）
 - 符合條件的變更為 `NO_INVOICE_NEEDED`
+- 不符合條件的記錄失敗原因
+- 返回成功/失敗統計
+
+---
+
+### 批量標記未收款
+
+**場景**: 多筆需繳稅且未收款的託運單批量標記
+
+**API**: `PUT /api/waybill/batch-mark-unpaid-with-tax`
+
+**請求**:
+
+```json
+{
+  "waybillIds": ["id1", "id2", "id3", ...]
+}
+```
+
+**處理邏輯**:
+
+- 逐筆檢查狀態（必須為 `PENDING`）
+- 符合條件的計算 5% 稅額並變更為 `NEED_TAX_UNPAID`
 - 不符合條件的記錄失敗原因
 - 返回成功/失敗統計
 
@@ -418,8 +667,8 @@ graph TD
 
 **處理邏輯**:
 
-- 逐筆檢查狀態（必須為 `NO_INVOICE_NEEDED` 或 `PENDING_PAYMENT`）
-- 符合條件的變更為 `PENDING`
+- 逐筆檢查狀態（必須為 `NO_INVOICE_NEEDED`、`NEED_TAX_UNPAID` 或 `NEED_TAX_PAID`）
+- 符合條件的變更為 `PENDING` 並清除稅額和收款資訊
 - 不符合條件的記錄失敗原因
 - 返回成功/失敗統計
 
@@ -427,19 +676,21 @@ graph TD
 
 ## 六、狀態轉換矩陣
 
-| 從 ↓ / 到 →           | PENDING | INVOICED | NO_INVOICE_NEEDED | PENDING_PAYMENT |
-| --------------------- | ------- | -------- | ----------------- | --------------- |
-| **PENDING**           | -       | ✅ 開票  | ✅ 標記           | ✅ 標記         |
-| **INVOICED**          | ✅ 自動 | -        | ❌                | ❌              |
-| **NO_INVOICE_NEEDED** | ✅ 還原 | ❌       | -                 | ❌              |
-| **PENDING_PAYMENT**   | ✅ 還原 | ❌       | ⚠️ 需還原後再標記 | -               |
+| 從 ↓ / 到 →              | PENDING | INVOICED | NO_INVOICE_NEEDED | COLLECTION_REQUESTED | NEED_TAX_UNPAID | NEED_TAX_PAID |
+| ------------------------ | ------- | -------- | ----------------- | -------------------- | --------------- | ------------- |
+| **PENDING**              | -       | ✅ 開票  | ✅ 標記           | ✅ 請款              | ✅ 標記         | ✅ 標記       |
+| **INVOICED**             | ✅ 自動 | -        | ❌                | ❌                   | ❌              | ❌            |
+| **NO_INVOICE_NEEDED**    | ✅ 還原 | ❌       | -                 | ❌                   | ❌              | ❌            |
+| **COLLECTION_REQUESTED** | ✅ 取消 | ❌       | ❌                | -                    | ❌              | ✅ 收款       |
+| **NEED_TAX_UNPAID**      | ✅ 還原 | ❌       | ❌                | ❌                   | -               | ✅ 切換       |
+| **NEED_TAX_PAID**        | ✅ 還原 | ❌       | ❌                | ❌                   | ✅ 切換         | -             |
 
 **圖例**:
 
 - ✅ 允許直接轉換
-- ⚠️ 需要多步驟操作
 - ❌ 不允許轉換
 - 自動：由系統自動觸發（發票操作）
+- 切換：透過 toggle-payment-status API 快速切換收款狀態
 
 ---
 
@@ -450,7 +701,9 @@ graph TD
 - ✅ **PENDING**: 可編輯所有欄位
 - ❌ **INVOICED**: 完全不可編輯（已綁定發票）
 - ❌ **NO_INVOICE_NEEDED**: 完全不可編輯（已完成）
-- ⚠️ **PENDING_PAYMENT**: 僅可編輯備註欄位
+- ❌ **COLLECTION_REQUESTED**: 完全不可編輯（已加入請款單）
+- ⚠️ **NEED_TAX_UNPAID**: 僅可編輯收款備註欄位 (PaymentNotes)
+- ⚠️ **NEED_TAX_PAID**: 僅可編輯收款備註欄位 (PaymentNotes)
 
 ### 2. 刪除限制
 
@@ -475,13 +728,14 @@ graph TD
 
 ### PENDING 狀態
 
-| 按鈕       | 功能           | API                                     |
-| ---------- | -------------- | --------------------------------------- |
-| 編輯       | 修改託運單     | `PUT /api/waybill/{id}`                 |
-| 刪除       | 刪除託運單     | `DELETE /api/waybill/{id}`              |
-| 開立發票   | 跳轉至發票頁面 | 導航至 Finance Page                     |
-| 不需開發票 | 標記不需開發票 | `PUT /api/waybill/{id}/no-invoice`      |
-| 標記待收款 | 標記待收款狀態 | `PUT /api/waybill/{id}/pending-payment` |
+| 按鈕       | 功能             | API                                         |
+| ---------- | ---------------- | ------------------------------------------- |
+| 編輯       | 修改託運單       | `PUT /api/waybill/{id}`                     |
+| 刪除       | 刪除託運單       | `DELETE /api/waybill/{id}`                  |
+| 開立發票   | 跳轉至發票頁面   | 導航至 Finance Page                         |
+| 不需開發票 | 標記不需開發票   | `PUT /api/waybill/{id}/no-invoice`          |
+| 標記未收款 | 標記未收款需繳稅 | `PUT /api/waybill/{id}/mark-unpaid-with-tax` |
+| 標記已收款 | 標記已收款需繳稅 | `PUT /api/waybill/{id}/mark-paid-with-tax`   |
 
 ### INVOICED 狀態
 
@@ -497,13 +751,31 @@ graph TD
 | 查看 | 唯讀檢視       | -                               |
 | 還原 | 還原為 PENDING | `PUT /api/waybill/{id}/restore` |
 
-### PENDING_PAYMENT 狀態
+### NEED_TAX_UNPAID 狀態
 
-| 按鈕     | 功能           | API                                  |
-| -------- | -------------- | ------------------------------------ |
-| 查看     | 唯讀檢視       | -                                    |
-| 編輯備註 | 修改備註欄位   | `PUT /api/waybill/{id}/update-notes` |
-| 還原     | 還原為 PENDING | `PUT /api/waybill/{id}/restore`      |
+| 按鈕         | 功能               | API                                       |
+| ------------ | ------------------ | ----------------------------------------- |
+| 查看         | 唯讀檢視           | -                                         |
+| 編輯收款備註 | 修改收款備註欄位   | `PUT /api/waybill/{id}/update-payment-notes` |
+| 切換收款狀態 | 切換為已收款       | `PUT /api/waybill/{id}/toggle-payment-status` |
+| 還原         | 還原為 PENDING     | `PUT /api/waybill/{id}/restore`           |
+
+### NEED_TAX_PAID 狀態
+
+| 按鈕         | 功能               | API                                       |
+| ------------ | ------------------ | ----------------------------------------- |
+| 查看         | 唯讀檢視           | -                                         |
+| 編輯收款備註 | 修改收款備註欄位   | `PUT /api/waybill/{id}/update-payment-notes` |
+| 切換收款狀態 | 切換為未收款       | `PUT /api/waybill/{id}/toggle-payment-status` |
+| 還原         | 還原為 PENDING     | `PUT /api/waybill/{id}/restore`           |
+
+### COLLECTION_REQUESTED 狀態
+
+| 按鈕           | 功能                   | API |
+| -------------- | ---------------------- | --- |
+| 查看           | 唯讀檢視               | -   |
+| 查看請款單     | 跳轉至請款單詳情頁面   | 導航至請款單管理頁面 |
+| （無直接操作） | 需從請款單頁面操作     | -   |
 
 ---
 
@@ -511,13 +783,19 @@ graph TD
 
 ### 常見錯誤情境
 
-| 錯誤情境                  | HTTP 狀態碼 | 錯誤訊息                                             | 解決方案                  |
-| ------------------------- | ----------- | ---------------------------------------------------- | ------------------------- |
-| 嘗試編輯 INVOICED 託運單  | 400         | 無法編輯狀態為 'INVOICED' 的託運單                   | 先作廢或刪除發票          |
-| 嘗試刪除 INVOICED 託運單  | 400         | 只有 'PENDING' 狀態的託運單可以刪除                  | 先作廢或刪除發票          |
-| 嘗試開票非 PENDING 託運單 | 400         | 託運單狀態無效                                       | 確認託運單為 PENDING 狀態 |
-| 標記不需開發票時狀態錯誤  | 400         | 只有 'PENDING' 狀態的託運單可以標記                  | 檢查託運單當前狀態        |
-| 還原時狀態不符            | 400         | 只有 'NO_INVOICE_NEEDED' 或 'PENDING_PAYMENT' 可還原 | 檢查託運單當前狀態        |
+| 錯誤情境                  | HTTP 狀態碼 | 錯誤訊息                                                      | 解決方案                  |
+| ------------------------- | ----------- | ------------------------------------------------------------- | ------------------------- |
+| 嘗試編輯 INVOICED 託運單  | 400         | 無法編輯狀態為 'INVOICED' 的託運單                            | 先作廢或刪除發票          |
+| 嘗試刪除 INVOICED 託運單  | 400         | 只有 'PENDING' 狀態的託運單可以刪除                           | 先作廢或刪除發票          |
+| 嘗試開票非 PENDING 託運單 | 400         | 託運單狀態無效                                                | 確認託運單為 PENDING 狀態 |
+| 標記不需開發票時狀態錯誤  | 400         | 只有 'PENDING' 狀態的託運單可以標記                           | 檢查託運單當前狀態        |
+| 標記未收款時狀態錯誤      | 400         | 只有 'PENDING' 狀態的託運單可以標記為未收款                   | 檢查託運單當前狀態        |
+| 標記已收款時狀態錯誤      | 400         | 只有 'PENDING' 或 'NEED_TAX_UNPAID' 狀態的託運單可以標記已收款 | 檢查託運單當前狀態        |
+| 切換收款狀態時狀態錯誤    | 400         | 只有 'NEED_TAX_UNPAID' 或 'NEED_TAX_PAID' 狀態可以切換         | 檢查託運單當前狀態        |
+| 還原時狀態不符            | 400         | 只有 'NO_INVOICE_NEEDED'、'NEED_TAX_UNPAID' 或 'NEED_TAX_PAID' 可還原 | 檢查託運單當前狀態        |
+| 還原 COLLECTION_REQUESTED | 400         | 無法直接還原狀態為 'COLLECTION_REQUESTED' 的託運單，請先取消相關的請款單 | 先取消請款單        |
+| 請款單託運單狀態不符      | 400         | 只有 'PENDING' 狀態的託運單可以加入請款單                                | 檢查託運單當前狀態   |
+| 請款單託運單公司不一致    | 400         | 所有託運單必須屬於同一家公司                                            | 檢查託運單所屬公司   |
 
 ---
 
@@ -530,9 +808,13 @@ graph TD
 1. 客戶是否需要發票？
    - 是 → 一般建立（PENDING）
    - 否 → 繼續下一步
-2. 款項是否已收？
-   - 是 → 建立時勾選「不需開發票」（NO_INVOICE_NEEDED）
-   - 否 → 一般建立後標記為待收款（PENDING_PAYMENT）
+2. 客戶是否需繳稅？
+   - 否 → 繼續下一步
+   - 是 → 繼續下第 3 步
+3. 款項是否已收？
+   - 是，不需繳稅 → 建立時勾選「不需開發票」（NO_INVOICE_NEEDED）
+   - 是，需繳稅 → 一般建立後標記已收款（NEED_TAX_PAID）
+   - 否，需繳稅 → 一般建立後標記未收款（NEED_TAX_UNPAID）
 
 ### 2. PENDING 狀態的及時處理
 
@@ -540,21 +822,36 @@ graph TD
 - 及時決定開票或標記狀態
 - 避免長期積壓未處理的託運單
 
-### 3. PENDING_PAYMENT 的追蹤管理
+### 3. 收款追蹤的管理 (NEED_TAX_UNPAID/PAID)
 
-- 善用備註欄位記錄追蹤資訊
-- 記錄預計收款日期、聯絡狀況等
-- 定期更新備註，保持資訊最新
+- **未收款狀態** (NEED_TAX_UNPAID):
+  - 善用收款備註欄位記錄追蹤資訊
+  - 記錄預計收款日期、聯絡狀況等
+  - 定期更新備註，保持資訊最新
+  - 收款後立即切換為已收款狀態
 
-### 4. 發票操作前的確認
+- **已收款狀態** (NEED_TAX_PAID):
+  - 記錄完整的收款資訊（日期、方式、備註）
+  - 系統已自動計算 5% 稅額
+  - 如發現收款錯誤，可快速切換回未收款狀態
+
+### 4. 稅額計算
+
+- 系統自動計算 5% 固定稅率
+- 標記為 NEED_TAX_UNPAID 或 NEED_TAX_PAID 時自動觸發
+- 稅額 = 運費 (Fee) × 5%
+- 還原為 PENDING 時會清除所有稅額和收款資訊
+
+### 5. 發票操作前的確認
 
 - 開立發票前確認託運單資料正確
 - 開票後託運單無法直接編輯
 - 需要修改時，必須先處理發票（作廢/刪除）
 
-### 5. 批量操作的使用時機
+### 6. 批量操作的使用時機
 
 - 月底結算時批量標記不需開發票
+- 批量標記多筆未收款託運單（含稅額計算）
 - 批次處理同一客戶的多筆現金交易
 - 錯誤操作的批量修正
 
@@ -592,17 +889,25 @@ graph TD
 │
 ├─ 客戶不需發票？
 │  │
-│  ├─ 已收款？
-│  │  └─ 是 → 標記不需開發票 → NO_INVOICE_NEEDED → [結束]
-│  │
-│  └─ 未收款？
-│     └─ 是 → 標記待收款 → PENDING_PAYMENT
-│        │
-│        ├─ 後續收款？
-│        │  └─ 是 → 還原 → 標記不需開發票 → NO_INVOICE_NEEDED → [結束]
-│        │
-│        └─ 改為需要發票？
-│           └─ 是 → 還原 → 開立發票 → INVOICED → [結束]
+│  ├─ 客戶是否需繳稅？
+│  │  │
+│  │  ├─ 否 → 已收款？
+│  │  │  └─ 是 → 標記不需開發票 → NO_INVOICE_NEEDED → [結束]
+│  │  │
+│  │  └─ 是 → 已收款？
+│  │     │
+│  │     ├─ 是 → 標記已收款 → NEED_TAX_PAID（自動計算 5% 稅額）
+│  │     │  │
+│  │     │  ├─ 需編輯備註？ → 編輯收款備註 → NEED_TAX_PAID
+│  │     │  ├─ 發現未收款？ → 切換狀態 → NEED_TAX_UNPAID
+│  │     │  ├─ 需要重新處理？ → 還原 → PENDING
+│  │     │  └─ 保持現狀 → [結束]
+│  │     │
+│  │     └─ 否 → 標記未收款 → NEED_TAX_UNPAID（自動計算 5% 稅額）
+│  │        │
+│  │        ├─ 後續收款？ → 切換為已收款 → NEED_TAX_PAID → [結束]
+│  │        ├─ 編輯追蹤備註？ → 更新收款備註 → NEED_TAX_UNPAID
+│  │        └─ 改為需要發票？ → 還原 → 開立發票 → INVOICED → [結束]
 │
 └─ 錄入錯誤？
    └─ 是 → 刪除託運單 → [結束]
@@ -617,14 +922,18 @@ graph TD
 - **PENDING**: 待處理託運單數量和金額
 - **INVOICED**: 已開票託運單數量和金額
 - **NO_INVOICE_NEEDED**: 不需開票（已完成）數量和金額
-- **PENDING_PAYMENT**: 待收款託運單數量和金額
+- **COLLECTION_REQUESTED**: 已請款待收款數量、金額和稅額
+- **NEED_TAX_UNPAID**: 需繳稅未收款數量、金額和稅額（單筆）
+- **NEED_TAX_PAID**: 需繳稅已收款數量、金額和稅額
 
 ### 業務指標
 
 - 平均處理時間（從 PENDING 到最終狀態）
 - 開票率（INVOICED / 總數）
 - 現金交易率（NO_INVOICE_NEEDED / 總數）
-- 應收款追蹤（PENDING_PAYMENT 狀態的追蹤）
+- 應收稅款追蹤（NEED_TAX_UNPAID 狀態的稅額總和）
+- 已收稅款統計（NEED_TAX_PAID 狀態的稅額總和）
+- 收款率（NEED_TAX_PAID / (NEED_TAX_PAID + NEED_TAX_UNPAID)）
 
 ---
 
@@ -648,7 +957,9 @@ graph TD
 
 ---
 
-> **文件版本**: v1.0
+> **文件版本**: v2.0
 > **建立日期**: 2025-01-11
+> **更新日期**: 2025-01-17
 > **基於文件**: waybill-management-feature.md, invoice-management-feature.md
+> **重大更新**: 新增批量請款功能（COLLECTION_REQUESTED 狀態）
 > **維護說明**: 本文件應與實際程式碼保持同步，如有業務流程變更請同步更新

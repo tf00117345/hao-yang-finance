@@ -121,51 +121,48 @@ export default function FinancePage() {
 					<Tab label="司機收現金之貨運單" />
 					<Tab label="已開立發票" />
 				</Tabs>
-				<Box sx={{ flex: 1, position: 'relative', overflow: 'auto' }}>
-					{/* Tab 0,2,3: 顯示 waybills loading */}
-					{(tab === 0 || tab === 2 || tab === 3) && isWaybillsPending && (
-						<Box
-							sx={{
-								display: 'flex',
-								flexDirection: 'column',
-								alignItems: 'center',
-								justifyContent: 'center',
-								height: '100%',
-								gap: 2,
-							}}
-						>
-							<CircularProgress size={48} />
-							<Typography variant="body2" color="text.secondary">
-								載入中...
-							</Typography>
-						</Box>
-					)}
-					{/* Tab 4: 顯示 invoices loading */}
-					{tab === 4 && isInvoicesPending && (
-						<Box
-							sx={{
-								display: 'flex',
-								flexDirection: 'column',
-								alignItems: 'center',
-								justifyContent: 'center',
-								height: '100%',
-								gap: 2,
-							}}
-						>
-							<CircularProgress size={48} />
-							<Typography variant="body2" color="text.secondary">
-								載入中...
-							</Typography>
-						</Box>
-					)}
-					{/* 顯示內容 */}
-					{!isWaybillsPending && tab === 0 && <PendingWaybillTable waybills={pendingWaybills} />}
-					{tab === 1 && <CollectionRequestTable startDate={startDate} endDate={endDate} />}
-					{!isWaybillsPending && tab === 2 && <NoInvoicedNeededTable waybills={noInvoicedNeededWaybills} />}
-					{!isInvoicesPending && tab === 3 && (
-						<InvoicedTable invoices={invoices} onEdit={handleEditInvoice} />
-					)}
-				</Box>
+
+				{/* Tab 0,2,3: 顯示 waybills loading */}
+				{(tab === 0 || tab === 2 || tab === 3) && isWaybillsPending && (
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							alignItems: 'center',
+							justifyContent: 'center',
+							height: '100%',
+							gap: 2,
+						}}
+					>
+						<CircularProgress size={48} />
+						<Typography variant="body2" color="text.secondary">
+							載入中...
+						</Typography>
+					</Box>
+				)}
+				{/* Tab 4: 顯示 invoices loading */}
+				{tab === 4 && isInvoicesPending && (
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							alignItems: 'center',
+							justifyContent: 'center',
+							height: '100%',
+							gap: 2,
+						}}
+					>
+						<CircularProgress size={48} />
+						<Typography variant="body2" color="text.secondary">
+							載入中...
+						</Typography>
+					</Box>
+				)}
+				{/* 顯示內容 */}
+				{!isWaybillsPending && tab === 0 && <PendingWaybillTable waybills={pendingWaybills} />}
+				{tab === 1 && <CollectionRequestTable startDate={startDate} endDate={endDate} />}
+				{!isWaybillsPending && tab === 2 && <NoInvoicedNeededTable waybills={noInvoicedNeededWaybills} />}
+				{!isInvoicesPending && tab === 3 && <InvoicedTable invoices={invoices} onEdit={handleEditInvoice} />}
 			</Box>
 
 			{/* 編輯發票對話框 */}

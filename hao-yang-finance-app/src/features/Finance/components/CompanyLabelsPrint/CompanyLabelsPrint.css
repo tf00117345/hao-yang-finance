@@ -12,6 +12,7 @@
 	#company-labels-print * {
 		visibility: visible;
 		overflow: visible;
+		font-family: cursive, 'Noto Sans TC', sans-serif !important;
 	}
 	#company-labels-print {
 		position: absolute;
@@ -78,6 +79,7 @@
 }
 
 .company-name {
+	font-family: cursive !important;
 	font-size: 18pt !important;
 	font-weight: 400 !important;
 	writing-mode: vertical-rl;
@@ -92,6 +94,7 @@
 }
 
 .company-address {
+	font-family: cursive !important;
 	font-size: 18pt !important;
 	writing-mode: vertical-rl;
 	text-orientation: mixed; /* 英文橫排，中文直排 */

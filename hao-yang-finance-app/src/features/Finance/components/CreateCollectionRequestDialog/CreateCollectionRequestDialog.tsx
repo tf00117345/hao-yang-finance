@@ -4,6 +4,7 @@ import {
 	Alert,
 	Box,
 	Button,
+	Chip,
 	Dialog,
 	DialogActions,
 	DialogContent,
@@ -22,6 +23,7 @@ import {
 	TableHead,
 	TableRow,
 	TextField,
+	Tooltip,
 	Typography,
 } from '@mui/material';
 import { format } from 'date-fns';
@@ -197,11 +199,10 @@ export function CreateCollectionRequestDialog({
 								<TableHead>
 									<TableRow>
 										<TableCell>日期</TableCell>
-										<TableCell>品項</TableCell>
+										<TableCell>地點</TableCell>
 										{isMultipleCompanies && <TableCell>所屬公司</TableCell>}
 										<TableCell>司機</TableCell>
-										<TableCell>車號</TableCell>
-										<TableCell align="right">運費</TableCell>
+										<TableCell align="right">金額</TableCell>
 									</TableRow>
 								</TableHead>
 								<TableBody>
@@ -218,7 +219,7 @@ export function CreateCollectionRequestDialog({
 														{/* 公司分組標題 */}
 														<TableRow key={`company-${company.id}`}>
 															<TableCell
-																colSpan={6}
+																colSpan={5}
 																sx={{
 																	bgcolor: 'grey.100',
 																	fontWeight: 'bold',
@@ -230,43 +231,143 @@ export function CreateCollectionRequestDialog({
 															</TableCell>
 														</TableRow>
 														{/* 該公司的託運單 */}
-														{companyWaybills.map((waybill) => (
-															<TableRow
-																key={waybill.id}
-																sx={{
-																	bgcolor:
-																		selectedCompanyId === company.id
-																			? 'primary.50'
-																			: undefined,
-																}}
-															>
-																<TableCell>
-																	{format(new Date(waybill.date), 'yyyy/MM/dd')}
-																</TableCell>
-																<TableCell>{waybill.item}</TableCell>
-																<TableCell>{waybill.companyName}</TableCell>
-																<TableCell>{waybill.driverName}</TableCell>
-																<TableCell>{waybill.plateNumber}</TableCell>
-																<TableCell align="right">
-																	{formatCurrency(waybill.fee)}
-																</TableCell>
-															</TableRow>
-														))}
+														{companyWaybills.map((waybill) => {
+															const locations = (waybill.loadingLocations || []).filter(
+																(loc) => loc.from !== '空白' && loc.to !== '空白',
+															);
+															const MAX_VISIBLE = 2;
+															const visible = locations.slice(0, MAX_VISIBLE);
+															const remaining = locations.length - visible.length;
+
+															return (
+																<TableRow
+																	key={waybill.id}
+																	sx={{
+																		bgcolor:
+																			selectedCompanyId === company.id
+																				? 'primary.50'
+																				: undefined,
+																	}}
+																>
+																	<TableCell>
+																		{format(new Date(waybill.date), 'yyyy/MM/dd')}
+																	</TableCell>
+																	<TableCell>
+																		<Stack
+																			direction="row"
+																			flexWrap="wrap"
+																			gap={0.5}
+																		>
+																			{visible.map((loc, idx) => (
+																				<Chip
+																					key={`${loc.from}-${loc.to}-${idx.toString()}`}
+																					label={`${loc.from} → ${loc.to}`}
+																					size="small"
+																					variant="outlined"
+																				/>
+																			))}
+																			{remaining > 0 && (
+																				<Tooltip
+																					title={
+																						<Stack
+																							sx={{
+																								maxWidth: 360,
+																								p: 0.5,
+																							}}
+																						>
+																							{locations.map(
+																								(loc, idx) => (
+																									<Typography
+																										key={`full-${`${loc.from}-${loc.to}-${idx}`}`}
+																										variant="body2"
+																									>
+																										{loc.from} →{' '}
+																										{loc.to}
+																									</Typography>
+																								),
+																							)}
+																						</Stack>
+																					}
+																					arrow
+																					placement="top"
+																				>
+																					<Chip
+																						label={`+${remaining}`}
+																						size="small"
+																						color="primary"
+																					/>
+																				</Tooltip>
+																			)}
+																		</Stack>
+																	</TableCell>
+																	<TableCell>{waybill.companyName}</TableCell>
+																	<TableCell>{waybill.driverName}</TableCell>
+																	<TableCell align="right">
+																		{formatCurrency(waybill.fee)}
+																	</TableCell>
+																</TableRow>
+															);
+														})}
 													</>
 												);
 											})
 										: // 單一公司時直接顯示
-											waybills.map((waybill) => (
-												<TableRow key={waybill.id}>
-													<TableCell>
-														{format(new Date(waybill.date), 'yyyy/MM/dd')}
-													</TableCell>
-													<TableCell>{waybill.item}</TableCell>
-													<TableCell>{waybill.driverName}</TableCell>
-													<TableCell>{waybill.plateNumber}</TableCell>
-													<TableCell align="right">{formatCurrency(waybill.fee)}</TableCell>
-												</TableRow>
-											))}
+											waybills.map((waybill) => {
+												const locations = (waybill.loadingLocations || []).filter(
+													(loc) => loc.from !== '空白' && loc.to !== '空白',
+												);
+												const MAX_VISIBLE = 2;
+												const visible = locations.slice(0, MAX_VISIBLE);
+												const remaining = locations.length - visible.length;
+
+												return (
+													<TableRow key={waybill.id}>
+														<TableCell>
+															{format(new Date(waybill.date), 'yyyy/MM/dd')}
+														</TableCell>
+														<TableCell>
+															<Stack direction="row" flexWrap="wrap" gap={0.5}>
+																{visible.map((loc, idx) => (
+																	<Chip
+																		key={`${loc.from}-${loc.to}-${idx.toString()}`}
+																		label={`${loc.from} → ${loc.to}`}
+																		size="small"
+																		variant="outlined"
+																	/>
+																))}
+																{remaining > 0 && (
+																	<Tooltip
+																		title={
+																			<Stack sx={{ maxWidth: 360, p: 0.5 }}>
+																				{locations.map((loc, idx) => (
+																					<Typography
+																						key={`full-${`${loc.from}-${loc.to}-${idx}`}`}
+																						variant="body2"
+																					>
+																						{loc.from} → {loc.to}
+																					</Typography>
+																				))}
+																			</Stack>
+																		}
+																		arrow
+																		placement="top"
+																	>
+																		<Chip
+																			label={`+${remaining}`}
+																			size="small"
+																			color="primary"
+																		/>
+																	</Tooltip>
+																)}
+															</Stack>
+														</TableCell>
+														<TableCell>{waybill.driverName}</TableCell>
+														<TableCell align="right">
+															{formatCurrency(waybill.fee)}
+														</TableCell>
+													</TableRow>
+												);
+											})}
 								</TableBody>
 							</Table>
 						</TableContainer>

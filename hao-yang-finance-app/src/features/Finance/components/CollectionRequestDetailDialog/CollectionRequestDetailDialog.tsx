@@ -16,6 +16,7 @@ import {
 	TableContainer,
 	TableHead,
 	TableRow,
+	Tooltip,
 	Typography,
 } from '@mui/material';
 import { format } from 'date-fns';
@@ -175,49 +176,63 @@ export function CollectionRequestDetailDialog({
 									<TableHead>
 										<TableRow>
 											<TableCell>日期</TableCell>
-											<TableCell>品項</TableCell>
-											<TableCell>所屬公司</TableCell>
+											<TableCell>地點</TableCell>
 											<TableCell>司機</TableCell>
-											<TableCell>車號</TableCell>
-											<TableCell align="right">運費</TableCell>
-											<TableCell align="right">稅額</TableCell>
+											<TableCell align="right">金額</TableCell>
 										</TableRow>
 									</TableHead>
 									<TableBody>
 										{collectionRequest.waybills.map((waybill) => {
-											// 判斷是否為非請款對象公司的託運單
-											const isDifferentCompany =
-												waybill.companyId && waybill.companyId !== collectionRequest.companyId;
+											const locations = (waybill.loadingLocations || []).filter(
+												(loc) => loc.from !== '空白' && loc.to !== '空白',
+											);
+											const MAX_VISIBLE = 2;
+											const visible = locations.slice(0, MAX_VISIBLE);
+											const remaining = locations.length - visible.length;
 
 											return (
-												<TableRow
-													key={waybill.id}
-													sx={{
-														bgcolor: isDifferentCompany ? 'warning.50' : undefined,
-													}}
-												>
+												<TableRow key={waybill.id}>
 													<TableCell>
 														{format(new Date(waybill.date), 'yyyy/MM/dd')}
 													</TableCell>
-													<TableCell>{waybill.item}</TableCell>
 													<TableCell>
-														{waybill.companyName || '-'}
-														{isDifferentCompany && (
-															<Typography
-																variant="caption"
-																color="warning.main"
-																sx={{ ml: 1 }}
-															>
-																(非請款對象)
-															</Typography>
-														)}
+														<Stack direction="row" flexWrap="wrap" gap={0.5}>
+															{visible.map((loc, idx) => (
+																<Chip
+																	key={`${loc.from}-${loc.to}-${idx.toString()}`}
+																	label={`${loc.from} → ${loc.to}`}
+																	size="small"
+																	variant="outlined"
+																/>
+															))}
+															{remaining > 0 && (
+																<Tooltip
+																	title={
+																		<Stack sx={{ maxWidth: 360, p: 0.5 }}>
+																			{locations.map((loc, idx) => (
+																				<Typography
+																					key={`full-${`${loc.from}-${loc.to}-${idx}`}`}
+																					variant="body2"
+																				>
+																					{loc.from} → {loc.to}
+																				</Typography>
+																			))}
+																		</Stack>
+																	}
+																	arrow
+																	placement="top"
+																>
+																	<Chip
+																		label={`+${remaining}`}
+																		size="small"
+																		color="primary"
+																	/>
+																</Tooltip>
+															)}
+														</Stack>
 													</TableCell>
 													<TableCell>{waybill.driverName}</TableCell>
-													<TableCell>{waybill.plateNumber}</TableCell>
 													<TableCell align="right">{formatCurrency(waybill.fee)}</TableCell>
-													<TableCell align="right">
-														{waybill.taxAmount ? formatCurrency(waybill.taxAmount) : '-'}
-													</TableCell>
 												</TableRow>
 											);
 										})}

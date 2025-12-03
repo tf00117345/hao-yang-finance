@@ -1,3 +1,5 @@
+import type { LoadingLocation } from '../../Waybill/types/waybill.types';
+
 // 請款單狀態
 export enum CollectionRequestStatus {
 	Requested = 'requested',
@@ -57,6 +59,7 @@ export interface CollectionRequestWaybill {
 	plateNumber: string;
 	companyId?: string;
 	companyName?: string;
+	loadingLocations?: LoadingLocation[];
 }
 
 // 建立請款單請求

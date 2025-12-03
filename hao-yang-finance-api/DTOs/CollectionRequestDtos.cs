@@ -59,6 +59,7 @@ namespace hao_yang_finance_api.DTOs
         public string PlateNumber { get; set; } = string.Empty;
         public string? CompanyId { get; set; }
         public string? CompanyName { get; set; }
+        public List<LoadingLocationDto> LoadingLocations { get; set; } = new();
     }
 
     public class BatchOperationResultDto

@@ -98,6 +98,8 @@ namespace hao_yang_finance_api.Controllers
                 .ThenInclude(w => w.Driver)
                 .Include(cr => cr.Waybills)
                 .ThenInclude(w => w.Company)
+                .Include(cr => cr.Waybills)
+                .ThenInclude(w => w.LoadingLocations)
                 .FirstOrDefaultAsync(cr => cr.Id == id);
 
             if (collectionRequest == null)
@@ -135,6 +137,14 @@ namespace hao_yang_finance_api.Controllers
                         PlateNumber = w.PlateNumber,
                         CompanyId = w.CompanyId,
                         CompanyName = w.Company?.Name ?? "",
+                        LoadingLocations = w
+                            .LoadingLocations.OrderBy(l => l.SequenceOrder)
+                            .Select(l => new LoadingLocationDto
+                            {
+                                From = l.FromLocation,
+                                To = l.ToLocation,
+                            })
+                            .ToList(),
                     })
                     .ToList(),
                 CreatedAt = collectionRequest.CreatedAt,

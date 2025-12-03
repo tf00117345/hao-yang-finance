@@ -4,11 +4,11 @@ export interface DriverStatsDto {
 	driverId: string;
 	driverName: string;
 	totalWaybills: number;
-	invoicedWaybills: number;
-	noInvoiceNeededWaybills: number;
+	// invoicedWaybills: number;
+	// noInvoiceNeededWaybills: number;
 	totalRevenue: number;
-	invoicedRevenue: number;
-	noInvoiceNeededRevenue: number;
+	// invoicedRevenue: number;
+	// noInvoiceNeededRevenue: number;
 	averageWaybillFee: number;
 	firstWaybillDate: string;
 	lastWaybillDate: string;

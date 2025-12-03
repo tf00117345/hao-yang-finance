@@ -500,14 +500,12 @@ namespace hao_yang_finance_api.Services
                 .ToListAsync();
 
             var invoiceIncome = waybills
-                .Where(w => w.Status == WaybillStatus.INVOICED.ToString() || w.Status == WaybillStatus.PENDING.ToString())
+                .Where( w=> w.Status != WaybillStatus.NO_INVOICE_NEEDED.ToString())
                 .Sum(w => w.Fee);
 
             var cashIncome = waybills
                 .Where(w =>
                     w.Status == WaybillStatus.NO_INVOICE_NEEDED.ToString()
-                    || w.Status == WaybillStatus.NEED_TAX_UNPAID.ToString()
-                    || w.Status == WaybillStatus.NEED_TAX_PAID.ToString()
                 )
                 .Sum(w => w.Fee);
 

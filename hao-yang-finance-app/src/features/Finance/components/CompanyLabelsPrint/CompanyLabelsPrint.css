@@ -79,7 +79,7 @@
 
 .company-name {
 	font-size: 18pt !important;
-	font-weight: 700 !important;
+	font-weight: 400 !important;
 	writing-mode: vertical-rl;
 	text-orientation: mixed; /* 英文橫排，中文直排 */
 	/* 自動換行，不撐開格子 */

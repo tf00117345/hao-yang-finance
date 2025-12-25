@@ -559,6 +559,7 @@ function WaybillForm({
 											error={!!errors.item}
 											helperText={errors.item?.message}
 											placeholder="請輸入貨名"
+											onFocus={(e) => (e.target as HTMLInputElement).select()}
 										/>
 									)}
 								/>
@@ -590,6 +591,7 @@ function WaybillForm({
 													error={!!errors.loadingLocations?.[index]?.from}
 													helperText={errors.loadingLocations?.[index]?.from?.message}
 													placeholder="請輸入起點"
+													onFocus={(e) => (e.target as HTMLInputElement).select()}
 												/>
 											)}
 										/>
@@ -606,6 +608,7 @@ function WaybillForm({
 													placeholder="請輸入終點"
 													error={!!errors.loadingLocations?.[index]?.to}
 													helperText={errors.loadingLocations?.[index]?.to?.message}
+													onFocus={(e) => (e.target as HTMLInputElement).select()}
 												/>
 											)}
 										/>
@@ -864,6 +867,7 @@ function WaybillForm({
 											size="small"
 											multiline
 											placeholder="請輸入備註"
+											onFocus={(e) => (e.target as HTMLTextAreaElement).select()}
 										/>
 									)}
 								/>

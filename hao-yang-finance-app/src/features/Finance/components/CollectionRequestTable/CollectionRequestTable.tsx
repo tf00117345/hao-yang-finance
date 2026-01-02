@@ -4,6 +4,7 @@ import {
 	ArrowDownward,
 	ArrowUpward,
 	Delete as DeleteIcon,
+	Edit as EditIcon,
 	Payment as PaymentIcon,
 	UnfoldMore,
 	Visibility as VisibilityIcon,
@@ -37,6 +38,7 @@ import {
 	CollectionRequestStatusLabels,
 } from '../../types/collection-request.types';
 import { CollectionRequestDetailDialog } from '../CollectionRequestDetailDialog/CollectionRequestDetailDialog';
+import { CreateCollectionRequestDialog } from '../CreateCollectionRequestDialog/CreateCollectionRequestDialog';
 import { MarkCollectionPaidDialog } from '../MarkCollectionPaidDialog/MarkCollectionPaidDialog';
 import { SmartFilterInput } from '../shared/SmartFilterInput';
 import { StyledTableCell, StyledTableRow } from '../styles/styles';
@@ -60,6 +62,7 @@ const formatCurrency = (amount: number) => {
 export function CollectionRequestTable({ companyId, status, startDate, endDate }: CollectionRequestTableProps) {
 	const [selectedRequest, setSelectedRequest] = useState<CollectionRequest | null>(null);
 	const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [markPaidDialogOpen, setMarkPaidDialogOpen] = useState(false);
 
 	const { data: collectionRequests = [], isLoading } = useCollectionRequests({
@@ -77,6 +80,11 @@ export function CollectionRequestTable({ companyId, status, startDate, endDate }
 	const handleViewDetail = useCallback((request: CollectionRequest) => {
 		setSelectedRequest(request);
 		setDetailDialogOpen(true);
+	}, []);
+
+	const handleEdit = useCallback((request: CollectionRequest) => {
+		setSelectedRequest(request);
+		setEditDialogOpen(true);
 	}, []);
 
 	const handleMarkPaid = useCallback((request: CollectionRequest) => {
@@ -159,6 +167,14 @@ export function CollectionRequestTable({ companyId, status, startDate, endDate }
 							</IconButton>
 						</Tooltip>
 
+						{CollectionRequestRules.canEdit(request.status) && (
+							<Tooltip title="編輯請款單">
+								<IconButton size="small" color="primary" onClick={() => handleEdit(request)}>
+									<EditIcon fontSize="small" />
+								</IconButton>
+							</Tooltip>
+						)}
+
 						{CollectionRequestRules.canMarkPaid(request.status) && (
 							<Tooltip title="標記已收款">
 								<IconButton size="small" color="success" onClick={() => handleMarkPaid(request)}>
@@ -211,7 +227,7 @@ export function CollectionRequestTable({ companyId, status, startDate, endDate }
 
 			return flexRender(cell.column.columnDef.cell, cell.getContext());
 		},
-		[handleViewDetail, handleMarkPaid, handleDelete],
+		[handleViewDetail, handleEdit, handleMarkPaid, handleDelete],
 	);
 
 	if (isLoading) {
@@ -388,6 +404,18 @@ export function CollectionRequestTable({ companyId, status, startDate, endDate }
 					collectionRequestId={selectedRequest.id}
 					onClose={() => {
 						setDetailDialogOpen(false);
+						setSelectedRequest(null);
+					}}
+				/>
+			)}
+
+			{/* Edit Dialog */}
+			{selectedRequest && (
+				<CreateCollectionRequestDialog
+					open={editDialogOpen}
+					collectionRequest={selectedRequest}
+					onClose={() => {
+						setEditDialogOpen(false);
 						setSelectedRequest(null);
 					}}
 				/>

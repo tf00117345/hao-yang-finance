@@ -71,6 +71,12 @@ export interface CreateCollectionRequestDto {
 	notes?: string;
 }
 
+// 更新請款單請求
+export interface UpdateCollectionRequestDto {
+	requestDate: string;
+	notes?: string;
+}
+
 // 標記已收款請求
 export interface MarkCollectionPaidDto {
 	paymentReceivedAt: string;

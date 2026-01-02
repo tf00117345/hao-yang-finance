@@ -7,6 +7,7 @@ import {
 	CollectionRequestQueryParams,
 	CreateCollectionRequestDto,
 	MarkCollectionPaidDto,
+	UpdateCollectionRequestDto,
 } from '../types/collection-request.types';
 
 const COLLECTION_REQUEST_API = '/CollectionRequest';
@@ -46,6 +47,14 @@ export const collectionRequestApi = {
 	 */
 	createCollectionRequest: async (dto: CreateCollectionRequestDto): Promise<CollectionRequest> => {
 		const response = await axiosInstance.post<CollectionRequest>(COLLECTION_REQUEST_API, dto);
+		return response.data;
+	},
+
+	/**
+	 * 更新請款單
+	 */
+	updateCollectionRequest: async (id: string, dto: UpdateCollectionRequestDto): Promise<CollectionRequest> => {
+		const response = await axiosInstance.put<CollectionRequest>(`${COLLECTION_REQUEST_API}/${id}`, dto);
 		return response.data;
 	},
 

@@ -9,6 +9,12 @@ namespace hao_yang_finance_api.DTOs
         public string? Notes { get; set; }
     }
 
+    public class UpdateCollectionRequestDto
+    {
+        public string RequestDate { get; set; } = string.Empty;
+        public string? Notes { get; set; }
+    }
+
     public class MarkCollectionPaidDto
     {
         public string PaymentReceivedAt { get; set; } = string.Empty;

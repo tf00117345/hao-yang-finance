@@ -5,6 +5,7 @@ import {
 	CollectionRequestQueryParams,
 	CreateCollectionRequestDto,
 	MarkCollectionPaidDto,
+	UpdateCollectionRequestDto,
 } from '../features/Finance/types/collection-request.types';
 
 // Query Keys
@@ -49,6 +50,23 @@ export const useCreateCollectionRequest = () => {
 			// 使請款單列表和託運單列表快取失效
 			queryClient.invalidateQueries({ queryKey: collectionRequestKeys.lists() });
 			queryClient.invalidateQueries({ queryKey: ['waybills'] });
+		},
+	});
+};
+
+/**
+ * 更新請款單
+ */
+export const useUpdateCollectionRequest = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({ id, dto }: { id: string; dto: UpdateCollectionRequestDto }) =>
+			collectionRequestApi.updateCollectionRequest(id, dto),
+		onSuccess: (_, { id }) => {
+			// 使請款單列表、詳情快取失效
+			queryClient.invalidateQueries({ queryKey: collectionRequestKeys.lists() });
+			queryClient.invalidateQueries({ queryKey: collectionRequestKeys.detail(id) });
 		},
 	});
 };

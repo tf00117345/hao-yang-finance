@@ -205,10 +205,27 @@ namespace hao_yang_finance_api.Controllers
             {
                 // Generate unique request number: CR-YYYYMMDD-XXX
                 var today = DateTime.Now.ToString("yyyyMMdd");
-                var todayCount = await _context.CollectionRequests.CountAsync(cr =>
-                    cr.RequestNumber.StartsWith($"CR-{today}-")
-                );
-                requestNumber = $"CR-{today}-{(todayCount + 1):D3}";
+                var prefix = $"CR-{today}-";
+
+                // 取得當天最大的流水號（避免刪除後重複）
+                var lastRequestNumber = await _context
+                    .CollectionRequests.Where(cr => cr.RequestNumber.StartsWith(prefix))
+                    .OrderByDescending(cr => cr.RequestNumber)
+                    .Select(cr => cr.RequestNumber)
+                    .FirstOrDefaultAsync();
+
+                int nextNumber = 1;
+                if (!string.IsNullOrEmpty(lastRequestNumber))
+                {
+                    // 解析最後三位數字 (例如 CR-20250102-003 → 3)
+                    var lastNumberStr = lastRequestNumber.Substring(prefix.Length);
+                    if (int.TryParse(lastNumberStr, out int lastNumber))
+                    {
+                        nextNumber = lastNumber + 1;
+                    }
+                }
+
+                requestNumber = $"{prefix}{nextNumber:D3}";
             }
 
             // Check if request number already exists
@@ -278,6 +295,67 @@ namespace hao_yang_finance_api.Controllers
                 new { id = collectionRequest.Id },
                 result
             );
+        }
+
+        // PUT: api/CollectionRequest/5
+        [HttpPut("{id}")]
+        [RequirePermission(Permission.WaybillUpdate)]
+        public async Task<ActionResult<CollectionRequestDto>> UpdateCollectionRequest(
+            string id,
+            UpdateCollectionRequestDto updateDto
+        )
+        {
+            var collectionRequest = await _context
+                .CollectionRequests.Include(cr => cr.Company)
+                .Include(cr => cr.Waybills)
+                .FirstOrDefaultAsync(cr => cr.Id == id);
+
+            if (collectionRequest == null)
+            {
+                return NotFound(new { message = "找不到指定的請款單" });
+            }
+
+            // Validate status - only 'requested' status can be updated
+            if (collectionRequest.Status != CollectionRequestStatus.Requested)
+            {
+                return BadRequest(
+                    new
+                    {
+                        message = $"無法更新狀態為 '{collectionRequest.Status}' 的請款單，只有 'requested' 狀態可編輯",
+                    }
+                );
+            }
+
+            // Update fields
+            collectionRequest.RequestDate = updateDto.RequestDate;
+            collectionRequest.Notes = updateDto.Notes;
+            collectionRequest.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+            await _context.SaveChangesAsync();
+
+            var result = new CollectionRequestDto
+            {
+                Id = collectionRequest.Id,
+                RequestNumber = collectionRequest.RequestNumber,
+                RequestDate = collectionRequest.RequestDate,
+                CompanyId = collectionRequest.CompanyId,
+                CompanyName = collectionRequest.Company.Name,
+                TotalAmount = collectionRequest.TotalAmount,
+                Subtotal = collectionRequest.Subtotal,
+                TaxAmount = collectionRequest.TaxAmount,
+                TaxRate = collectionRequest.TaxRate,
+                Status = collectionRequest.Status,
+                Notes = collectionRequest.Notes,
+                PaymentReceivedAt = collectionRequest.PaymentReceivedAt,
+                PaymentMethod = collectionRequest.PaymentMethod,
+                PaymentNotes = collectionRequest.PaymentNotes,
+                WaybillCount = collectionRequest.Waybills.Count,
+                WaybillIds = collectionRequest.Waybills.Select(w => w.Id).ToList(),
+                CreatedAt = collectionRequest.CreatedAt,
+                UpdatedAt = collectionRequest.UpdatedAt,
+            };
+
+            return Ok(result);
         }
 
         // POST: api/CollectionRequest/5/mark-paid

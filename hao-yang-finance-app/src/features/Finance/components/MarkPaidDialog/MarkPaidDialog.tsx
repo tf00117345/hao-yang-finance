@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
 	Button,
@@ -110,6 +110,7 @@ export function MarkPaidDialog({ open, waybill, onClose, onConfirm, processing }
 							shrink: true,
 						}}
 						helperText="必填欄位"
+						onKeyDown={(e) => e.preventDefault()}
 					/>
 
 					<FormControl fullWidth required>

@@ -329,6 +329,7 @@ export function CreateCollectionRequestDialog({
 							fullWidth
 							required
 							InputLabelProps={{ shrink: true }}
+							onKeyDown={(e) => e.preventDefault()}
 						/>
 
 						{/* 備註 */}

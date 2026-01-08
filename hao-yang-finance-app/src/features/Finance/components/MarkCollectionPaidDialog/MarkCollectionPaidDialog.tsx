@@ -97,6 +97,7 @@ export function MarkCollectionPaidDialog({ open, collectionRequest, onClose }: M
 						fullWidth
 						required
 						InputLabelProps={{ shrink: true }}
+						onKeyDown={(e) => e.preventDefault()}
 					/>
 
 					<FormControl fullWidth required>

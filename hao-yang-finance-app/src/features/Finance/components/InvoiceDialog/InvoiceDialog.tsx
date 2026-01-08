@@ -350,6 +350,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 										InputLabelProps={{ shrink: true }}
 										error={!!errors.date}
 										helperText={errors.date?.message}
+										onKeyDown={(e) => e.preventDefault()}
 									/>
 								)}
 							/>

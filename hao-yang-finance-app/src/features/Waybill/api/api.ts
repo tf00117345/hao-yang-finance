@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { QueryClientInstance } from '../../../cache/queryClient';
 import { DateRange } from '../../../types/date-range';
 import { axiosInstance } from '../../../utils/axios-instance';
-import { Waybill, WaybillFormData } from '../types/waybill.types';
+import { Waybill, WaybillFormData, CreateWaybillFeeSplit } from '../types/waybill.types';
 
 export const getWaybills = async (
 	dateRange: DateRange,
@@ -61,6 +61,10 @@ const transformWaybillFromApi = (apiWaybill: any): Waybill => {
 		paymentMethod: apiWaybill.paymentMethod,
 		createdAt: apiWaybill.createdAt,
 		updatedAt: apiWaybill.updatedAt,
+		feeSplits: apiWaybill.feeSplits || [],
+		isFeeSplitRecord: apiWaybill.isFeeSplitRecord || false,
+		splitAmount: apiWaybill.splitAmount,
+		splitFromDriverName: apiWaybill.splitFromDriverName,
 	};
 };
 
@@ -189,4 +193,15 @@ export const markWaybillsAsUnpaidWithTaxBatch = async (waybillIds: string[]): Pr
 	const response = await axiosInstance.put('/waybill/batch-mark-unpaid-with-tax', waybillIds);
 	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
 	return response.data;
+};
+
+// 儲存運費分攤
+export const saveWaybillFeeSplits = async (params: {
+	waybillId: string;
+	splits: CreateWaybillFeeSplit[];
+}): Promise<void> => {
+	await axiosInstance.put(`/waybill/${params.waybillId}/fee-splits`, {
+		splits: params.splits,
+	});
+	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
 };

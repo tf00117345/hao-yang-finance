@@ -25,6 +25,10 @@ namespace hao_yang_finance_api.DTOs
         public string? PaymentMethod { get; set; }
         public List<LoadingLocationDto> LoadingLocations { get; set; } = new List<LoadingLocationDto>();
         public List<ExtraExpenseDto> ExtraExpenses { get; set; } = new List<ExtraExpenseDto>();
+        public List<WaybillFeeSplitDto> FeeSplits { get; set; } = new List<WaybillFeeSplitDto>();
+        public bool IsFeeSplitRecord { get; set; } = false;
+        public decimal? SplitAmount { get; set; }
+        public string? SplitFromDriverName { get; set; }
         public string CreatedAt { get; set; } = string.Empty;
         public string UpdatedAt { get; set; } = string.Empty;
     }

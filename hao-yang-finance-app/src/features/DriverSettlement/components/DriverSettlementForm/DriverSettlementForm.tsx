@@ -137,7 +137,8 @@ function DriverSettlementForm({
 		// These would come from the API in a real implementation
 		const income = existingSettlement?.income || editingSettlement?.income || 0;
 		const incomeCash = existingSettlement?.incomeCash || editingSettlement?.incomeCash || 0;
-		const totalIncome = income + incomeCash;
+		const feeSplitAmount = existingSettlement?.feeSplitAmount ?? editingSettlement?.feeSplitAmount ?? 0;
+		const totalIncome = income + incomeCash + feeSplitAmount;
 
 		const profitableAmount = totalIncome - companyTotal - personalTotal;
 		const bonus = profitableAmount * (Number(profitShareRatio) / 100);
@@ -146,6 +147,7 @@ function DriverSettlementForm({
 		return {
 			income,
 			incomeCash,
+			feeSplitAmount,
 			totalIncome,
 			companyTotal,
 			personalTotal,
@@ -302,6 +304,17 @@ function DriverSettlementForm({
 										現金收入
 									</Typography>
 									<Typography variant="h6">{formatCurrency(calculations.incomeCash)}</Typography>
+								</Grid>
+								<Grid item xs={3}>
+									<Typography variant="body2" color="text.secondary">
+										分攤金額
+									</Typography>
+									<Typography
+										variant="h6"
+										color={calculations.feeSplitAmount > 0 ? 'warning.main' : 'text.primary'}
+									>
+										{formatCurrency(calculations.feeSplitAmount)}
+									</Typography>
 								</Grid>
 								<Grid item xs={3}>
 									<Typography variant="body2" color="text.secondary">

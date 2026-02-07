@@ -29,6 +29,10 @@ export interface Waybill {
 	paymentMethod?: string;
 	createdAt?: string;
 	updatedAt?: string;
+	feeSplits: WaybillFeeSplit[];
+	isFeeSplitRecord?: boolean;
+	splitAmount?: number;
+	splitFromDriverName?: string;
 }
 
 export interface WaybillFormData extends Omit<Waybill, 'id' | 'companyId'> {
@@ -46,5 +50,20 @@ export interface ExtraExpense {
 	id: string;
 	item: string;
 	fee: number;
+	notes?: string;
+}
+
+export interface WaybillFeeSplit {
+	id: string;
+	waybillId: string;
+	targetDriverId: string;
+	targetDriverName: string;
+	amount: number;
+	notes?: string;
+}
+
+export interface CreateWaybillFeeSplit {
+	targetDriverId: string;
+	amount: number;
 	notes?: string;
 }

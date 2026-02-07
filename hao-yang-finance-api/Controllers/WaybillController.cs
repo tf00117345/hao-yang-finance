@@ -36,6 +36,8 @@ namespace hao_yang_finance_api.Controllers
                 .Include(w => w.Driver)
                 .Include(w => w.LoadingLocations)
                 .Include(w => w.ExtraExpenses)
+                .Include(w => w.FeeSplits)
+                .ThenInclude(fs => fs.TargetDriver)
                 .AsQueryable();
 
             // 日期範圍篩選將在客戶端進行
@@ -80,51 +82,62 @@ namespace hao_yang_finance_api.Controllers
                 waybills = waybills.Where(w => DateTime.Parse(w.Date) <= end).ToList();
             }
 
-            var result = waybills
-                .Select(w => new WaybillDto
+            var result = waybills.Select(w => MapToWaybillDto(w)).ToList();
+
+            // 如果有司機篩選，也要加入該司機的費用分攤記錄（虛擬託運單）
+            if (!string.IsNullOrEmpty(driverId))
+            {
+                var splitQuery = _context
+                    .WaybillFeeSplits.Include(fs => fs.Waybill)
+                    .ThenInclude(w => w.Company)
+                    .Include(fs => fs.Waybill)
+                    .ThenInclude(w => w.Driver)
+                    .Include(fs => fs.Waybill)
+                    .ThenInclude(w => w.LoadingLocations)
+                    .Include(fs => fs.Waybill)
+                    .ThenInclude(w => w.ExtraExpenses)
+                    .Include(fs => fs.TargetDriver)
+                    .Where(fs => fs.TargetDriverId == driverId);
+
+                var splitRecords = await splitQuery.ToListAsync();
+
+                // 套用同樣的日期篩選
+                if (
+                    !string.IsNullOrEmpty(startDate)
+                    && DateTime.TryParse(startDate, out var splitStart)
+                )
                 {
-                    Id = w.Id,
-                    // WaybillNumber = w.WaybillNumber,
-                    Date = w.Date,
-                    Item = w.Item,
-                    Tonnage = w.Tonnage,
-                    CompanyId = w.CompanyId,
-                    CompanyName = w.Company.Name,
-                    WorkingTimeStart = w.WorkingTimeStart,
-                    WorkingTimeEnd = w.WorkingTimeEnd,
-                    Fee = w.Fee,
-                    DriverId = w.DriverId,
-                    DriverName = w.Driver.Name,
-                    PlateNumber = w.PlateNumber,
-                    Notes = w.Notes,
-                    Status = w.Status,
-                    InvoiceId = w.InvoiceId,
-                    TaxAmount = w.TaxAmount,
-                    TaxRate = w.TaxRate,
-                    PaymentNotes = w.PaymentNotes,
-                    PaymentReceivedAt = w.PaymentReceivedAt,
-                    PaymentMethod = w.PaymentMethod,
-                    LoadingLocations = w
-                        .LoadingLocations.OrderBy(l => l.SequenceOrder)
-                        .Select(l => new LoadingLocationDto
-                        {
-                            From = l.FromLocation,
-                            To = l.ToLocation,
-                        })
-                        .ToList(),
-                    ExtraExpenses = w
-                        .ExtraExpenses.Select(e => new ExtraExpenseDto
-                        {
-                            Id = e.Id,
-                            Item = e.Item ?? e.Description,
-                            Fee = e.Fee ?? e.Amount,
-                            Notes = e.Notes,
-                        })
-                        .ToList(),
-                    CreatedAt = w.CreatedAt,
-                    UpdatedAt = w.UpdatedAt,
-                })
-                .ToList();
+                    splitRecords = splitRecords
+                        .Where(fs => DateTime.Parse(fs.Waybill.Date) >= splitStart)
+                        .ToList();
+                }
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out var splitEnd))
+                {
+                    splitRecords = splitRecords
+                        .Where(fs => DateTime.Parse(fs.Waybill.Date) <= splitEnd)
+                        .ToList();
+                }
+
+                foreach (var split in splitRecords)
+                {
+                    var w = split.Waybill;
+                    var virtualDto = MapToWaybillDto(w);
+                    virtualDto.IsFeeSplitRecord = true;
+                    virtualDto.SplitAmount = split.Amount;
+                    virtualDto.Fee = split.Amount;
+                    virtualDto.SplitFromDriverName = w.Driver.Name;
+                    virtualDto.DriverId = split.TargetDriverId;
+                    virtualDto.DriverName = split.TargetDriver.Name;
+                    virtualDto.Id = $"split-{split.Id}";
+                    result.Add(virtualDto);
+                }
+
+                // 重新排序
+                result = result
+                    .OrderByDescending(r => r.Date)
+                    .ThenByDescending(r => r.CreatedAt)
+                    .ToList();
+            }
 
             return Ok(result);
         }
@@ -376,6 +389,37 @@ namespace hao_yang_finance_api.Controllers
             // {
             //     warnings.Add($"託運單號碼 '{updateWaybillDto.WaybillNumber}' 已存在，請確認是否重複。");
             // }
+
+            // 檢查費用分攤限制
+            var existingSplits = await _context
+                .WaybillFeeSplits.Where(fs => fs.WaybillId == id)
+                .ToListAsync();
+
+            if (existingSplits.Any())
+            {
+                // 如果司機變更，且有分攤記錄，不允許
+                if (updateWaybillDto.DriverId != waybill.DriverId)
+                {
+                    return BadRequest(
+                        new
+                        {
+                            message = "此託運單已有費用分攤記錄，無法變更司機。請先移除費用分攤。",
+                        }
+                    );
+                }
+
+                // 如果費用降低到低於分攤總額，不允許
+                var totalSplitAmount = existingSplits.Sum(fs => fs.Amount);
+                if (updateWaybillDto.Fee < totalSplitAmount)
+                {
+                    return BadRequest(
+                        new
+                        {
+                            message = $"運費不能低於已分攤總額 {totalSplitAmount}。請先調整費用分攤。",
+                        }
+                    );
+                }
+            }
 
             // 更新主要資料
             // waybill.WaybillNumber = updateWaybillDto.WaybillNumber;
@@ -1159,6 +1203,232 @@ namespace hao_yang_finance_api.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "收款備註已成功更新" });
+        }
+
+        // GET: api/Waybill/{waybillId}/fee-splits
+        [HttpGet("{waybillId}/fee-splits")]
+        [RequirePermission(Permission.WaybillRead)]
+        public async Task<ActionResult<IEnumerable<WaybillFeeSplitDto>>> GetFeeSplits(
+            string waybillId
+        )
+        {
+            var waybill = await _context.Waybills.FindAsync(waybillId);
+            if (waybill == null)
+            {
+                return NotFound(new { message = "找不到指定的託運單" });
+            }
+
+            var splits = await _context
+                .WaybillFeeSplits.Include(fs => fs.TargetDriver)
+                .Where(fs => fs.WaybillId == waybillId)
+                .ToListAsync();
+
+            var result = splits
+                .Select(fs => new WaybillFeeSplitDto
+                {
+                    Id = fs.Id,
+                    WaybillId = fs.WaybillId,
+                    TargetDriverId = fs.TargetDriverId,
+                    TargetDriverName = fs.TargetDriver.Name,
+                    Amount = fs.Amount,
+                    Notes = fs.Notes,
+                    CreatedAt = fs.CreatedAt,
+                    UpdatedAt = fs.UpdatedAt,
+                })
+                .ToList();
+
+            return Ok(result);
+        }
+
+        // PUT: api/Waybill/{waybillId}/fee-splits
+        [HttpPut("{waybillId}/fee-splits")]
+        [RequirePermission(Permission.WaybillUpdate)]
+        public async Task<ActionResult<IEnumerable<WaybillFeeSplitDto>>> SaveFeeSplits(
+            string waybillId,
+            [FromBody] SaveWaybillFeeSplitsDto dto
+        )
+        {
+            var waybill = await _context.Waybills.FindAsync(waybillId);
+            if (waybill == null)
+            {
+                return NotFound(new { message = "找不到指定的託運單" });
+            }
+
+            // 驗證
+            if (dto.Splits != null && dto.Splits.Any())
+            {
+                // 檢查分攤總額不超過運費
+                var totalSplitAmount = dto.Splits.Sum(s => s.Amount);
+                if (totalSplitAmount > waybill.Fee)
+                {
+                    return BadRequest(
+                        new
+                        {
+                            message = $"分攤總額 {totalSplitAmount} 超過託運單運費 {waybill.Fee}",
+                        }
+                    );
+                }
+
+                // 檢查每筆分攤金額大於零
+                if (dto.Splits.Any(s => s.Amount <= 0))
+                {
+                    return BadRequest(new { message = "每筆分攤金額必須大於零" });
+                }
+
+                // 檢查不能分攤給自己
+                if (dto.Splits.Any(s => s.TargetDriverId == waybill.DriverId))
+                {
+                    return BadRequest(new { message = "不能將費用分攤給託運單原始司機" });
+                }
+
+                // 檢查不能重複司機
+                var driverIds = dto.Splits.Select(s => s.TargetDriverId).ToList();
+                if (driverIds.Distinct().Count() != driverIds.Count)
+                {
+                    return BadRequest(new { message = "不能將費用重複分攤給同一司機" });
+                }
+
+                // 檢查所有目標司機存在且活躍
+                foreach (var split in dto.Splits)
+                {
+                    var targetDriver = await _context.Drivers.FindAsync(split.TargetDriverId);
+                    if (targetDriver == null || !targetDriver.IsActive)
+                    {
+                        return BadRequest(
+                            new { message = $"無效的司機ID或司機已停用: {split.TargetDriverId}" }
+                        );
+                    }
+                }
+            }
+
+            // 刪除舊的分攤記錄
+            var existingSplits = await _context
+                .WaybillFeeSplits.Where(fs => fs.WaybillId == waybillId)
+                .ToListAsync();
+            _context.WaybillFeeSplits.RemoveRange(existingSplits);
+
+            // 建立新的分攤記錄
+            var newSplits = new List<WaybillFeeSplit>();
+            if (dto.Splits != null)
+            {
+                foreach (var splitDto in dto.Splits)
+                {
+                    var split = new WaybillFeeSplit
+                    {
+                        WaybillId = waybillId,
+                        TargetDriverId = splitDto.TargetDriverId,
+                        Amount = splitDto.Amount,
+                        Notes = splitDto.Notes,
+                    };
+                    newSplits.Add(split);
+                    _context.WaybillFeeSplits.Add(split);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            // 回傳更新後的分攤記錄
+            var savedSplits = await _context
+                .WaybillFeeSplits.Include(fs => fs.TargetDriver)
+                .Where(fs => fs.WaybillId == waybillId)
+                .ToListAsync();
+
+            var result = savedSplits
+                .Select(fs => new WaybillFeeSplitDto
+                {
+                    Id = fs.Id,
+                    WaybillId = fs.WaybillId,
+                    TargetDriverId = fs.TargetDriverId,
+                    TargetDriverName = fs.TargetDriver.Name,
+                    Amount = fs.Amount,
+                    Notes = fs.Notes,
+                    CreatedAt = fs.CreatedAt,
+                    UpdatedAt = fs.UpdatedAt,
+                })
+                .ToList();
+
+            return Ok(result);
+        }
+
+        // DELETE: api/Waybill/{waybillId}/fee-splits
+        [HttpDelete("{waybillId}/fee-splits")]
+        [RequirePermission(Permission.WaybillUpdate)]
+        public async Task<IActionResult> DeleteFeeSplits(string waybillId)
+        {
+            var waybill = await _context.Waybills.FindAsync(waybillId);
+            if (waybill == null)
+            {
+                return NotFound(new { message = "找不到指定的託運單" });
+            }
+
+            var existingSplits = await _context
+                .WaybillFeeSplits.Where(fs => fs.WaybillId == waybillId)
+                .ToListAsync();
+
+            _context.WaybillFeeSplits.RemoveRange(existingSplits);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "費用分攤已全部刪除" });
+        }
+
+        // 將 Waybill 實體轉換為 WaybillDto 的輔助方法
+        private static WaybillDto MapToWaybillDto(Waybill w)
+        {
+            return new WaybillDto
+            {
+                Id = w.Id,
+                Date = w.Date,
+                Item = w.Item,
+                Tonnage = w.Tonnage,
+                CompanyId = w.CompanyId,
+                CompanyName = w.Company?.Name ?? "",
+                WorkingTimeStart = w.WorkingTimeStart,
+                WorkingTimeEnd = w.WorkingTimeEnd,
+                Fee = w.Fee,
+                DriverId = w.DriverId,
+                DriverName = w.Driver?.Name ?? "",
+                PlateNumber = w.PlateNumber,
+                Notes = w.Notes,
+                Status = w.Status,
+                InvoiceId = w.InvoiceId,
+                TaxAmount = w.TaxAmount,
+                TaxRate = w.TaxRate,
+                PaymentNotes = w.PaymentNotes,
+                PaymentReceivedAt = w.PaymentReceivedAt,
+                PaymentMethod = w.PaymentMethod,
+                LoadingLocations =
+                    w.LoadingLocations?.OrderBy(l => l.SequenceOrder)
+                        .Select(l => new LoadingLocationDto
+                        {
+                            From = l.FromLocation,
+                            To = l.ToLocation,
+                        })
+                        .ToList() ?? new List<LoadingLocationDto>(),
+                ExtraExpenses =
+                    w.ExtraExpenses?.Select(e => new ExtraExpenseDto
+                        {
+                            Id = e.Id,
+                            Item = e.Item ?? e.Description,
+                            Fee = e.Fee ?? e.Amount,
+                            Notes = e.Notes,
+                        })
+                        .ToList() ?? new List<ExtraExpenseDto>(),
+                FeeSplits =
+                    w.FeeSplits?.Select(fs => new WaybillFeeSplitDto
+                        {
+                            Id = fs.Id,
+                            WaybillId = fs.WaybillId,
+                            TargetDriverId = fs.TargetDriverId,
+                            TargetDriverName = fs.TargetDriver?.Name ?? "",
+                            Amount = fs.Amount,
+                            Notes = fs.Notes,
+                            CreatedAt = fs.CreatedAt,
+                            UpdatedAt = fs.UpdatedAt,
+                        })
+                        .ToList() ?? new List<WaybillFeeSplitDto>(),
+                CreatedAt = w.CreatedAt,
+                UpdatedAt = w.UpdatedAt,
+            };
         }
 
         // PUT: api/Waybill/batch-mark-unpaid-with-tax

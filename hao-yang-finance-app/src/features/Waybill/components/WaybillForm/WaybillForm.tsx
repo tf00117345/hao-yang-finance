@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
+import CallSplitIcon from '@mui/icons-material/CallSplit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Autocomplete, Box, Button, Checkbox, IconButton, Stack, TextField, Typography } from '@mui/material';
+import { Autocomplete, Box, Button, Checkbox, Chip, IconButton, Stack, TextField, Typography } from '@mui/material';
 import { keyframes, styled } from '@mui/material/styles';
 import { LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
@@ -13,7 +14,7 @@ import { generateUUID } from '../../../../utils/general';
 import CompanyForm from '../../../Settings/components/CompanyForm/CompanyForm';
 import { Company, CreateCompanyDto } from '../../../Settings/types/company';
 import { Driver } from '../../../Settings/types/driver';
-import { WaybillFormData } from '../../types/waybill.types';
+import { WaybillFeeSplit, WaybillFormData } from '../../types/waybill.types';
 
 // 定義樣式化組件
 const StyledPaper = styled(Box, {
@@ -134,6 +135,7 @@ interface WaybillFormProps {
 	onSave: (data: WaybillFormData) => Promise<void> | void;
 	onAddCompany: (company: Company) => void; // 新增公司的回調函數
 	isMobile?: boolean; // 手機版標識
+	onOpenFeeSplit?: () => void; // 開啟運費分攤對話框
 }
 
 function WaybillForm({
@@ -144,6 +146,7 @@ function WaybillForm({
 	onAddCompany,
 	readonly = false,
 	isMobile = false,
+	onOpenFeeSplit,
 }: WaybillFormProps) {
 	const navigate = useNavigate();
 	// 新增公司相關狀態
@@ -766,6 +769,74 @@ function WaybillForm({
 								/>
 							</Box>
 						</FormRow>
+
+						{/* 運費分攤摘要（僅顯示於已存在的託運單且有分攤記錄時） */}
+						{initialData?.id && initialData.feeSplits && initialData.feeSplits.length > 0 && (
+							<FormRow isMobile={isMobile}>
+								<Typography>運費分攤</Typography>
+								<Box sx={{ p: 1 }}>
+									<Stack spacing={0.5}>
+										{initialData.feeSplits.map((split: WaybillFeeSplit) => (
+											<Stack
+												key={split.id}
+												direction="row"
+												justifyContent="space-between"
+												alignItems="center"
+											>
+												<Typography variant="body2">{split.targetDriverName}</Typography>
+												<Chip
+													label={`$${split.amount.toLocaleString()}`}
+													size="small"
+													color="info"
+													variant="outlined"
+												/>
+											</Stack>
+										))}
+										<Stack
+											direction="row"
+											justifyContent="space-between"
+											alignItems="center"
+											sx={{ borderTop: '1px solid #eee', pt: 0.5 }}
+										>
+											<Typography variant="body2" fontWeight="bold">
+												原始司機實際
+											</Typography>
+											<Typography variant="body2" fontWeight="bold">
+												$
+												{(
+													initialData.fee -
+													initialData.feeSplits.reduce((s, fs) => s + fs.amount, 0)
+												).toLocaleString()}
+											</Typography>
+										</Stack>
+									</Stack>
+									{onOpenFeeSplit && (
+										<Button
+											size="small"
+											startIcon={<CallSplitIcon />}
+											onClick={onOpenFeeSplit}
+											sx={{ mt: 0.5 }}
+										>
+											編輯分攤
+										</Button>
+									)}
+								</Box>
+							</FormRow>
+						)}
+
+						{/* 若無分攤且有 onOpenFeeSplit，顯示新增按鈕 */}
+						{initialData?.id &&
+							(!initialData.feeSplits || initialData.feeSplits.length === 0) &&
+							onOpenFeeSplit && (
+								<FormRow isMobile={isMobile}>
+									<Typography>運費分攤</Typography>
+									<Box sx={{ p: 1 }}>
+										<Button size="small" startIcon={<CallSplitIcon />} onClick={onOpenFeeSplit}>
+											新增分攤
+										</Button>
+									</Box>
+								</FormRow>
+							)}
 
 						<FormRow isMobile={isMobile}>
 							<Typography>額外費用</Typography>

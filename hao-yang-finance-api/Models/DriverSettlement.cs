@@ -26,6 +26,9 @@ namespace hao_yang_finance_api.Models
         public decimal IncomeCash { get; set; } = 0; // 現金收入
 
         [Column(TypeName = "decimal(12,2)")]
+        public decimal FeeSplitAmount { get; set; } = 0; // 分攤金額
+
+        [Column(TypeName = "decimal(12,2)")]
         public decimal TotalCompanyExpense { get; set; } = 0;
 
         [Column(TypeName = "decimal(12,2)")]

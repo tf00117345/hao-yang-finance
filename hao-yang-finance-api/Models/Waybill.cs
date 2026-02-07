@@ -93,5 +93,6 @@ namespace hao_yang_finance_api.Models
         public virtual CollectionRequest? CollectionRequest { get; set; }
         public virtual ICollection<LoadingLocation> LoadingLocations { get; set; } = new List<LoadingLocation>();
         public virtual ICollection<ExtraExpense> ExtraExpenses { get; set; } = new List<ExtraExpense>();
+        public virtual ICollection<WaybillFeeSplit> FeeSplits { get; set; } = new List<WaybillFeeSplit>();
     }
 }

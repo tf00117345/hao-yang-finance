@@ -24,6 +24,7 @@ namespace hao_yang_finance_api.Data
         public DbSet<DriverSettlement> DriverSettlements { get; set; }
         public DbSet<Expense> Expenses { get; set; }
         public DbSet<CollectionRequest> CollectionRequests { get; set; }
+        public DbSet<WaybillFeeSplit> WaybillFeeSplits { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -75,10 +76,27 @@ namespace hao_yang_finance_api.Data
                     .HasForeignKey(e => e.WaybillId)
                     .OnDelete(DeleteBehavior.Cascade);
 
+                entity.HasMany(w => w.FeeSplits)
+                    .WithOne(fs => fs.Waybill)
+                    .HasForeignKey(fs => fs.WaybillId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
                 entity.HasOne(w => w.Invoice)
                     .WithMany()
                     .HasForeignKey(w => w.InvoiceId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // Configure WaybillFeeSplit
+            modelBuilder.Entity<WaybillFeeSplit>(entity =>
+            {
+                entity.HasOne(fs => fs.TargetDriver)
+                    .WithMany()
+                    .HasForeignKey(fs => fs.TargetDriverId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(fs => fs.Amount)
+                    .HasPrecision(12, 2);
             });
 
             // Configure Invoice

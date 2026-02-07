@@ -8,6 +8,7 @@ namespace hao_yang_finance_api.DTOs
         public string TargetMonth { get; set; } = string.Empty;
         public decimal Income { get; set; } = 0;
         public decimal IncomeCash { get; set; } = 0;
+        public decimal FeeSplitAmount { get; set; } = 0;
         public decimal TotalCompanyExpense { get; set; } = 0;
         public decimal TotalPersonalExpense { get; set; } = 0;
         public decimal ProfitShareRatio { get; set; }
@@ -73,6 +74,7 @@ namespace hao_yang_finance_api.DTOs
         public string TargetMonth { get; set; } = string.Empty;
         public decimal Income { get; set; }
         public decimal IncomeCash { get; set; }
+        public decimal FeeSplitAmount { get; set; }
         public decimal TotalIncome => Income + IncomeCash;
         public decimal TotalCompanyExpense { get; set; }
         public decimal TotalPersonalExpense { get; set; }

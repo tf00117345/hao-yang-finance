@@ -5,6 +5,7 @@ export interface DriverSettlement {
 	targetMonth: string; // ISO date string
 	income: number;
 	incomeCash: number;
+	feeSplitAmount: number;
 	totalCompanyExpense: number;
 	totalPersonalExpense: number;
 	profitShareRatio: number;
@@ -23,6 +24,7 @@ export interface DriverSettlementSummary {
 	targetMonth: string;
 	income: number;
 	incomeCash: number;
+	feeSplitAmount: number;
 	totalIncome: number;
 	totalCompanyExpense: number;
 	totalPersonalExpense: number;

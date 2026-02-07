@@ -35,9 +35,10 @@ interface WaybillGridProps {
 	onDelete: (id: string) => void;
 	onSelect: (waybill: Waybill) => void;
 	onView: (waybill: Waybill) => void;
+	onFeeSplit?: (waybill: Waybill) => void;
 }
 
-export function WaybillGrid({ waybills, onDelete, onSelect, onView }: WaybillGridProps) {
+export function WaybillGrid({ waybills, onDelete, onSelect, onView, onFeeSplit }: WaybillGridProps) {
 	const theme = useTheme();
 	const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 	const { table } = useWaybillTable({
@@ -45,6 +46,7 @@ export function WaybillGrid({ waybills, onDelete, onSelect, onView }: WaybillGri
 		onDelete,
 		onSelect,
 		onView,
+		onFeeSplit,
 	});
 
 	const handleGrouping = (e: React.MouseEvent, column: Column<Waybill, any>) => {

@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 
+import CallSplitIcon from '@mui/icons-material/CallSplit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { Chip, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Chip, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import {
 	ColumnDef,
 	ColumnFiltersState,
@@ -29,9 +30,10 @@ export interface UseWaybillTableProps {
 	onDelete: (id: string) => void;
 	onSelect: (waybill: Waybill) => void;
 	onView: (waybill: Waybill) => void;
+	onFeeSplit?: (waybill: Waybill) => void;
 }
 
-export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybillTableProps) {
+export function useWaybillTable({ data, onDelete, onSelect, onView, onFeeSplit }: UseWaybillTableProps) {
 	const columns = useMemo<ColumnDef<Waybill, any>[]>(
 		() => [
 			// columnHelper.accessor('waybillNumber', {
@@ -106,7 +108,21 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 			}),
 			columnHelper.accessor('driverName', {
 				header: '司機',
-				size: 100,
+				size: 120,
+				cell: ({ row }) => {
+					const waybill = row.original;
+					if (waybill.isFeeSplitRecord) {
+						return (
+							<Box>
+								<Typography variant="body2">{waybill.driverName}</Typography>
+								<Typography variant="caption" color="text.secondary">
+									(來自 {waybill.splitFromDriverName})
+								</Typography>
+							</Box>
+						);
+					}
+					return waybill.driverName;
+				},
 			}),
 			// columnHelper.accessor('driverId', {
 			// 	header: '司機ID',
@@ -120,16 +136,54 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 			columnHelper.accessor('fee', {
 				header: '運費',
 				enableGrouping: false,
-				size: 120,
+				size: 140,
 				cell: ({ row }) => {
-					const { fee } = row.original;
-					const { taxAmount } = row.original;
+					const waybill = row.original;
+					const { fee } = waybill;
 					if (fee == null) return '';
 
-					if (taxAmount) {
-						const totalWithTax = fee + taxAmount;
-						return `${fee.toLocaleString()}`;
+					// Virtual split record
+					if (waybill.isFeeSplitRecord) {
+						return (
+							<Stack direction="row" alignItems="center" spacing={0.5}>
+								<Chip label="分攤" size="small" color="info" variant="outlined" />
+								<span>{fee.toLocaleString()}</span>
+							</Stack>
+						);
 					}
+
+					// Original waybill with splits
+					if (waybill.feeSplits && waybill.feeSplits.length > 0) {
+						const splitTotal = waybill.feeSplits.reduce((sum, s) => sum + s.amount, 0);
+						// const netFee = fee - splitTotal;
+						return (
+							<Tooltip
+								title={
+									<Box>
+										<Typography variant="caption">原始運費：${fee.toLocaleString()}</Typography>
+										{waybill.feeSplits.map((s) => (
+											<Typography key={s.id} variant="caption" display="block">
+												分攤給 {s.targetDriverName}：${s.amount.toLocaleString()}
+											</Typography>
+										))}
+										{/* <Typography variant="caption">實際：${netFee.toLocaleString()}</Typography> */}
+									</Box>
+								}
+								arrow
+							>
+								<Stack direction="row" alignItems="center" spacing={0.5}>
+									<span>{fee.toLocaleString()}</span>
+									<Chip
+										label={`分${waybill.feeSplits.length}`}
+										size="small"
+										color="info"
+										variant="outlined"
+									/>
+								</Stack>
+							</Tooltip>
+						);
+					}
+
 					return fee.toLocaleString();
 				},
 			}),
@@ -186,9 +240,14 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 					const waybill = row.original;
 					const { status } = waybill;
 
+					// Virtual split records have no actions
+					if (waybill.isFeeSplitRecord) {
+						return null;
+					}
+
 					return (
 						<Stack direction="row" spacing={0.5}>
-							{/* PENDING 狀態：編輯、刪除 */}
+							{/* PENDING 狀態：編輯、分攤、刪除 */}
 							{status === WaybillStatus.PENDING && (
 								<>
 									<Tooltip title="編輯">
@@ -196,6 +255,13 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 											<EditIcon />
 										</IconButton>
 									</Tooltip>
+									{onFeeSplit && (
+										<Tooltip title="運費分攤">
+											<IconButton size="small" color="info" onClick={() => onFeeSplit(waybill)}>
+												<CallSplitIcon />
+											</IconButton>
+										</Tooltip>
+									)}
 									<Tooltip title="刪除">
 										<IconButton
 											size="small"
@@ -208,20 +274,29 @@ export function useWaybillTable({ data, onDelete, onSelect, onView }: UseWaybill
 								</>
 							)}
 
-							{/* 其他狀態：查看 */}
+							{/* 其他狀態：查看 + 分攤 */}
 							{status !== WaybillStatus.PENDING && (
-								<Tooltip title="查看詳情">
-									<IconButton size="small" onClick={() => onView(waybill)}>
-										<VisibilityIcon />
-									</IconButton>
-								</Tooltip>
+								<>
+									<Tooltip title="查看詳情">
+										<IconButton size="small" onClick={() => onView(waybill)}>
+											<VisibilityIcon />
+										</IconButton>
+									</Tooltip>
+									{onFeeSplit && (
+										<Tooltip title="運費分攤">
+											<IconButton size="small" color="info" onClick={() => onFeeSplit(waybill)}>
+												<CallSplitIcon />
+											</IconButton>
+										</Tooltip>
+									)}
+								</>
 							)}
 						</Stack>
 					);
 				},
 			},
 		],
-		[onDelete, onSelect, onView],
+		[onDelete, onSelect, onView, onFeeSplit],
 	);
 
 	const [grouping, setGrouping] = useState<GroupingState>([]);

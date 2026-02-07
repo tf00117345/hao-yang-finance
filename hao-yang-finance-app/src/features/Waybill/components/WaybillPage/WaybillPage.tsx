@@ -27,10 +27,16 @@ import { useInsertCompanyMutation } from '../../../Settings/api/mutation';
 import { useCompaniesQuery, useDriversQuery } from '../../../Settings/api/query';
 import { Company } from '../../../Settings/types/company';
 import { Driver } from '../../../Settings/types/driver';
-import { useDeleteWaybillMutation, useInsertWaybillMutation, useUpdateWaybillMutation } from '../../api/mutation';
+import {
+	useDeleteWaybillMutation,
+	useInsertWaybillMutation,
+	useSaveWaybillFeeSplitsMutation,
+	useUpdateWaybillMutation,
+} from '../../api/mutation';
 import { useWaybillsQuery } from '../../api/query';
 import { WaybillStatus } from '../../types/waybill-status.types';
 import { Waybill, WaybillFormData } from '../../types/waybill.types';
+import { FeeSplitDialog } from '../FeeSplitDialog/FeeSplitDialog';
 import WaybillForm from '../WaybillForm/WaybillForm';
 import { WaybillGrid } from '../WaybillGrid/WaybillGrid';
 
@@ -49,6 +55,7 @@ const defaultWaybill: WaybillFormData = {
 	plateNumber: '',
 	notes: '',
 	extraExpenses: [],
+	feeSplits: [],
 	status: WaybillStatus.PENDING,
 	tonnage: 10.4,
 	markAsNoInvoiceNeeded: false,
@@ -101,6 +108,9 @@ export default function WaybillPage() {
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [deleteId, setDeleteId] = useState<string | null>(null);
 	const [performanceDialogOpen, setPerformanceDialogOpen] = useState(false);
+	const [feeSplitDialogOpen, setFeeSplitDialogOpen] = useState(false);
+	const [feeSplitWaybill, setFeeSplitWaybill] = useState<Waybill | null>(null);
+	const { mutate: saveFeeSplits, isPending: isSavingFeeSplits } = useSaveWaybillFeeSplitsMutation();
 
 	const handleSelectWaybill = (waybill: Waybill) => {
 		setSelectedWaybill(waybill);
@@ -155,6 +165,20 @@ export default function WaybillPage() {
 		}
 	};
 
+	const handleFeeSplit = (waybill: Waybill) => {
+		setFeeSplitWaybill(waybill);
+		setFeeSplitDialogOpen(true);
+	};
+
+	const handleFeeSplitSave = (params: { waybillId: string; splits: any[] }) => {
+		saveFeeSplits(params, {
+			onSuccess: () => {
+				setFeeSplitDialogOpen(false);
+				setFeeSplitWaybill(null);
+			},
+		});
+	};
+
 	const handleDateChange = (start: Date, end: Date) => {
 		setDateRange({ start, end });
 	};
@@ -180,37 +204,85 @@ export default function WaybillPage() {
 		[],
 	);
 
-	// 計算司機業績統計
+	// 計算司機業績統計（考慮運費分攤）
 	const performanceStats = useMemo(() => {
+		// 只計算非虛擬分攤記錄的原始託運單
+		const realWaybills = waybills.filter((w) => !w.isFeeSplitRecord);
+
 		// 司機收現金業績（NO_INVOICE_NEEDED）
-		const driverCashRevenue = waybills
+		const driverCashRevenue = realWaybills
 			.filter((w) => w.status === WaybillStatus.NO_INVOICE_NEEDED)
 			.reduce((sum, w) => sum + (w.fee || 0), 0);
 
 		// 公司收的業績（其他狀態）
-		const companyRevenue = waybills
+		const companyRevenue = realWaybills
 			.filter((w) => w.status !== WaybillStatus.NO_INVOICE_NEEDED)
 			.reduce((sum, w) => sum + (w.fee || 0), 0);
 
-		// 總業績
+		// 總業績（不受分攤影響，因為分攤是內部重新分配）
 		const totalRevenue = driverCashRevenue + companyRevenue;
 
-		// 按司機分組統計
+		// 按司機分組統計（考慮分攤）
 		const byDriver = drivers.map((driver) => {
-			const driverWaybills = waybills.filter((w) => w.driverId === driver.id);
-			const driverCash = driverWaybills
+			const driverWaybills = realWaybills.filter((w) => w.driverId === driver.id);
+
+			// 計算分攤後的現金收入
+			const driverCashBase = driverWaybills
 				.filter((w) => w.status === WaybillStatus.NO_INVOICE_NEEDED)
 				.reduce((sum, w) => sum + (w.fee || 0), 0);
-			const company = driverWaybills
+			const outgoingCashSplits = driverWaybills
+				.filter((w) => w.status === WaybillStatus.NO_INVOICE_NEEDED)
+				.reduce((sum, w) => {
+					if (!w.feeSplits) return sum;
+					return sum + w.feeSplits.reduce((s, split) => s + split.amount, 0);
+				}, 0);
+			const incomingCashSplits = realWaybills
+				.filter((w) => w.driverId !== driver.id && w.status === WaybillStatus.NO_INVOICE_NEEDED)
+				.reduce((sum, w) => {
+					if (!w.feeSplits) return sum;
+					return (
+						sum +
+						w.feeSplits
+							.filter((split) => split.targetDriverId === driver.id)
+							.reduce((s, split) => s + split.amount, 0)
+					);
+				}, 0);
+
+			// 計算公司收入（毛額）及分攤
+			const companyBase = driverWaybills
 				.filter((w) => w.status !== WaybillStatus.NO_INVOICE_NEEDED)
 				.reduce((sum, w) => sum + (w.fee || 0), 0);
-			const total = driverCash + company;
+			const outgoingCompanySplits = driverWaybills
+				.filter((w) => w.status !== WaybillStatus.NO_INVOICE_NEEDED)
+				.reduce((sum, w) => {
+					if (!w.feeSplits) return sum;
+					return sum + w.feeSplits.reduce((s, split) => s + split.amount, 0);
+				}, 0);
+			const incomingCompanySplits = realWaybills
+				.filter((w) => w.driverId !== driver.id && w.status !== WaybillStatus.NO_INVOICE_NEEDED)
+				.reduce((sum, w) => {
+					if (!w.feeSplits) return sum;
+					return (
+						sum +
+						w.feeSplits
+							.filter((split) => split.targetDriverId === driver.id)
+							.reduce((s, split) => s + split.amount, 0)
+					);
+				}, 0);
+
+			// 分攤金額：被分攤到的為正，分攤給別人的為負
+			const feeSplitAmount =
+				incomingCashSplits + incomingCompanySplits - (outgoingCashSplits + outgoingCompanySplits);
+
+			// 收入用毛額（不含分攤調整），總計 = 毛收入 + 分攤金額
+			const total = driverCashBase + companyBase + feeSplitAmount;
 
 			return {
 				driverId: driver.id,
 				driverName: driver.name,
-				driverCashRevenue: driverCash,
-				companyRevenue: company,
+				driverCashRevenue: driverCashBase,
+				companyRevenue: companyBase,
+				feeSplitAmount,
 				totalRevenue: total,
 			};
 		});
@@ -344,6 +416,7 @@ export default function WaybillPage() {
 									onDelete={handleDelete}
 									onSelect={handleSelectWaybill}
 									onView={handleViewWaybill}
+									onFeeSplit={handleFeeSplit}
 								/>
 							)}
 						</Box>
@@ -447,6 +520,7 @@ export default function WaybillPage() {
 										onDelete={handleDelete}
 										onSelect={handleSelectWaybill}
 										onView={handleViewWaybill}
+										onFeeSplit={handleFeeSplit}
 									/>
 								)}
 							</Box>
@@ -458,6 +532,11 @@ export default function WaybillPage() {
 							onAddCompany={handleAddCompany}
 							initialData={selectedWaybill}
 							readonly={selectedWaybill?.status !== WaybillStatus.PENDING}
+							onOpenFeeSplit={
+								selectedWaybill?.id
+									? () => handleFeeSplit(selectedWaybill as unknown as Waybill)
+									: undefined
+							}
 						/>
 					</Stack>
 				)}
@@ -504,6 +583,11 @@ export default function WaybillPage() {
 							initialData={selectedWaybill}
 							readonly={selectedWaybill?.status !== WaybillStatus.PENDING}
 							isMobile
+							onOpenFeeSplit={
+								selectedWaybill?.id
+									? () => handleFeeSplit(selectedWaybill as unknown as Waybill)
+									: undefined
+							}
 						/>
 					</Box>
 				</Drawer>
@@ -585,7 +669,6 @@ export default function WaybillPage() {
 							</Typography>
 							<Stack spacing={2}>
 								{performanceStats.byDriver
-									.filter((d) => d.totalRevenue > 0)
 									.sort((a, b) => b.totalRevenue - a.totalRevenue)
 									.map((driverStat) => (
 										<Box
@@ -640,6 +723,28 @@ export default function WaybillPage() {
 														NT$ {driverStat.companyRevenue.toLocaleString()}
 													</Typography>
 												</Box>
+												{driverStat.feeSplitAmount !== 0 && (
+													<Box>
+														<Typography
+															variant="caption"
+															color="text.secondary"
+															display="block"
+														>
+															分攤金額
+														</Typography>
+														<Typography
+															variant="body1"
+															color={
+																driverStat.feeSplitAmount > 0
+																	? 'success.main'
+																	: 'error.main'
+															}
+															fontWeight="medium"
+														>
+															NT$ {driverStat.feeSplitAmount.toLocaleString()}
+														</Typography>
+													</Box>
+												)}
 												<Box>
 													<Typography
 														variant="caption"
@@ -663,6 +768,18 @@ export default function WaybillPage() {
 					<Button onClick={() => setPerformanceDialogOpen(false)}>關閉</Button>
 				</DialogActions>
 			</Dialog>
+
+			{/* 運費分攤視窗 */}
+			<FeeSplitDialog
+				open={feeSplitDialogOpen}
+				waybill={feeSplitWaybill}
+				onClose={() => {
+					setFeeSplitDialogOpen(false);
+					setFeeSplitWaybill(null);
+				}}
+				onSave={handleFeeSplitSave}
+				saving={isSavingFeeSplits}
+			/>
 		</>
 	);
 }

@@ -39,6 +39,7 @@ namespace hao_yang_finance_api.Services
                     TargetMonth = s.TargetMonth,
                     Income = s.Income,
                     IncomeCash = s.IncomeCash,
+                    FeeSplitAmount = s.FeeSplitAmount,
                     TotalCompanyExpense = s.TotalCompanyExpense,
                     TotalPersonalExpense = s.TotalPersonalExpense,
                     ProfitShareRatio = s.ProfitShareRatio,
@@ -67,6 +68,7 @@ namespace hao_yang_finance_api.Services
                 TargetMonth = settlement.TargetMonth,
                 Income = settlement.Income,
                 IncomeCash = settlement.IncomeCash,
+                FeeSplitAmount = settlement.FeeSplitAmount,
                 TotalCompanyExpense = settlement.TotalCompanyExpense,
                 TotalPersonalExpense = settlement.TotalPersonalExpense,
                 ProfitShareRatio = settlement.ProfitShareRatio,
@@ -117,7 +119,7 @@ namespace hao_yang_finance_api.Services
 
             // Parse target month to DateTime for calculation
             var targetDate = DateTime.ParseExact(targetMonth, "yyyy-MM-dd", null);
-            var (invoiceIncome, cashIncome) = await CalculateMonthlyIncomeAsync(
+            var (invoiceIncome, cashIncome, feeSplitAmount) = await CalculateMonthlyIncomeAsync(
                 driverId,
                 targetDate
             );
@@ -131,6 +133,7 @@ namespace hao_yang_finance_api.Services
                 TargetMonth = targetMonth,
                 Income = invoiceIncome,
                 IncomeCash = cashIncome,
+                FeeSplitAmount = feeSplitAmount,
                 TotalCompanyExpense = 0, // No expenses yet
                 TotalPersonalExpense = 0, // No expenses yet
                 ProfitShareRatio = 0, // Default ratio, user will set this
@@ -162,7 +165,7 @@ namespace hao_yang_finance_api.Services
 
             // Calculate income from waybills - parse the month string to DateTime for calculation
             var targetDate = DateTime.ParseExact(createDto.TargetMonth + "-01", "yyyy-MM-dd", null);
-            var (invoiceIncome, cashIncome) = await CalculateMonthlyIncomeAsync(
+            var (invoiceIncome, cashIncome, feeSplitAmount) = await CalculateMonthlyIncomeAsync(
                 createDto.DriverId,
                 targetDate
             );
@@ -174,6 +177,7 @@ namespace hao_yang_finance_api.Services
                 TargetMonth = createDto.TargetMonth,
                 Income = invoiceIncome,
                 IncomeCash = cashIncome,
+                FeeSplitAmount = feeSplitAmount,
                 ProfitShareRatio = createDto.ProfitShareRatio,
                 CalculationVersion = "1.0",
             };
@@ -481,7 +485,7 @@ namespace hao_yang_finance_api.Services
             };
         }
 
-        private async Task<(decimal invoiceIncome, decimal cashIncome)> CalculateMonthlyIncomeAsync(
+        private async Task<(decimal invoiceIncome, decimal cashIncome, decimal feeSplitAmount)> CalculateMonthlyIncomeAsync(
             string driverId,
             DateTime targetMonth
         )
@@ -499,17 +503,37 @@ namespace hao_yang_finance_api.Services
                 )
                 .ToListAsync();
 
+            // 載入出帳分攤（此司機的託運單分攤給別人的金額）
+            var waybillIds = waybills.Select(w => w.Id).ToList();
+            var outgoingSplits = await _context
+                .WaybillFeeSplits.Where(fs => waybillIds.Contains(fs.WaybillId))
+                .ToListAsync();
+
+            // 載入入帳分攤（別的司機的託運單分攤給此司機的金額）
+            var incomingSplits = await _context
+                .WaybillFeeSplits.Include(fs => fs.Waybill)
+                .Where(fs =>
+                    fs.TargetDriverId == driverId
+                    && fs.Waybill.Date.CompareTo(monthStart) >= 0
+                    && fs.Waybill.Date.CompareTo(monthEnd) < 0
+                )
+                .ToListAsync();
+
+            // 計算毛收入（不扣除分攤）
             var invoiceIncome = waybills
-                .Where( w=> w.Status != WaybillStatus.NO_INVOICE_NEEDED.ToString())
+                .Where(w => w.Status != WaybillStatus.NO_INVOICE_NEEDED.ToString())
                 .Sum(w => w.Fee);
 
             var cashIncome = waybills
-                .Where(w =>
-                    w.Status == WaybillStatus.NO_INVOICE_NEEDED.ToString()
-                )
+                .Where(w => w.Status == WaybillStatus.NO_INVOICE_NEEDED.ToString())
                 .Sum(w => w.Fee);
 
-            return (invoiceIncome, cashIncome);
+            // 計算分攤金額：被分攤到的為正，分攤給別人的為負
+            var totalOutgoing = outgoingSplits.Sum(fs => fs.Amount);
+            var totalIncoming = incomingSplits.Sum(fs => fs.Amount);
+            var feeSplitAmount = totalIncoming - totalOutgoing;
+
+            return (invoiceIncome, cashIncome, feeSplitAmount);
         }
 
         private async Task<DriverSettlement> RecalculateSettlementAsync(long settlementId)
@@ -531,7 +555,7 @@ namespace hao_yang_finance_api.Services
                 .Sum(e => e.Amount);
 
             // Calculate bonus: (Total Income - Company Expenses - Personal Expenses) × Profit Share Ratio / 100
-            var totalIncome = settlement.Income + settlement.IncomeCash;
+            var totalIncome = settlement.Income + settlement.IncomeCash + settlement.FeeSplitAmount;
             var profitableAmount =
                 totalIncome - settlement.TotalCompanyExpense - settlement.TotalPersonalExpense;
             settlement.Bonus = profitableAmount * (settlement.ProfitShareRatio / 100);

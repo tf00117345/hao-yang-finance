@@ -15,6 +15,7 @@ import {
 	markWaybillsAsNoInvoiceNeededBatch,
 	restoreWaybillsBatch,
 	markWaybillsAsUnpaidWithTaxBatch,
+	saveWaybillFeeSplits,
 } from './api';
 
 // 更新託運單
@@ -206,6 +207,22 @@ export const useMarkWaybillsAsUnpaidWithTaxBatchMutation = () => {
 			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
 			const { summary } = data;
 			notifySuccess(`批次標記完成：成功 ${summary.success} 筆，失敗 ${summary.failure} 筆`);
+		},
+		onError: (error) => {
+			notifyError(error);
+		},
+	});
+};
+
+// 儲存運費分攤
+export const useSaveWaybillFeeSplitsMutation = () => {
+	const { notifySuccess, notifyError } = useNotifications();
+
+	return useMutation({
+		mutationFn: saveWaybillFeeSplits,
+		onSuccess: () => {
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			notifySuccess('運費分攤已儲存');
 		},
 		onError: (error) => {
 			notifyError(error);

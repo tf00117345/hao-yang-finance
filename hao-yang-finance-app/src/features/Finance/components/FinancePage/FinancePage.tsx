@@ -11,6 +11,7 @@ import { useWaybillsByIdsQuery, useWaybillsQuery } from '../../../Waybill/api/qu
 import { WaybillStatus } from '../../../Waybill/types/waybill-status.types';
 import { useInvoicesQuery } from '../../api/query';
 import { Invoice } from '../../types/invoice.type';
+import { AccountsReceivableSummary } from '../AccountsReceivableSummary/AccountsReceivableSummary';
 import { CollectionRequestTable } from '../CollectionRequestTable/CollectionRequestTable';
 import { InvoiceDialog } from '../InvoiceDialog/InvoiceDialog';
 import { InvoicedTable } from '../InvoicedTable/InvoicedTable';
@@ -120,6 +121,7 @@ export default function FinancePage() {
 					{/* <Tab label="公司應收款項之貨運單" /> */}
 					<Tab label="司機收現金之貨運單" />
 					<Tab label="已開立發票" />
+					<Tab label="未收款彙總" />
 				</Tabs>
 
 				{/* Tab 0,2,3: 顯示 waybills loading */}
@@ -163,6 +165,7 @@ export default function FinancePage() {
 				{tab === 1 && <CollectionRequestTable startDate={startDate} endDate={endDate} />}
 				{!isWaybillsPending && tab === 2 && <NoInvoicedNeededTable waybills={noInvoicedNeededWaybills} />}
 				{!isInvoicesPending && tab === 3 && <InvoicedTable invoices={invoices} onEdit={handleEditInvoice} />}
+				{tab === 4 && <AccountsReceivableSummary onEdit={handleEditInvoice} />}
 			</Box>
 
 			{/* 編輯發票對話框 */}

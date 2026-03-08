@@ -173,12 +173,16 @@ function DriverSettlementForm({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [defaultCompanyExpenses]);
 
-	// Auto-calculate tax based on income
+	// Auto-calculate tax based on income (only for new/unsaved settlements)
 	useEffect(() => {
-		const income = existingSettlement?.income || editingSettlement?.income || 0;
+		// Skip auto-calculation for saved settlements to preserve user-modified tax values
+		if (editingSettlement) return;
+
+		const income = existingSettlement?.income || 0;
+		const feeSplitAmount = existingSettlement?.feeSplitAmount ?? 0;
 
 		if (income > 0 && companyExpenseFields.length > 0) {
-			const taxAmount = income * 0.05;
+			const taxAmount = (feeSplitAmount + income) * 0.05;
 
 			// Find the tax expense item by name
 			const taxIndex = companyExpenseFields.findIndex((_field, index) => {
@@ -192,7 +196,12 @@ function DriverSettlementForm({
 			}
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [existingSettlement?.income, editingSettlement?.income, companyExpenseFields.length]);
+	}, [
+		existingSettlement?.income,
+		existingSettlement?.feeSplitAmount,
+		editingSettlement,
+		companyExpenseFields.length,
+	]);
 
 	// Auto-fill profit share ratio from driver's default when creating new settlement
 	useEffect(() => {

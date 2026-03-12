@@ -73,6 +73,30 @@ export interface UpdateInvoiceRequest {
 export interface MarkInvoicePaidRequest {
 	paymentMethod: string;
 	paymentNote?: string;
+	outstandingAmount?: number;
+	outstandingNote?: string;
+}
+
+// 欠款記錄
+export interface OutstandingBalance {
+	id: string;
+	invoiceId: string;
+	companyId: string;
+	companyName: string;
+	invoiceNumber: string;
+	amount: number;
+	note?: string;
+	status: 'outstanding' | 'resolved';
+	resolvedAt?: string;
+	createdAt: string;
+}
+
+// 按公司分組的欠款摘要
+export interface CompanyOutstandingBalanceSummary {
+	companyId: string;
+	companyName: string;
+	totalOutstanding: number;
+	records: OutstandingBalance[];
 }
 
 // 發票查詢參數

@@ -2,7 +2,15 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useSnackbar } from '../../../contexts/SnackbarContext';
 import { CreateInvoiceRequest, MarkInvoicePaidRequest, UpdateInvoiceRequest } from '../types/invoice.type';
-import { createInvoice, deleteInvoice, markInvoicePaid, restoreInvoice, updateInvoice, voidInvoice } from './api';
+import {
+	createInvoice,
+	deleteInvoice,
+	markInvoicePaid,
+	resolveOutstandingBalance,
+	restoreInvoice,
+	updateInvoice,
+	voidInvoice,
+} from './api';
 
 // 建立發票 mutation
 export const useCreateInvoiceMutation = () => {
@@ -102,6 +110,7 @@ export const useMarkInvoicePaidMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['invoices'] });
 			queryClient.invalidateQueries({ queryKey: ['invoice', variables.id] });
 			queryClient.invalidateQueries({ queryKey: ['invoice-stats'] });
+			queryClient.invalidateQueries({ queryKey: ['outstanding-balances-by-company'] });
 		},
 		onError: (error: any) => {
 			const errors = error?.response?.data?.errors;
@@ -160,6 +169,29 @@ export const useRestoreInvoiceMutation = () => {
 		onError: (error: any) => {
 			const errors = error?.response?.data?.errors;
 			let message = error?.response?.data?.message || '恢復發票失敗';
+			if (errors) {
+				message += `：${errors.join(', ')}`;
+			}
+			showErrorMessage(message);
+		},
+	});
+};
+
+// 標記欠款已補齊 mutation
+export const useResolveOutstandingBalanceMutation = () => {
+	const queryClient = useQueryClient();
+	const { showSuccessMessage, showErrorMessage } = useSnackbar();
+
+	return useMutation({
+		mutationFn: (id: string) => resolveOutstandingBalance(id),
+		onSuccess: () => {
+			showSuccessMessage('欠款已標記為已補齊');
+
+			queryClient.invalidateQueries({ queryKey: ['outstanding-balances-by-company'] });
+		},
+		onError: (error: any) => {
+			const errors = error?.response?.data?.errors;
+			let message = error?.response?.data?.message || '標記欠款補齊失敗';
 			if (errors) {
 				message += `：${errors.join(', ')}`;
 			}

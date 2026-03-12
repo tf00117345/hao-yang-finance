@@ -678,6 +678,19 @@ namespace hao_yang_finance_api.Controllers
             invoice.PaidAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
             invoice.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
+            // 如果有欠款金額，建立欠款記錄
+            if (markPaidDto.OutstandingAmount.HasValue && markPaidDto.OutstandingAmount.Value > 0)
+            {
+                var outstandingBalance = new OutstandingBalance
+                {
+                    InvoiceId = invoice.Id,
+                    CompanyId = invoice.CompanyId,
+                    Amount = markPaidDto.OutstandingAmount.Value,
+                    Note = markPaidDto.OutstandingNote?.Trim(),
+                };
+                _context.OutstandingBalances.Add(outstandingBalance);
+            }
+
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "發票已成功標記為已收款" });

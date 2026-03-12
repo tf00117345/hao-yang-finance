@@ -14,12 +14,8 @@ import {
 	DialogActions,
 	DialogContent,
 	DialogTitle,
-	FormControl,
 	IconButton,
-	InputLabel,
-	MenuItem,
 	Paper,
-	Select,
 	Stack,
 	Table,
 	TableBody,
@@ -27,12 +23,10 @@ import {
 	TableContainer,
 	TableHead,
 	TableRow,
-	TextField,
 	Tooltip,
 	Typography,
 } from '@mui/material';
 import { flexRender } from '@tanstack/react-table';
-import { Controller, useForm } from 'react-hook-form';
 
 import ConfirmDialog from '../../../../component/ConfirmDialog/ConfirmDialog';
 import {
@@ -43,9 +37,10 @@ import {
 } from '../../api/mutation';
 import { useInvoiceTable } from '../../hooks/useInvoiceTable';
 import { useStickyFilterTop } from '../../hooks/useStickyFilterTop';
-import { Invoice, MarkInvoicePaidRequest } from '../../types/invoice.type';
+import { Invoice } from '../../types/invoice.type';
 import CompanyLabelsPrint from '../CompanyLabelsPrint/CompanyLabelsPrint';
 import InvoicedWaybillSubTable from '../InvoiceWaybillSubTable/InvoiceWaybillSubTable';
+import { MarkInvoicePaidDialog } from '../shared/MarkInvoicePaidDialog';
 import { SmartFilterInput } from '../shared/SmartFilterInput';
 import { StyledTableCell, StyledTableRow } from '../styles/styles';
 
@@ -83,19 +78,6 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 		invoice: Invoice | null;
 	}>({ open: false, action: null, invoice: null });
 
-	// 收款表單
-	const {
-		control: paymentControl,
-		handleSubmit: handlePaymentSubmit,
-		reset: resetPayment,
-		formState: { errors: paymentErrors },
-	} = useForm<MarkInvoicePaidRequest>({
-		defaultValues: {
-			paymentMethod: '',
-			paymentNote: '',
-		},
-	});
-
 	// 操作處理函數（改為先確認再執行）
 	const handleVoidInvoice = useCallback((invoice: Invoice) => {
 		setConfirmState({ open: true, action: 'void', invoice });
@@ -129,25 +111,6 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 		setViewingInvoice(invoice);
 		setViewDialogOpen(true);
 	}, []);
-
-	// 收款表單提交
-	const onPaymentSubmit = useCallback(
-		(data: MarkInvoicePaidRequest) => {
-			if (selectedInvoice) {
-				markPaidMutation.mutate(
-					{ id: selectedInvoice.id, data },
-					{
-						onSuccess: () => {
-							setPaymentDialogOpen(false);
-							resetPayment();
-							setSelectedInvoice(null);
-						},
-					},
-				);
-			}
-		},
-		[selectedInvoice, markPaidMutation, resetPayment],
-	);
 
 	// 確認對話框：確認執行
 	const confirmDialogConfirm = useCallback(() => {
@@ -613,69 +576,14 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 			</TableContainer>
 
 			{/* 收款對話框 */}
-			<Dialog open={paymentDialogOpen} onClose={() => setPaymentDialogOpen(false)} maxWidth="sm" fullWidth>
-				<DialogTitle>標記發票收款</DialogTitle>
-				<form onSubmit={handlePaymentSubmit(onPaymentSubmit)}>
-					<DialogContent>
-						<Stack spacing={3} sx={{ mt: 1 }}>
-							{selectedInvoice && (
-								<Box>
-									<Typography variant="body2" color="text.secondary">
-										發票號碼: {selectedInvoice.invoiceNumber}
-									</Typography>
-									<Typography variant="body2" color="text.secondary">
-										金額: ${selectedInvoice.total.toLocaleString()}
-									</Typography>
-								</Box>
-							)}
-
-							<Controller
-								name="paymentMethod"
-								control={paymentControl}
-								rules={{ required: '請選擇付款方式' }}
-								render={({ field }) => (
-									<FormControl fullWidth error={!!paymentErrors.paymentMethod}>
-										<InputLabel>付款方式</InputLabel>
-										<Select {...field} label="付款方式">
-											<MenuItem value="現金">現金</MenuItem>
-											<MenuItem value="轉帳">轉帳</MenuItem>
-											<MenuItem value="支票">支票</MenuItem>
-											<MenuItem value="信用卡">信用卡</MenuItem>
-											<MenuItem value="其他">其他</MenuItem>
-										</Select>
-										{paymentErrors.paymentMethod && (
-											<Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-												{paymentErrors.paymentMethod.message}
-											</Typography>
-										)}
-									</FormControl>
-								)}
-							/>
-
-							<Controller
-								name="paymentNote"
-								control={paymentControl}
-								render={({ field }) => (
-									<TextField
-										{...field}
-										label="收款備註"
-										fullWidth
-										multiline
-										rows={3}
-										placeholder="可填寫收款詳細資訊、參考號碼等..."
-									/>
-								)}
-							/>
-						</Stack>
-					</DialogContent>
-					<DialogActions>
-						<Button onClick={() => setPaymentDialogOpen(false)}>取消</Button>
-						<Button type="submit" variant="contained" disabled={markPaidMutation.isPending}>
-							確認收款
-						</Button>
-					</DialogActions>
-				</form>
-			</Dialog>
+			<MarkInvoicePaidDialog
+				open={paymentDialogOpen}
+				invoice={selectedInvoice}
+				onClose={() => {
+					setPaymentDialogOpen(false);
+					setSelectedInvoice(null);
+				}}
+			/>
 
 			{/* 通用確認對話框（作廢／恢復／刪除） */}
 			<ConfirmDialog

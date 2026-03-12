@@ -1,10 +1,12 @@
 import { axiosInstance } from '../../../utils/axios-instance';
 import {
+	CompanyOutstandingBalanceSummary,
 	CreateInvoiceRequest,
 	Invoice,
 	InvoiceQueryParams,
 	InvoiceStats,
 	MarkInvoicePaidRequest,
+	OutstandingBalance,
 	UpdateInvoiceRequest,
 } from '../types/invoice.type';
 
@@ -73,4 +75,22 @@ export const getInvoiceStats = async (startDate?: string, endDate?: string): Pro
 
 	const response = await axiosInstance.get('/invoice/stats', { params });
 	return response.data;
+};
+
+// 取得欠款記錄
+export const getOutstandingBalances = async (status?: string): Promise<OutstandingBalance[]> => {
+	const params = status ? { status } : undefined;
+	const response = await axiosInstance.get('/outstandingbalance', { params });
+	return response.data;
+};
+
+// 取得按公司分組的欠款摘要
+export const getOutstandingBalancesByCompany = async (): Promise<CompanyOutstandingBalanceSummary[]> => {
+	const response = await axiosInstance.get('/outstandingbalance/by-company');
+	return response.data;
+};
+
+// 標記欠款已補齊
+export const resolveOutstandingBalance = async (id: string): Promise<void> => {
+	await axiosInstance.post(`/outstandingbalance/${id}/resolve`);
 };

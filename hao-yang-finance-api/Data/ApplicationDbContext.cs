@@ -25,6 +25,7 @@ namespace hao_yang_finance_api.Data
         public DbSet<Expense> Expenses { get; set; }
         public DbSet<CollectionRequest> CollectionRequests { get; set; }
         public DbSet<WaybillFeeSplit> WaybillFeeSplits { get; set; }
+        public DbSet<OutstandingBalance> OutstandingBalances { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -159,6 +160,23 @@ namespace hao_yang_finance_api.Data
             modelBuilder.Entity<ExpenseType>(entity =>
             {
                 entity.Property(et => et.DefaultAmount)
+                    .HasPrecision(12, 2);
+            });
+
+            // Configure OutstandingBalance
+            modelBuilder.Entity<OutstandingBalance>(entity =>
+            {
+                entity.HasOne(ob => ob.Invoice)
+                    .WithMany()
+                    .HasForeignKey(ob => ob.InvoiceId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(ob => ob.Company)
+                    .WithMany()
+                    .HasForeignKey(ob => ob.CompanyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(ob => ob.Amount)
                     .HasPrecision(12, 2);
             });
 

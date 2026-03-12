@@ -88,6 +88,12 @@ namespace hao_yang_finance_api.DTOs
         public string PaymentMethod { get; set; } = string.Empty;
 
         public string? PaymentNote { get; set; }
+
+        // 欠款記錄（選填）
+        [Range(0, (double)decimal.MaxValue, ErrorMessage = "欠款金額不可為負數")]
+        public decimal? OutstandingAmount { get; set; }
+
+        public string? OutstandingNote { get; set; }
     }
 
     // 發票託運單關聯 DTO

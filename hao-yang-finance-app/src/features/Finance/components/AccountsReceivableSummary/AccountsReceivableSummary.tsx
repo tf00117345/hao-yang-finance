@@ -14,13 +14,9 @@ import {
 	DialogActions,
 	DialogContent,
 	DialogTitle,
-	FormControl,
 	IconButton,
 	InputAdornment,
-	InputLabel,
-	MenuItem,
 	Paper,
-	Select,
 	Stack,
 	Table,
 	TableBody,
@@ -32,13 +28,13 @@ import {
 	Tooltip,
 	Typography,
 } from '@mui/material';
-import { Controller, useForm } from 'react-hook-form';
 
 import ConfirmDialog from '../../../../component/ConfirmDialog/ConfirmDialog';
-import { useDeleteInvoiceMutation, useMarkInvoicePaidMutation } from '../../api/mutation';
-import { useInvoicesQuery } from '../../api/query';
-import { Invoice, MarkInvoicePaidRequest } from '../../types/invoice.type';
+import { useDeleteInvoiceMutation, useResolveOutstandingBalanceMutation } from '../../api/mutation';
+import { useInvoicesQuery, useOutstandingBalancesByCompanyQuery } from '../../api/query';
+import { Invoice } from '../../types/invoice.type';
 import InvoicedWaybillSubTable from '../InvoiceWaybillSubTable/InvoiceWaybillSubTable';
+import { MarkInvoicePaidDialog } from '../shared/MarkInvoicePaidDialog';
 import { StyledTableCell, StyledTableRow } from '../styles/styles';
 
 interface CompanyGroup {
@@ -55,22 +51,45 @@ interface AccountsReceivableSummaryProps {
 
 export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryProps) {
 	const { data: invoices = [], isPending } = useInvoicesQuery({ status: 'issued' });
-	const markPaidMutation = useMarkInvoicePaidMutation();
+	const { data: outstandingByCompany = [] } = useOutstandingBalancesByCompanyQuery();
 	const deleteMutation = useDeleteInvoiceMutation();
+	const resolveMutation = useResolveOutstandingBalanceMutation();
 
-	// 按公司分組
+	// 建立公司欠款 Map 方便查詢
+	const outstandingMap = useMemo(() => {
+		const map = new Map<string, { total: number; records: typeof outstandingByCompany[0]['records'] }>();
+		for (const item of outstandingByCompany) {
+			map.set(item.companyId, { total: item.totalOutstanding, records: item.records });
+		}
+		return map;
+	}, [outstandingByCompany]);
+
+	const totalOutstandingAmount = useMemo(
+		() => outstandingByCompany.reduce((sum, item) => sum + item.totalOutstanding, 0),
+		[outstandingByCompany],
+	);
+
+	// 按公司分組（包含只有欠款但沒有未收款發票的公司）
 	const companyGroups = useMemo(() => {
-		const map = new Map<string, { companyId: string; invoices: Invoice[] }>();
+		const map = new Map<string, { companyId: string; companyName: string; invoices: Invoice[] }>();
 		for (const inv of invoices) {
-			const existing = map.get(inv.companyName);
+			const existing = map.get(inv.companyId);
 			if (existing) {
 				existing.invoices.push(inv);
 			} else {
-				map.set(inv.companyName, { companyId: inv.companyId, invoices: [inv] });
+				map.set(inv.companyId, { companyId: inv.companyId, companyName: inv.companyName, invoices: [inv] });
 			}
 		}
+
+		// 合併只有欠款但沒有未收款發票的公司
+		for (const ob of outstandingByCompany) {
+			if (!map.has(ob.companyId)) {
+				map.set(ob.companyId, { companyId: ob.companyId, companyName: ob.companyName, invoices: [] });
+			}
+		}
+
 		const groups: CompanyGroup[] = [];
-		for (const [companyName, { companyId, invoices: companyInvoices }] of map) {
+		for (const [, { companyId, companyName, invoices: companyInvoices }] of map) {
 			groups.push({
 				companyName,
 				companyId,
@@ -81,7 +100,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 		}
 		groups.sort((a, b) => a.companyName.localeCompare(b.companyName, 'zh-TW'));
 		return groups;
-	}, [invoices]);
+	}, [invoices, outstandingByCompany]);
 
 	// 搜尋篩選
 	const [searchText, setSearchText] = useState('');
@@ -110,16 +129,6 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 		open: boolean;
 		invoice: Invoice | null;
 	}>({ open: false, invoice: null });
-
-	// 收款表單
-	const {
-		control: paymentControl,
-		handleSubmit: handlePaymentSubmit,
-		reset: resetPayment,
-		formState: { errors: paymentErrors },
-	} = useForm<MarkInvoicePaidRequest>({
-		defaultValues: { paymentMethod: '', paymentNote: '' },
-	});
 
 	const toggleCompany = useCallback((companyName: string) => {
 		setExpandedCompanies((prev) => {
@@ -167,24 +176,6 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 		setDeleteConfirmState({ open: true, invoice });
 	}, []);
 
-	const onPaymentSubmit = useCallback(
-		(data: MarkInvoicePaidRequest) => {
-			if (selectedInvoice) {
-				markPaidMutation.mutate(
-					{ id: selectedInvoice.id, data },
-					{
-						onSuccess: () => {
-							setPaymentDialogOpen(false);
-							resetPayment();
-							setSelectedInvoice(null);
-						},
-					},
-				);
-			}
-		},
-		[selectedInvoice, markPaidMutation, resetPayment],
-	);
-
 	const confirmDelete = useCallback(() => {
 		if (deleteConfirmState.invoice) {
 			deleteMutation.mutate(deleteConfirmState.invoice.id, {
@@ -224,7 +215,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 				}}
 			>
 				<Typography variant="body1" color="text.secondary">
-					目前沒有未收款的發票
+					目前沒有未收款的發票或欠款記錄
 				</Typography>
 			</Box>
 		);
@@ -267,6 +258,11 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 					<Typography variant="body2" color="error">
 						未收款總額：<strong>${grandTotal.toLocaleString()}</strong>
 					</Typography>
+					{totalOutstandingAmount > 0 && (
+						<Typography variant="body2" color="error" fontWeight="bold">
+							歷史欠款：${totalOutstandingAmount.toLocaleString()}
+						</Typography>
+					)}
 				</Stack>
 			</Stack>
 
@@ -306,7 +302,16 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 										</IconButton>
 									</StyledTableCell>
 									<StyledTableCell>
-										<strong>{company.companyName}</strong>
+										<Stack direction="row" spacing={1} alignItems="center">
+											<strong>{company.companyName}</strong>
+											{(outstandingMap.get(company.companyId)?.total ?? 0) > 0 && (
+												<Chip
+													label={`欠款: $${outstandingMap.get(company.companyId)!.total.toLocaleString()}`}
+													color="error"
+													size="small"
+												/>
+											)}
+										</Stack>
 									</StyledTableCell>
 									<StyledTableCell align="center">
 										<Chip
@@ -493,6 +498,56 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 														))}
 													</TableBody>
 												</Table>
+
+												{/* 欠款記錄區塊 */}
+												{(outstandingMap.get(company.companyId)?.records?.length ?? 0) > 0 && (
+													<Box sx={{ mt: 2 }}>
+														<Typography variant="subtitle2" color="error" gutterBottom>
+															歷史欠款記錄
+														</Typography>
+														<Table size="small" sx={{ border: '1px solid #E0E0E0' }}>
+															<TableHead>
+																<TableRow>
+																	<StyledTableCell>來源發票</StyledTableCell>
+																	<StyledTableCell align="right">欠款金額</StyledTableCell>
+																	<StyledTableCell>備註</StyledTableCell>
+																	<StyledTableCell>建立日期</StyledTableCell>
+																	<StyledTableCell align="center" sx={{ width: 120 }}>操作</StyledTableCell>
+																</TableRow>
+															</TableHead>
+															<TableBody>
+																{outstandingMap.get(company.companyId)!.records.map((record) => (
+																	<StyledTableRow key={record.id}>
+																		<TableCell>{record.invoiceNumber}</TableCell>
+																		<TableCell align="right">
+																			<Typography variant="body2" color="error" fontWeight="bold">
+																				${record.amount.toLocaleString()}
+																			</Typography>
+																		</TableCell>
+																		<TableCell>{record.note || '-'}</TableCell>
+																		<TableCell>
+																			{new Date(record.createdAt).toLocaleDateString('zh-TW')}
+																		</TableCell>
+																		<TableCell align="center">
+																			<Button
+																				size="small"
+																				variant="contained"
+																				color="success"
+																				disabled={resolveMutation.isPending}
+																				onClick={(e) => {
+																					e.stopPropagation();
+																					resolveMutation.mutate(record.id);
+																				}}
+																			>
+																				已補齊
+																			</Button>
+																		</TableCell>
+																	</StyledTableRow>
+																))}
+															</TableBody>
+														</Table>
+													</Box>
+												)}
 											</Box>
 										</Collapse>
 									</TableCell>
@@ -504,80 +559,14 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 			</TableContainer>
 
 			{/* 收款對話框 */}
-			<Dialog
+			<MarkInvoicePaidDialog
 				open={paymentDialogOpen}
-				onClose={() => setPaymentDialogOpen(false)}
-				maxWidth="sm"
-				fullWidth
-			>
-				<DialogTitle>標記發票收款</DialogTitle>
-				<form onSubmit={handlePaymentSubmit(onPaymentSubmit)}>
-					<DialogContent>
-						<Stack spacing={3} sx={{ mt: 1 }}>
-							{selectedInvoice && (
-								<Box>
-									<Typography variant="body2" color="text.secondary">
-										發票號碼: {selectedInvoice.invoiceNumber}
-									</Typography>
-									<Typography variant="body2" color="text.secondary">
-										金額: ${selectedInvoice.total.toLocaleString()}
-									</Typography>
-								</Box>
-							)}
-							<Controller
-								name="paymentMethod"
-								control={paymentControl}
-								rules={{ required: '請選擇付款方式' }}
-								render={({ field }) => (
-									<FormControl fullWidth error={!!paymentErrors.paymentMethod}>
-										<InputLabel>付款方式</InputLabel>
-										<Select {...field} label="付款方式">
-											<MenuItem value="現金">現金</MenuItem>
-											<MenuItem value="轉帳">轉帳</MenuItem>
-											<MenuItem value="支票">支票</MenuItem>
-											<MenuItem value="信用卡">信用卡</MenuItem>
-											<MenuItem value="其他">其他</MenuItem>
-										</Select>
-										{paymentErrors.paymentMethod && (
-											<Typography
-												variant="caption"
-												color="error"
-												sx={{ mt: 0.5, ml: 1.5 }}
-											>
-												{paymentErrors.paymentMethod.message}
-											</Typography>
-										)}
-									</FormControl>
-								)}
-							/>
-							<Controller
-								name="paymentNote"
-								control={paymentControl}
-								render={({ field }) => (
-									<TextField
-										{...field}
-										label="收款備註"
-										fullWidth
-										multiline
-										rows={3}
-										placeholder="可填寫收款詳細資訊、參考號碼等..."
-									/>
-								)}
-							/>
-						</Stack>
-					</DialogContent>
-					<DialogActions>
-						<Button onClick={() => setPaymentDialogOpen(false)}>取消</Button>
-						<Button
-							type="submit"
-							variant="contained"
-							disabled={markPaidMutation.isPending}
-						>
-							確認收款
-						</Button>
-					</DialogActions>
-				</form>
-			</Dialog>
+				invoice={selectedInvoice}
+				onClose={() => {
+					setPaymentDialogOpen(false);
+					setSelectedInvoice(null);
+				}}
+			/>
 
 			{/* 刪除確認對話框 */}
 			<ConfirmDialog

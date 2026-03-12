@@ -1,7 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { Invoice, InvoiceQueryParams, InvoiceStats } from '../types/invoice.type';
-import { getInvoice, getInvoices, getInvoiceStats, getLastInvoiceNumber } from './api';
+import {
+	CompanyOutstandingBalanceSummary,
+	Invoice,
+	InvoiceQueryParams,
+	InvoiceStats,
+} from '../types/invoice.type';
+import {
+	getInvoice,
+	getInvoices,
+	getInvoiceStats,
+	getLastInvoiceNumber,
+	getOutstandingBalancesByCompany,
+} from './api';
 
 // 取得發票列表
 export const useInvoicesQuery = (params?: InvoiceQueryParams) => {
@@ -35,5 +46,13 @@ export const useLastInvoiceNumberQuery = () => {
 		staleTime: 0,
 		retryOnMount: true,
 		refetchOnMount: 'always',
+	});
+};
+
+// 取得按公司分組的欠款摘要
+export const useOutstandingBalancesByCompanyQuery = () => {
+	return useQuery<CompanyOutstandingBalanceSummary[]>({
+		queryKey: ['outstanding-balances-by-company'],
+		queryFn: () => getOutstandingBalancesByCompany(),
 	});
 };

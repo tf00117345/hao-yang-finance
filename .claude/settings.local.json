@@ -32,7 +32,8 @@
       "Bash(railway up:*)",
       "Bash(npm run dev)",
       "Bash(yarn prettier:*)",
-      "Bash(yarn lint:fix:*)"
+      "Bash(yarn lint:fix:*)",
+      "Bash(npx tsc --noEmit)"
     ],
     "deny": []
   }

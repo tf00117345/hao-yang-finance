@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ClearAllIcon from '@mui/icons-material/ClearAll';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import PrintIcon from '@mui/icons-material/Print';
 import SearchIcon from '@mui/icons-material/Search';
 import SelectAllIcon from '@mui/icons-material/SelectAll';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import {
+	Autocomplete,
 	Box,
 	Button,
 	Checkbox,
@@ -46,11 +48,24 @@ interface LabelItem {
 function CompanyLabelsPrint({ companyIds }: CompanyLabelsPrintProps) {
 	const { data: companies = [] } = useCompaniesQuery();
 
-	// 候選清單：只顯示外部傳入的公司 ids
+	// 候選清單 ids：初值來自 prop，使用者可自由新增 / 移除
+	const [candidateIds, setCandidateIds] = useState<string[]>(companyIds);
+	useEffect(() => {
+		setCandidateIds(companyIds);
+	}, [companyIds]);
+
 	const candidates: Company[] = useMemo(() => {
-		const set = new Set(companyIds);
+		const set = new Set(candidateIds);
 		return companies.filter((c) => set.has(c.id));
-	}, [companies, companyIds]);
+	}, [companies, candidateIds]);
+
+	// 可加入的公司：尚未在候選清單內、且為 active
+	const addableCompanies = useMemo(() => {
+		const set = new Set(candidateIds);
+		return companies.filter((c) => !set.has(c.id) && c.isActive);
+	}, [companies, candidateIds]);
+
+	const [companyToAdd, setCompanyToAdd] = useState<Company | null>(null);
 
 	// 勾選狀態：預設為全部勾選（與傳入的 companyIds 同步）
 	const [selectedIds, setSelectedIds] = useState<string[]>(companyIds);
@@ -104,6 +119,24 @@ function CompanyLabelsPrint({ companyIds }: CompanyLabelsPrintProps) {
 			return candidates.filter((c) => !prevSet.has(c.id)).map((c) => c.id);
 		});
 	}, [candidates]);
+
+	const handleAddCompany = useCallback((_: unknown, company: Company | null) => {
+		if (!company) return;
+		setCandidateIds((prev) => (prev.includes(company.id) ? prev : [...prev, company.id]));
+		setSelectedIds((prev) => (prev.includes(company.id) ? prev : [...prev, company.id]));
+		setQuantities((prev) => ({ ...prev, [company.id]: prev[company.id] ?? 1 }));
+		setCompanyToAdd(null);
+	}, []);
+
+	const handleRemoveCandidate = useCallback((id: string) => {
+		setCandidateIds((prev) => prev.filter((x) => x !== id));
+		setSelectedIds((prev) => prev.filter((x) => x !== id));
+		setQuantities((prev) => {
+			const next = { ...prev };
+			delete next[id];
+			return next;
+		});
+	}, []);
 
 	// 搜尋與只看已選
 	const [query, setQuery] = useState('');
@@ -230,12 +263,55 @@ function CompanyLabelsPrint({ companyIds }: CompanyLabelsPrintProps) {
 						overflow: 'hidden',
 					}}
 				>
+					<Box sx={{ pb: 1 }}>
+						<Autocomplete
+							size="small"
+							fullWidth
+							options={addableCompanies}
+							value={companyToAdd}
+							onChange={handleAddCompany}
+							getOptionLabel={(option) =>
+								option.taxId ? `${option.name} (${option.taxId})` : option.name
+							}
+							getOptionKey={(option) => option.id}
+							isOptionEqualToValue={(option, val) => option.id === val.id}
+							filterOptions={(options, { inputValue }) => {
+								const searchText = inputValue.toLowerCase();
+								return options.filter(
+									(option) =>
+										option.name?.toLowerCase().includes(searchText) ||
+										option.taxId?.includes(searchText),
+								);
+							}}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label="新增公司到貼紙清單"
+									placeholder="輸入公司名稱或統編搜尋..."
+								/>
+							)}
+						/>
+					</Box>
+					<Divider />
 					<List dense sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
 						{visibleList.map((c) => {
 							const checked = selectedIds.includes(c.id);
 							return (
 								<Box key={c.id}>
-									<ListItem sx={{ alignItems: 'flex-start' }}>
+									<ListItem
+										sx={{ alignItems: 'flex-start', pr: 6 }}
+										secondaryAction={
+											<Tooltip title="從清單移除">
+												<IconButton
+													edge="end"
+													size="small"
+													onClick={() => handleRemoveCandidate(c.id)}
+												>
+													<DeleteOutlineIcon fontSize="small" />
+												</IconButton>
+											</Tooltip>
+										}
+									>
 										<ListItemIcon sx={{ minWidth: 32 }}>
 											<Checkbox
 												size="small"

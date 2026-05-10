@@ -1,17 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import {
 	Autocomplete,
 	Box,
 	Button,
 	Checkbox,
 	Chip,
+	CircularProgress,
 	Dialog,
 	DialogActions,
 	DialogContent,
 	DialogTitle,
 	Divider,
 	FormControlLabel,
+	IconButton,
 	Stack,
 	Switch,
 	Table,
@@ -34,7 +40,7 @@ import {
 	useUpdateExtraExpenseMutation,
 	useDeleteExtraExpenseMutation,
 } from '../../../Waybill/api/mutation';
-import { useSuggestedWaybillsQuery } from '../../../Waybill/api/query';
+import { useSuggestedWaybillsQuery, useWaybillsByIdsQuery } from '../../../Waybill/api/query';
 import { Waybill } from '../../../Waybill/types/waybill.types';
 import { useCreateInvoiceMutation, useUpdateInvoiceMutation } from '../../api/mutation';
 import { useLastInvoiceNumberQuery } from '../../api/query';
@@ -87,7 +93,11 @@ function ExpenseRow({
 			setFee(expense?.fee?.toString() ?? '');
 			setNotes(expense?.notes ?? '');
 		}
-	}, [mode, expense?.id, expense?.item, expense?.fee, expense?.notes]);
+		// Intentionally omit expense?.item/fee/notes from deps:
+		// we only want to reset when entering edit on a different row,
+		// not when the underlying record is refetched while the user is typing.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [mode, expense?.id]);
 
 	if (mode === 'view') {
 		return (
@@ -97,12 +107,16 @@ function ExpenseRow({
 				<Typography sx={{ minWidth: 100, textAlign: 'right' }}>${expense?.fee?.toLocaleString()}</Typography>
 				{!disabled && (
 					<>
-						<Button size="small" onClick={onEditStart}>
-							✏️
-						</Button>
-						<Button size="small" color="error" onClick={onDelete}>
-							🗑️
-						</Button>
+						<Tooltip title="編輯">
+							<IconButton size="small" onClick={onEditStart}>
+								<EditIcon fontSize="small" />
+							</IconButton>
+						</Tooltip>
+						<Tooltip title="刪除">
+							<IconButton size="small" color="error" onClick={onDelete}>
+								<DeleteIcon fontSize="small" />
+							</IconButton>
+						</Tooltip>
 					</>
 				)}
 			</Stack>
@@ -136,17 +150,23 @@ function ExpenseRow({
 				onChange={(e) => setNotes(e.target.value)}
 				sx={{ width: 160 }}
 			/>
-			<Button
-				size="small"
-				variant="contained"
-				disabled={!isValid || saving}
-				onClick={() => onSave?.({ item: item.trim(), fee: feeNumber, notes: notes || undefined })}
-			>
-				{saving ? '...' : '✓'}
-			</Button>
-			<Button size="small" onClick={onCancel} disabled={saving}>
-				✗
-			</Button>
+			<Tooltip title="儲存">
+				<span>
+					<IconButton
+						size="small"
+						color="primary"
+						disabled={!isValid || saving}
+						onClick={() => onSave?.({ item: item.trim(), fee: feeNumber, notes: notes || undefined })}
+					>
+						{saving ? <CircularProgress size={16} /> : <CheckIcon fontSize="small" />}
+					</IconButton>
+				</span>
+			</Tooltip>
+			<Tooltip title="取消">
+				<IconButton size="small" onClick={onCancel} disabled={saving}>
+					<CloseIcon fontSize="small" />
+				</IconButton>
+			</Tooltip>
 		</Stack>
 	);
 }
@@ -201,6 +221,16 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 		watchedValues.companyId,
 		open && !editingInvoice,
 	);
+
+	// Subscribe to fresh waybill data so extra-expense CRUD shows up immediately.
+	// Without this, create mode (which gets waybillList from a parent React-state snapshot)
+	// would show stale extra expenses after add/edit/delete.
+	const waybillIdsForQuery = useMemo(
+		() => (waybillList || []).map((w) => w.id).filter(Boolean) as string[],
+		[waybillList],
+	);
+	const { data: freshWaybills } = useWaybillsByIdsQuery(waybillIdsForQuery);
+	const effectiveWaybillList = freshWaybills && freshWaybills.length > 0 ? freshWaybills : waybillList;
 
 	// 初始化表單資料
 	useEffect(() => {
@@ -272,12 +302,12 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 
 	// 使用當前選中的 waybill IDs（穩定的字符串標識）
 	const currentWaybillIdsString = useMemo(() => {
-		return waybillList
+		return effectiveWaybillList
 			.map((w) => w.id)
 			.filter(Boolean)
 			.sort()
 			.join(',');
-	}, [waybillList]);
+	}, [effectiveWaybillList]);
 
 	// 使用 useMemo 計算過濾後的建議託運單（排除已選中的託運單）
 	const filteredSuggestedWaybills = useMemo(() => {
@@ -366,7 +396,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 	// 計算金額（單一 useMemo 計算發票區、額外費用區、總計）
 	const amounts = useMemo(() => {
 		// === 發票金額計算區 ===
-		const currentWaybillAmount = waybillList.reduce((sum, w) => sum + (w.fee || 0), 0);
+		const currentWaybillAmount = effectiveWaybillList.reduce((sum, w) => sum + (w.fee || 0), 0);
 		const suggestedWaybillAmount = filteredSuggestedWaybills
 			.filter((w) => selectedSuggestedIds.includes(w.id || ''))
 			.reduce((sum, w) => sum + (w.fee || 0), 0);
@@ -375,7 +405,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 		const waybillTotal = waybillAmount + waybillTax;
 
 		// === 額外費用計算區（只計入勾選的）===
-		const extraExpenseAmount = waybillList.reduce((sum, w) => {
+		const extraExpenseAmount = effectiveWaybillList.reduce((sum, w) => {
 			if (!w.extraExpenses) return sum;
 			return (
 				sum +
@@ -400,7 +430,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 			grandTotal,
 		};
 	}, [
-		waybillList,
+		effectiveWaybillList,
 		filteredSuggestedWaybills,
 		selectedSuggestedIds,
 		selectedExtraExpenses,
@@ -612,7 +642,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 								額外費用計算
 							</Typography>
 							<Stack spacing={1}>
-								{waybillList.flatMap((waybill) =>
+								{effectiveWaybillList.flatMap((waybill) =>
 									(waybill.extraExpenses || [])
 										.filter((expense) => selectedExtraExpenses.includes(expense.id || ''))
 										.map((expense) => (
@@ -695,7 +725,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 						{/* 託運單列表 */}
 						<Box sx={{ border: '1px solid #e0e0e0', p: 2, borderRadius: 1 }}>
 							<Typography variant="subtitle2" gutterBottom>
-								選中的託運單 ({waybillList.length})
+								選中的託運單 ({effectiveWaybillList.length})
 							</Typography>
 							<TableContainer sx={{ maxHeight: 300 }}>
 								<Table size="small">
@@ -709,7 +739,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 										</TableRow>
 									</TableHead>
 									<TableBody>
-										{waybillList.map((waybill) => {
+										{effectiveWaybillList.map((waybill) => {
 											const locations = (waybill.loadingLocations || []).filter(
 												(loc) => loc.from !== '空白' && loc.to !== '空白',
 											);
@@ -910,7 +940,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 								額外費用
 							</Typography>
 							<Stack spacing={2}>
-								{waybillList.map((waybill) => {
+								{effectiveWaybillList.map((waybill) => {
 									const isInvoiced = waybill.status === 'INVOICED';
 									const expenses = waybill.extraExpenses || [];
 									return (
@@ -1023,7 +1053,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 				<DialogActions>
 					<Box sx={{ flex: 1, display: 'flex', alignItems: 'center', ml: 2 }}>
 						<Typography variant="body2" color="text.secondary">
-							共 {waybillList.length + selectedSuggestedIds.length} 張託運單
+							共 {effectiveWaybillList.length + selectedSuggestedIds.length} 張託運單
 						</Typography>
 					</Box>
 					<Button onClick={handleClose}>取消</Button>

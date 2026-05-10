@@ -213,6 +213,7 @@ export const saveWaybillFeeSplits = async (params: {
 	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
 };
 
+// Cache invalidation is intentionally absent here — handled by the mutation hooks in mutation.ts.
 export const createExtraExpense = async (params: {
 	waybillId: string;
 	input: CreateExtraExpenseInput;

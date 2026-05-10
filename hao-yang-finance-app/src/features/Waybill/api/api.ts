@@ -3,7 +3,14 @@ import { format } from 'date-fns';
 import { QueryClientInstance } from '../../../cache/queryClient';
 import { DateRange } from '../../../types/date-range';
 import { axiosInstance } from '../../../utils/axios-instance';
-import { Waybill, WaybillFormData, CreateWaybillFeeSplit } from '../types/waybill.types';
+import {
+	Waybill,
+	WaybillFormData,
+	CreateWaybillFeeSplit,
+	ExtraExpense,
+	CreateExtraExpenseInput,
+	UpdateExtraExpenseInput,
+} from '../types/waybill.types';
 
 export const getWaybills = async (
 	dateRange: DateRange,
@@ -204,4 +211,27 @@ export const saveWaybillFeeSplits = async (params: {
 		splits: params.splits,
 	});
 	QueryClientInstance.invalidateQueries({ queryKey: ['waybills'] });
+};
+
+export const createExtraExpense = async (params: {
+	waybillId: string;
+	input: CreateExtraExpenseInput;
+}): Promise<ExtraExpense> => {
+	const response = await axiosInstance.post(
+		`/waybill/${params.waybillId}/extra-expenses`,
+		params.input,
+	);
+	return response.data;
+};
+
+export const updateExtraExpense = async (params: {
+	id: string;
+	input: UpdateExtraExpenseInput;
+}): Promise<ExtraExpense> => {
+	const response = await axiosInstance.put(`/extraexpense/${params.id}`, params.input);
+	return response.data;
+};
+
+export const deleteExtraExpense = async (id: string): Promise<void> => {
+	await axiosInstance.delete(`/extraexpense/${id}`);
 };

@@ -67,3 +67,15 @@ export interface CreateWaybillFeeSplit {
 	amount: number;
 	notes?: string;
 }
+
+export interface CreateExtraExpenseInput {
+	item: string;
+	fee: number;
+	notes?: string;
+}
+
+export interface UpdateExtraExpenseInput {
+	item: string;
+	fee: number;
+	notes?: string;
+}

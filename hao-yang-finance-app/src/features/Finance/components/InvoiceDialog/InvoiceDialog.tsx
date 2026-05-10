@@ -29,6 +29,11 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { useCompaniesQuery } from '../../../Settings/api/query';
 import { Company } from '../../../Settings/types/company';
+import {
+	useCreateExtraExpenseMutation,
+	useUpdateExtraExpenseMutation,
+	useDeleteExtraExpenseMutation,
+} from '../../../Waybill/api/mutation';
 import { useSuggestedWaybillsQuery } from '../../../Waybill/api/query';
 import { Waybill } from '../../../Waybill/types/waybill.types';
 import { useCreateInvoiceMutation, useUpdateInvoiceMutation } from '../../api/mutation';
@@ -46,9 +51,112 @@ interface InvoiceDialogProps {
 	onSuccess?: () => void;
 }
 
+type ExpenseRowProps = {
+	mode: 'view' | 'edit';
+	expense?: { id?: string; item: string; fee: number; notes?: string };
+	checked?: boolean;
+	disabled?: boolean;
+	onToggle?: () => void;
+	onEditStart?: () => void;
+	onDelete?: () => void;
+	onSave?: (input: { item: string; fee: number; notes?: string }) => void;
+	onCancel?: () => void;
+	saving?: boolean;
+};
+
+function ExpenseRow({
+	mode,
+	expense,
+	checked,
+	disabled,
+	onToggle,
+	onEditStart,
+	onDelete,
+	onSave,
+	onCancel,
+	saving,
+}: ExpenseRowProps) {
+	const [item, setItem] = useState(expense?.item ?? '');
+	const [fee, setFee] = useState<string>(expense?.fee?.toString() ?? '');
+	const [notes, setNotes] = useState(expense?.notes ?? '');
+
+	// Reset local state when switching into edit on a different expense
+	useEffect(() => {
+		if (mode === 'edit') {
+			setItem(expense?.item ?? '');
+			setFee(expense?.fee?.toString() ?? '');
+			setNotes(expense?.notes ?? '');
+		}
+	}, [mode, expense?.id, expense?.item, expense?.fee, expense?.notes]);
+
+	if (mode === 'view') {
+		return (
+			<Stack direction="row" alignItems="center" spacing={1}>
+				<Checkbox checked={!!checked} onChange={onToggle} disabled={disabled} />
+				<Typography sx={{ flex: 1 }}>{expense?.item}</Typography>
+				<Typography sx={{ minWidth: 100, textAlign: 'right' }}>${expense?.fee?.toLocaleString()}</Typography>
+				{!disabled && (
+					<>
+						<Button size="small" onClick={onEditStart}>
+							✏️
+						</Button>
+						<Button size="small" color="error" onClick={onDelete}>
+							🗑️
+						</Button>
+					</>
+				)}
+			</Stack>
+		);
+	}
+
+	const feeNumber = Number(fee);
+	const isValid = item.trim().length > 0 && fee.trim().length > 0 && !Number.isNaN(feeNumber);
+
+	return (
+		<Stack direction="row" alignItems="center" spacing={1}>
+			<TextField
+				size="small"
+				placeholder="品項"
+				value={item}
+				onChange={(e) => setItem(e.target.value)}
+				sx={{ flex: 1 }}
+			/>
+			<TextField
+				size="small"
+				type="number"
+				placeholder="金額"
+				value={fee}
+				onChange={(e) => setFee(e.target.value)}
+				sx={{ width: 120 }}
+			/>
+			<TextField
+				size="small"
+				placeholder="備註"
+				value={notes}
+				onChange={(e) => setNotes(e.target.value)}
+				sx={{ width: 160 }}
+			/>
+			<Button
+				size="small"
+				variant="contained"
+				disabled={!isValid || saving}
+				onClick={() => onSave?.({ item: item.trim(), fee: feeNumber, notes: notes || undefined })}
+			>
+				{saving ? '...' : '✓'}
+			</Button>
+			<Button size="small" onClick={onCancel} disabled={saving}>
+				✗
+			</Button>
+		</Stack>
+	);
+}
+
 export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSuccess }: InvoiceDialogProps) {
 	const createMutation = useCreateInvoiceMutation();
 	const updateMutation = useUpdateInvoiceMutation();
+	const createExtraExpenseMutation = useCreateExtraExpenseMutation();
+	const updateExtraExpenseMutation = useUpdateExtraExpenseMutation();
+	const deleteExtraExpenseMutation = useDeleteExtraExpenseMutation();
 	const { data: companies = [] } = useCompaniesQuery();
 	const { data: lastInvoiceNumber = '', refetch: refetchLastInvoiceNumber } = useLastInvoiceNumberQuery();
 
@@ -61,6 +169,8 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 
 	const [selectedExtraExpenses, setSelectedExtraExpenses] = useState<string[]>([]);
 	const [selectedSuggestedIds, setSelectedSuggestedIds] = useState<string[]>([]);
+	const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+	const [addingForWaybillId, setAddingForWaybillId] = useState<string | null>(null);
 
 	// 用於追踪是否已經初始化建議託運單的選擇
 	const initializedSuggestedRef = useRef<string>('');
@@ -794,46 +904,120 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 							</Box>
 						)}
 
-						{/* 額外費用選擇 */}
-						{waybillList.some((w) => w.extraExpenses && w.extraExpenses.length > 0) && (
-							<Box sx={{ border: '1px solid #e0e0e0', p: 2, borderRadius: 1 }}>
-								<Typography variant="subtitle2" gutterBottom>
-									額外費用選擇
-								</Typography>
-								<Stack spacing={2}>
-									{waybillList.map((waybill) =>
-										waybill.extraExpenses && waybill.extraExpenses.length > 0 ? (
-											<Box key={waybill.id}>
-												<Typography variant="body2" fontWeight="medium" gutterBottom>
-													{waybill.companyName} {waybill.item} 的額外費用:
-												</Typography>
-												<Stack direction="row" flexWrap="wrap" gap={1}>
-													{waybill.extraExpenses.map((expense) => (
-														<FormControlLabel
+						{/* 額外費用 (新增/修改/刪除) */}
+						<Box sx={{ border: '1px solid #e0e0e0', p: 2, borderRadius: 1 }}>
+							<Typography variant="subtitle2" gutterBottom>
+								額外費用
+							</Typography>
+							<Stack spacing={2}>
+								{waybillList.map((waybill) => {
+									const isInvoiced = waybill.status === 'INVOICED';
+									const expenses = waybill.extraExpenses || [];
+									return (
+										<Box key={waybill.id}>
+											<Typography variant="body2" fontWeight="medium" gutterBottom>
+												{waybill.companyName} {waybill.item} 的額外費用
+												{isInvoiced && (
+													<Typography
+														component="span"
+														variant="caption"
+														color="text.secondary"
+														sx={{ ml: 1 }}
+													>
+														(已開立發票，無法修改)
+													</Typography>
+												)}
+												:
+											</Typography>
+											<Stack spacing={0.5}>
+												{expenses.map((expense) => {
+													const isEditing = editingExpenseId === expense.id;
+													return (
+														<ExpenseRow
 															key={expense.id}
-															control={
-																<Checkbox
-																	checked={selectedExtraExpenses.includes(
-																		expense.id || '',
-																	)}
-																	onChange={(e) =>
-																		handleExtraExpenseToggle(
-																			expense.id || '',
-																			e.target.checked,
-																		)
-																	}
-																/>
+															mode={isEditing ? 'edit' : 'view'}
+															expense={expense}
+															checked={selectedExtraExpenses.includes(expense.id || '')}
+															disabled={isInvoiced}
+															onToggle={() =>
+																handleExtraExpenseToggle(
+																	expense.id || '',
+																	!selectedExtraExpenses.includes(expense.id || ''),
+																)
 															}
-															label={`${expense.item} - $${expense.fee.toLocaleString()}`}
+															onEditStart={() => {
+																setAddingForWaybillId(null);
+																setEditingExpenseId(expense.id || null);
+															}}
+															onDelete={() => {
+																if (!expense.id) return;
+																deleteExtraExpenseMutation.mutate(expense.id, {
+																	onSuccess: () => {
+																		setSelectedExtraExpenses((prev) =>
+																			prev.filter((id) => id !== expense.id),
+																		);
+																	},
+																});
+															}}
+															onSave={(input) => {
+																if (!expense.id) return;
+																updateExtraExpenseMutation.mutate(
+																	{ id: expense.id, input },
+																	{
+																		onSuccess: () => setEditingExpenseId(null),
+																	},
+																);
+															}}
+															onCancel={() => setEditingExpenseId(null)}
+															saving={
+																updateExtraExpenseMutation.isPending ||
+																deleteExtraExpenseMutation.isPending
+															}
 														/>
-													))}
-												</Stack>
-											</Box>
-										) : null,
-									)}
-								</Stack>
-							</Box>
-						)}
+													);
+												})}
+												{addingForWaybillId === waybill.id ? (
+													<ExpenseRow
+														mode="edit"
+														onSave={(input) => {
+															createExtraExpenseMutation.mutate(
+																{ waybillId: waybill.id, input },
+																{
+																	onSuccess: (created) => {
+																		if (created.id) {
+																			setSelectedExtraExpenses((prev) => [
+																				...prev,
+																				created.id!,
+																			]);
+																		}
+																		setAddingForWaybillId(null);
+																	},
+																},
+															);
+														}}
+														onCancel={() => setAddingForWaybillId(null)}
+														saving={createExtraExpenseMutation.isPending}
+													/>
+												) : (
+													!isInvoiced && (
+														<Button
+															size="small"
+															onClick={() => {
+																setEditingExpenseId(null);
+																setAddingForWaybillId(waybill.id);
+															}}
+															sx={{ alignSelf: 'flex-start' }}
+														>
+															+ 新增額外費用
+														</Button>
+													)
+												)}
+											</Stack>
+										</Box>
+									);
+								})}
+							</Stack>
+						</Box>
 					</Stack>
 				</DialogContent>
 				<DialogActions>

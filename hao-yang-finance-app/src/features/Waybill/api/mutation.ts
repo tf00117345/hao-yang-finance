@@ -233,7 +233,10 @@ export const useSaveWaybillFeeSplitsMutation = () => {
 	});
 };
 
-// 新增額外費用
+// These three hooks invalidate both 'waybills' and 'waybills-by-ids'.
+// The second key is needed because InvoiceDialog loads its waybill data via
+// useWaybillsByIdsQuery (key: 'waybills-by-ids'), which is independent of
+// the main waybills list query used everywhere else.
 export const useCreateExtraExpenseMutation = () => {
 	const { notifySuccess, notifyError } = useNotifications();
 

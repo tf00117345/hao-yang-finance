@@ -16,6 +16,9 @@ import {
 	restoreWaybillsBatch,
 	markWaybillsAsUnpaidWithTaxBatch,
 	saveWaybillFeeSplits,
+	createExtraExpense,
+	updateExtraExpense,
+	deleteExtraExpense,
 } from './api';
 
 // 更新託運單
@@ -223,6 +226,57 @@ export const useSaveWaybillFeeSplitsMutation = () => {
 		onSuccess: () => {
 			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
 			notifySuccess('運費分攤已儲存');
+		},
+		onError: (error) => {
+			notifyError(error);
+		},
+	});
+};
+
+// 新增額外費用
+export const useCreateExtraExpenseMutation = () => {
+	const { notifySuccess, notifyError } = useNotifications();
+
+	return useMutation({
+		mutationFn: createExtraExpense,
+		onSuccess: () => {
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills-by-ids'], exact: false });
+			notifySuccess('已新增額外費用');
+		},
+		onError: (error) => {
+			notifyError(error);
+		},
+	});
+};
+
+// 修改額外費用
+export const useUpdateExtraExpenseMutation = () => {
+	const { notifySuccess, notifyError } = useNotifications();
+
+	return useMutation({
+		mutationFn: updateExtraExpense,
+		onSuccess: () => {
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills-by-ids'], exact: false });
+			notifySuccess('已更新額外費用');
+		},
+		onError: (error) => {
+			notifyError(error);
+		},
+	});
+};
+
+// 刪除額外費用
+export const useDeleteExtraExpenseMutation = () => {
+	const { notifySuccess, notifyError } = useNotifications();
+
+	return useMutation({
+		mutationFn: deleteExtraExpense,
+		onSuccess: () => {
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills'], exact: false });
+			QueryClientInstance.invalidateQueries({ queryKey: ['waybills-by-ids'], exact: false });
+			notifySuccess('已刪除額外費用');
 		},
 		onError: (error) => {
 			notifyError(error);

@@ -253,43 +253,50 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 		return companies.find((company) => company.id === watchedValues.companyId);
 	};
 
-	// 計算金額
-	const calculateAmounts = () => {
-		// 當前選中的託運單金額
-		const currentWaybillAmount = waybillList.reduce((sum, waybill) => sum + (waybill.fee || 0), 0);
-
-		// 選中的建議託運單金額
+	// 計算金額（單一 useMemo 計算發票區、額外費用區、總計）
+	const amounts = useMemo(() => {
+		// === 發票金額計算區 ===
+		const currentWaybillAmount = waybillList.reduce((sum, w) => sum + (w.fee || 0), 0);
 		const suggestedWaybillAmount = filteredSuggestedWaybills
 			.filter((w) => selectedSuggestedIds.includes(w.id || ''))
-			.reduce((sum, waybill) => sum + (waybill.fee || 0), 0);
-
-		// 總託運單金額
+			.reduce((sum, w) => sum + (w.fee || 0), 0);
 		const waybillAmount = currentWaybillAmount + suggestedWaybillAmount;
+		const waybillTax = Math.round(waybillAmount * watchedValues.taxRate);
+		const waybillTotal = waybillAmount + waybillTax;
 
-		// if (watchedValues.extraExpensesIncludeTax) {
-		// 	// 額外費用包含稅率：稅額 = (託運單金額 + 額外費用) × 稅率
-		// 	subtotal = waybillAmount;
-		// 	tax = subtotal * watchedValues.taxRate;
-		// 	total = subtotal + tax;
-		// } else {
-		// 額外費用不包含稅率：稅額 = 託運單金額 × 稅率
-		const subtotal = waybillAmount;
-		const tax = waybillAmount * watchedValues.taxRate;
-		const total = subtotal + tax;
-		// }
-
-		return { waybillAmount, subtotal, tax, total };
-	};
-
-	const calculateExtraExpenseAmount = () => {
-		return waybillList.reduce((sum, waybill) => {
-			if (!waybill.extraExpenses) return sum;
-			return sum + waybill.extraExpenses.reduce((expenseSum, expense) => expenseSum + expense.fee, 0);
+		// === 額外費用計算區（只計入勾選的）===
+		const extraExpenseAmount = waybillList.reduce((sum, w) => {
+			if (!w.extraExpenses) return sum;
+			return (
+				sum +
+				w.extraExpenses.filter((e) => selectedExtraExpenses.includes(e.id || '')).reduce((s, e) => s + e.fee, 0)
+			);
 		}, 0);
-	};
+		const extraExpenseTax = watchedValues.extraExpensesIncludeTax
+			? Math.round(extraExpenseAmount * watchedValues.taxRate)
+			: 0;
+		const extraExpenseTotal = extraExpenseAmount + extraExpenseTax;
 
-	const { waybillAmount, subtotal, tax, total } = calculateAmounts();
-	const extraExpenseAmount = calculateExtraExpenseAmount();
+		// === 總金額總計 ===
+		const grandTotal = waybillTotal + extraExpenseTotal;
+
+		return {
+			waybillAmount,
+			waybillTax,
+			waybillTotal,
+			extraExpenseAmount,
+			extraExpenseTax,
+			extraExpenseTotal,
+			grandTotal,
+		};
+	}, [
+		waybillList,
+		filteredSuggestedWaybills,
+		selectedSuggestedIds,
+		selectedExtraExpenses,
+		watchedValues.taxRate,
+		watchedValues.extraExpensesIncludeTax,
+	]);
 
 	// 處理額外費用選擇變更
 	const handleExtraExpenseToggle = (expenseId: string, checked: boolean) => {
@@ -471,19 +478,19 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 							<Stack spacing={1}>
 								<Stack direction="row" justifyContent="space-between">
 									<Typography variant="body2">託運單金額:</Typography>
-									<Typography variant="body2">${waybillAmount.toLocaleString()}</Typography>
+									<Typography variant="body2">${amounts.waybillAmount.toLocaleString()}</Typography>
 								</Stack>
 								<Stack direction="row" justifyContent="space-between">
 									<Typography variant="body2">
 										稅額 ({(watchedValues.taxRate * 100).toFixed(1)}%):
 									</Typography>
-									<Typography variant="body2">${tax.toLocaleString()}</Typography>
+									<Typography variant="body2">${amounts.waybillTax.toLocaleString()}</Typography>
 								</Stack>
 								<Divider />
 								<Stack direction="row" justifyContent="space-between">
 									<Typography variant="h6">總計:</Typography>
 									<Typography variant="h6" color="primary">
-										${total.toLocaleString()}
+										${amounts.waybillTotal.toLocaleString()}
 									</Typography>
 								</Stack>
 							</Stack>
@@ -518,7 +525,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 								<Stack direction="row" justifyContent="space-between">
 									<Typography variant="h6">總計:</Typography>
 									<Typography variant="h6" color="primary">
-										${extraExpenseAmount.toLocaleString()}
+										${amounts.extraExpenseTotal.toLocaleString()}
 									</Typography>
 								</Stack>
 							</Stack>

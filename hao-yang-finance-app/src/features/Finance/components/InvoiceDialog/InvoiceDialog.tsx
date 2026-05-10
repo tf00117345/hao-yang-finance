@@ -555,7 +555,7 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 								borderColor: 'primary.main',
 								p: 2,
 								borderRadius: 1,
-								bgcolor: 'primary.50',
+								bgcolor: '#e3f2fd',
 							}}
 						>
 							<Typography variant="subtitle2" gutterBottom>

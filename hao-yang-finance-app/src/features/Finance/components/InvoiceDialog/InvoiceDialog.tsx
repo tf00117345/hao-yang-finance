@@ -496,30 +496,47 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 							</Stack>
 						</Box>
 
-						{/* 額外費用顯示 */}
+						{/* 額外費用計算 */}
 						<Box sx={{ border: '1px solid #e0e0e0', p: 2, borderRadius: 1, bgcolor: '#f5f5f5' }}>
 							<Typography variant="subtitle2" gutterBottom>
 								額外費用計算
 							</Typography>
 							<Stack spacing={1}>
-								{waybillList.map((waybill) =>
-									waybill.extraExpenses && waybill.extraExpenses.length > 0 ? (
-										<Stack spacing={0.5} key={waybill.id}>
-											{waybill.extraExpenses.map((expense) => (
-												<>
-													<Stack direction="row" justifyContent="space-between">
-														<Typography variant="body2">{expense.item}:</Typography>
-														<Typography
-															variant="body2"
-															color={expense.fee > 0 ? 'success' : 'error'}
-														>
-															${expense.fee.toLocaleString()}
-														</Typography>
-													</Stack>
-												</>
-											))}
-										</Stack>
-									) : null,
+								{waybillList.flatMap((waybill) =>
+									(waybill.extraExpenses || [])
+										.filter((expense) => selectedExtraExpenses.includes(expense.id || ''))
+										.map((expense) => (
+											<Stack
+												direction="row"
+												justifyContent="space-between"
+												key={`calc-${expense.id}`}
+											>
+												<Typography variant="body2">{expense.item}:</Typography>
+												<Typography
+													variant="body2"
+													color={expense.fee >= 0 ? 'success.main' : 'error.main'}
+												>
+													${expense.fee.toLocaleString()}
+												</Typography>
+											</Stack>
+										)),
+								)}
+								<Divider />
+								<Stack direction="row" justifyContent="space-between">
+									<Typography variant="body2">小計:</Typography>
+									<Typography variant="body2">
+										${amounts.extraExpenseAmount.toLocaleString()}
+									</Typography>
+								</Stack>
+								{watchedValues.extraExpensesIncludeTax && (
+									<Stack direction="row" justifyContent="space-between">
+										<Typography variant="body2">
+											稅額 ({(watchedValues.taxRate * 100).toFixed(1)}%):
+										</Typography>
+										<Typography variant="body2">
+											${amounts.extraExpenseTax.toLocaleString()}
+										</Typography>
+									</Stack>
 								)}
 								<Divider />
 								<Stack direction="row" justifyContent="space-between">

@@ -193,6 +193,7 @@ namespace hao_yang_finance_api.Controllers
                 ExtraExpenses = waybill
                     .ExtraExpenses.Select(e => new ExtraExpenseDto
                     {
+                        Id = e.Id,
                         Item = e.Item ?? e.Description,
                         Fee = e.Fee ?? e.Amount,
                         Notes = e.Notes,
@@ -323,6 +324,7 @@ namespace hao_yang_finance_api.Controllers
                 ExtraExpenses = createdWaybill
                     .ExtraExpenses.Select(e => new ExtraExpenseDto
                     {
+                        Id = e.Id,
                         Item = e.Item ?? e.Description,
                         Fee = e.Fee ?? e.Amount,
                         Notes = e.Notes,
@@ -507,6 +509,7 @@ namespace hao_yang_finance_api.Controllers
                 ExtraExpenses = updatedWaybill
                     .ExtraExpenses.Select(e => new ExtraExpenseDto
                     {
+                        Id = e.Id,
                         Item = e.Item ?? e.Description,
                         Fee = e.Fee ?? e.Amount,
                         Notes = e.Notes,

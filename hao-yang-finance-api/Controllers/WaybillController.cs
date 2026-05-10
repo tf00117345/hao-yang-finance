@@ -1541,5 +1541,51 @@ namespace hao_yang_finance_api.Controllers
         //         }
         //     );
         // }
+
+        // POST: api/Waybill/{waybillId}/extra-expenses
+        [HttpPost("{waybillId}/extra-expenses")]
+        [RequirePermission(Permission.WaybillUpdate)]
+        public async Task<ActionResult<ExtraExpenseDto>> CreateExtraExpense(
+            string waybillId,
+            CreateExtraExpenseRequestDto dto
+        )
+        {
+            if (string.IsNullOrWhiteSpace(dto.Item))
+            {
+                return BadRequest(new { message = "品項為必填" });
+            }
+
+            var waybill = await _context.Waybills.FirstOrDefaultAsync(w => w.Id == waybillId);
+            if (waybill == null)
+            {
+                return NotFound(new { message = "託運單不存在" });
+            }
+
+            if (waybill.Status == WaybillStatus.INVOICED.ToString())
+            {
+                return BadRequest(new { message = "已開立發票的託運單無法新增額外費用" });
+            }
+
+            var extraExpense = new ExtraExpense
+            {
+                WaybillId = waybillId,
+                Description = dto.Item,
+                Amount = dto.Fee,
+                Item = dto.Item,
+                Fee = dto.Fee,
+                Notes = dto.Notes,
+            };
+
+            _context.ExtraExpenses.Add(extraExpense);
+            await _context.SaveChangesAsync();
+
+            return Ok(new ExtraExpenseDto
+            {
+                Id = extraExpense.Id,
+                Item = extraExpense.Item ?? extraExpense.Description,
+                Fee = extraExpense.Fee ?? extraExpense.Amount,
+                Notes = extraExpense.Notes,
+            });
+        }
     }
 }

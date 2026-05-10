@@ -94,6 +94,13 @@ namespace hao_yang_finance_api.DTOs
         public string? Notes { get; set; }
     }
 
+    public class UpdateExtraExpenseRequestDto
+    {
+        public string Item { get; set; } = string.Empty;
+        public decimal Fee { get; set; }
+        public string? Notes { get; set; }
+    }
+
     public class MarkUnpaidWithTaxDto
     {
         public string? Notes { get; set; }

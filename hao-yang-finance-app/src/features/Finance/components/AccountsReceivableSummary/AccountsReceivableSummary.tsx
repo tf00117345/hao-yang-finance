@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
-import ClearIcon from '@mui/icons-material/Clear';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ClearIcon from '@mui/icons-material/Clear';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SearchIcon from '@mui/icons-material/Search';
 import {
@@ -57,7 +57,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 
 	// 建立公司欠款 Map 方便查詢
 	const outstandingMap = useMemo(() => {
-		const map = new Map<string, { total: number; records: typeof outstandingByCompany[0]['records'] }>();
+		const map = new Map<string, { total: number; records: (typeof outstandingByCompany)[0]['records'] }>();
 		for (const item of outstandingByCompany) {
 			map.set(item.companyId, { total: item.totalOutstanding, records: item.records });
 		}
@@ -111,10 +111,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 		return companyGroups.filter((g) => g.companyName.toLowerCase().includes(keyword));
 	}, [companyGroups, searchText]);
 
-	const grandTotal = useMemo(
-		() => filteredGroups.reduce((sum, g) => sum + g.totalAmount, 0),
-		[filteredGroups],
-	);
+	const grandTotal = useMemo(() => filteredGroups.reduce((sum, g) => sum + g.totalAmount, 0), [filteredGroups]);
 
 	// 展開狀態
 	const [expandedCompanies, setExpandedCompanies] = useState<Set<string>>(new Set());
@@ -267,10 +264,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 			</Stack>
 
 			{/* 公司分組表格 */}
-			<TableContainer
-				component={Paper}
-				sx={{ flex: 1, overflow: 'auto', border: '1px solid #E0E0E0' }}
-			>
+			<TableContainer component={Paper} sx={{ flex: 1, overflow: 'auto', border: '1px solid #E0E0E0' }}>
 				<Table stickyHeader size="small">
 					<TableHead>
 						<TableRow>
@@ -314,11 +308,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 										</Stack>
 									</StyledTableCell>
 									<StyledTableCell align="center">
-										<Chip
-											label={`${company.invoiceCount} 張`}
-											size="small"
-											variant="outlined"
-										/>
+										<Chip label={`${company.invoiceCount} 張`} size="small" variant="outlined" />
 									</StyledTableCell>
 									<StyledTableCell align="right">
 										<Typography variant="body2" fontWeight="bold" color="error">
@@ -338,10 +328,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 												: 'none',
 										}}
 									>
-										<Collapse
-											in={expandedCompanies.has(company.companyName)}
-											unmountOnExit
-										>
+										<Collapse in={expandedCompanies.has(company.companyName)} unmountOnExit>
 											<Box sx={{ m: 2 }}>
 												<Table size="small" sx={{ border: '1px solid #E0E0E0' }}>
 													<TableHead>
@@ -359,10 +346,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 															<StyledTableCell sx={{ minWidth: 140 }}>
 																應收帳款
 															</StyledTableCell>
-															<StyledTableCell
-																sx={{ minWidth: 240 }}
-																align="center"
-															>
+															<StyledTableCell sx={{ minWidth: 240 }} align="center">
 																操作
 															</StyledTableCell>
 														</TableRow>
@@ -392,27 +376,32 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 																				</IconButton>
 																			)}
 																	</TableCell>
+																	<TableCell>{invoice.invoiceNumber}</TableCell>
 																	<TableCell>
-																		{invoice.invoiceNumber}
-																	</TableCell>
-																	<TableCell>
-																		$
-																		{invoice.extraExpenses
-																			?.reduce(
-																				(sum, e) => sum + e.fee,
-																				0,
+																		{(() => {
+																			const subtotal = (
+																				invoice.extraExpenses ?? []
 																			)
-																			.toLocaleString()}
+																				.filter((e) => e.isSelected)
+																				.reduce((sum, e) => sum + e.fee, 0);
+																			const tax = invoice.extraExpensesIncludeTax
+																				? Math.round(subtotal * invoice.taxRate)
+																				: 0;
+																			return `$${(subtotal + tax).toLocaleString()}`;
+																		})()}
 																	</TableCell>
 																	<TableCell>
-																		$
-																		{(
-																			invoice.waybills?.reduce(
-																				(sum, w) =>
-																					sum + (w.fee || 0),
-																				0,
-																			) + invoice.tax
-																		).toLocaleString()}
+																		{(() => {
+																			const waybillAmount =
+																				invoice.waybills?.reduce(
+																					(sum, w) => sum + (w.fee || 0),
+																					0,
+																				) ?? 0;
+																			const waybillTax = Math.round(
+																				waybillAmount * invoice.taxRate,
+																			);
+																			return `$${(waybillAmount + waybillTax).toLocaleString()}`;
+																		})()}
 																	</TableCell>
 																	<TableCell>
 																		<strong>
@@ -429,9 +418,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 																				size="small"
 																				variant="outlined"
 																				onClick={() =>
-																					handleViewInvoice(
-																						invoice,
-																					)
+																					handleViewInvoice(invoice)
 																				}
 																			>
 																				查看
@@ -440,9 +427,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 																				size="small"
 																				variant="contained"
 																				color="success"
-																				onClick={() =>
-																					handleMarkPaid(invoice)
-																				}
+																				onClick={() => handleMarkPaid(invoice)}
 																			>
 																				收款
 																			</Button>
@@ -450,9 +435,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 																				size="small"
 																				variant="contained"
 																				onClick={() =>
-																					handleEditInvoice(
-																						invoice,
-																					)
+																					handleEditInvoice(invoice)
 																				}
 																			>
 																				編輯
@@ -462,9 +445,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 																				variant="contained"
 																				color="error"
 																				onClick={() =>
-																					handleDeleteInvoice(
-																						invoice,
-																					)
+																					handleDeleteInvoice(invoice)
 																				}
 																			>
 																				刪除
@@ -476,14 +457,9 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 																{/* Level 3: 展開的託運單明細 */}
 																{expandedInvoices.has(invoice.id) && (
 																	<TableRow>
-																		<TableCell
-																			colSpan={6}
-																			sx={{ p: 0, border: 0 }}
-																		>
+																		<TableCell colSpan={6} sx={{ p: 0, border: 0 }}>
 																			<Collapse
-																				in={expandedInvoices.has(
-																					invoice.id,
-																				)}
+																				in={expandedInvoices.has(invoice.id)}
 																				timeout="auto"
 																				unmountOnExit
 																			>
@@ -509,41 +485,57 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 															<TableHead>
 																<TableRow>
 																	<StyledTableCell>來源發票</StyledTableCell>
-																	<StyledTableCell align="right">欠款金額</StyledTableCell>
+																	<StyledTableCell align="right">
+																		欠款金額
+																	</StyledTableCell>
 																	<StyledTableCell>備註</StyledTableCell>
 																	<StyledTableCell>建立日期</StyledTableCell>
-																	<StyledTableCell align="center" sx={{ width: 120 }}>操作</StyledTableCell>
+																	<StyledTableCell align="center" sx={{ width: 120 }}>
+																		操作
+																	</StyledTableCell>
 																</TableRow>
 															</TableHead>
 															<TableBody>
-																{outstandingMap.get(company.companyId)!.records.map((record) => (
-																	<StyledTableRow key={record.id}>
-																		<TableCell>{record.invoiceNumber}</TableCell>
-																		<TableCell align="right">
-																			<Typography variant="body2" color="error" fontWeight="bold">
-																				${record.amount.toLocaleString()}
-																			</Typography>
-																		</TableCell>
-																		<TableCell>{record.note || '-'}</TableCell>
-																		<TableCell>
-																			{new Date(record.createdAt).toLocaleDateString('zh-TW')}
-																		</TableCell>
-																		<TableCell align="center">
-																			<Button
-																				size="small"
-																				variant="contained"
-																				color="success"
-																				disabled={resolveMutation.isPending}
-																				onClick={(e) => {
-																					e.stopPropagation();
-																					resolveMutation.mutate(record.id);
-																				}}
-																			>
-																				已補齊
-																			</Button>
-																		</TableCell>
-																	</StyledTableRow>
-																))}
+																{outstandingMap
+																	.get(company.companyId)!
+																	.records.map((record) => (
+																		<StyledTableRow key={record.id}>
+																			<TableCell>
+																				{record.invoiceNumber}
+																			</TableCell>
+																			<TableCell align="right">
+																				<Typography
+																					variant="body2"
+																					color="error"
+																					fontWeight="bold"
+																				>
+																					${record.amount.toLocaleString()}
+																				</Typography>
+																			</TableCell>
+																			<TableCell>{record.note || '-'}</TableCell>
+																			<TableCell>
+																				{new Date(
+																					record.createdAt,
+																				).toLocaleDateString('zh-TW')}
+																			</TableCell>
+																			<TableCell align="center">
+																				<Button
+																					size="small"
+																					variant="contained"
+																					color="success"
+																					disabled={resolveMutation.isPending}
+																					onClick={(e) => {
+																						e.stopPropagation();
+																						resolveMutation.mutate(
+																							record.id,
+																						);
+																					}}
+																				>
+																					已補齊
+																				</Button>
+																			</TableCell>
+																		</StyledTableRow>
+																	))}
 															</TableBody>
 														</Table>
 													</Box>
@@ -608,11 +600,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 								</Typography>
 								<Stack spacing={1.5}>
 									<Stack direction="row" spacing={2}>
-										<Typography
-											variant="body2"
-											color="text.secondary"
-											sx={{ minWidth: 100 }}
-										>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
 											發票號碼:
 										</Typography>
 										<Typography variant="body2" fontWeight="medium">
@@ -620,11 +608,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 										</Typography>
 									</Stack>
 									<Stack direction="row" spacing={2}>
-										<Typography
-											variant="body2"
-											color="text.secondary"
-											sx={{ minWidth: 100 }}
-										>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
 											開立日期:
 										</Typography>
 										<Typography variant="body2">
@@ -632,29 +616,17 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 										</Typography>
 									</Stack>
 									<Stack direction="row" spacing={2}>
-										<Typography
-											variant="body2"
-											color="text.secondary"
-											sx={{ minWidth: 100 }}
-										>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
 											客戶名稱:
 										</Typography>
-										<Typography variant="body2">
-											{viewingInvoice.companyName}
-										</Typography>
+										<Typography variant="body2">{viewingInvoice.companyName}</Typography>
 									</Stack>
 									{viewingInvoice.notes && (
 										<Stack direction="row" spacing={2}>
-											<Typography
-												variant="body2"
-												color="text.secondary"
-												sx={{ minWidth: 100 }}
-											>
+											<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
 												備註:
 											</Typography>
-											<Typography variant="body2">
-												{viewingInvoice.notes}
-											</Typography>
+											<Typography variant="body2">{viewingInvoice.notes}</Typography>
 										</Stack>
 									)}
 								</Stack>
@@ -667,11 +639,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 								</Typography>
 								<Stack spacing={1.5}>
 									<Stack direction="row" spacing={2}>
-										<Typography
-											variant="body2"
-											color="text.secondary"
-											sx={{ minWidth: 100 }}
-										>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
 											小計:
 										</Typography>
 										<Typography variant="body2">
@@ -679,51 +647,29 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 										</Typography>
 									</Stack>
 									<Stack direction="row" spacing={2}>
-										<Typography
-											variant="body2"
-											color="text.secondary"
-											sx={{ minWidth: 100 }}
-										>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
 											稅率:
 										</Typography>
 										<Typography variant="body2">
-											{viewingInvoice.taxRate}%
+											{(viewingInvoice.taxRate * 100).toFixed(1)}%
 										</Typography>
 									</Stack>
 									<Stack direction="row" spacing={2}>
-										<Typography
-											variant="body2"
-											color="text.secondary"
-											sx={{ minWidth: 100 }}
-										>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
 											稅額:
 										</Typography>
-										<Typography variant="body2">
-											${viewingInvoice.tax.toLocaleString()}
-										</Typography>
+										<Typography variant="body2">${viewingInvoice.tax.toLocaleString()}</Typography>
 									</Stack>
 									<Stack direction="row" spacing={2}>
-										<Typography
-											variant="body2"
-											color="text.secondary"
-											sx={{ minWidth: 100 }}
-										>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
 											總計:
 										</Typography>
-										<Typography
-											variant="body2"
-											fontWeight="bold"
-											fontSize="1.1rem"
-										>
+										<Typography variant="body2" fontWeight="bold" fontSize="1.1rem">
 											${viewingInvoice.total.toLocaleString()}
 										</Typography>
 									</Stack>
 									<Stack direction="row" spacing={2}>
-										<Typography
-											variant="body2"
-											color="text.secondary"
-											sx={{ minWidth: 100 }}
-										>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
 											額外費用含稅:
 										</Typography>
 										<Typography variant="body2">
@@ -746,47 +692,30 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 													<StyledTableCell>日期</StyledTableCell>
 													<StyledTableCell>地點</StyledTableCell>
 													<StyledTableCell>司機</StyledTableCell>
-													<StyledTableCell align="right">
-														金額
-													</StyledTableCell>
+													<StyledTableCell align="right">金額</StyledTableCell>
 												</TableRow>
 											</TableHead>
 											<TableBody>
 												{viewingInvoice.waybills
 													.sort(
 														(a, b) =>
-															new Date(a.date).getTime() -
-															new Date(b.date).getTime(),
+															new Date(a.date).getTime() - new Date(b.date).getTime(),
 													)
 													.map((waybill) => {
-														const locations = (
-															waybill.loadingLocations || []
-														).filter(
-															(loc) =>
-																loc.from !== '空白' &&
-																loc.to !== '空白',
+														const locations = (waybill.loadingLocations || []).filter(
+															(loc) => loc.from !== '空白' && loc.to !== '空白',
 														);
 														const MAX_VISIBLE = 2;
-														const visible = locations.slice(
-															0,
-															MAX_VISIBLE,
-														);
-														const remaining =
-															locations.length - visible.length;
+														const visible = locations.slice(0, MAX_VISIBLE);
+														const remaining = locations.length - visible.length;
 
 														return (
 															<TableRow key={waybill.waybillId}>
 																<TableCell>
-																	{new Date(
-																		waybill.date,
-																	).toLocaleDateString('zh-TW')}
+																	{new Date(waybill.date).toLocaleDateString('zh-TW')}
 																</TableCell>
 																<TableCell>
-																	<Stack
-																		direction="row"
-																		flexWrap="wrap"
-																		gap={0.5}
-																	>
+																	<Stack direction="row" flexWrap="wrap" gap={0.5}>
 																		{visible.map((loc, idx) => (
 																			<Chip
 																				key={`${loc.from}-${loc.to}-${idx.toString()}`}
@@ -804,25 +733,14 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 																							p: 0.5,
 																						}}
 																					>
-																						{locations.map(
-																							(
-																								loc,
-																								idx,
-																							) => (
-																								<Typography
-																									key={`full-${loc.from}-${loc.to}-${idx}`}
-																									variant="body2"
-																								>
-																									{
-																										loc.from
-																									}{' '}
-																									→{' '}
-																									{
-																										loc.to
-																									}
-																								</Typography>
-																							),
-																						)}
+																						{locations.map((loc, idx) => (
+																							<Typography
+																								key={`full-${loc.from}-${loc.to}-${idx}`}
+																								variant="body2"
+																							>
+																								{loc.from} → {loc.to}
+																							</Typography>
+																						))}
 																					</Stack>
 																				}
 																				arrow
@@ -837,9 +755,7 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 																		)}
 																	</Stack>
 																</TableCell>
-																<TableCell>
-																	{waybill.driverName}
-																</TableCell>
+																<TableCell>{waybill.driverName}</TableCell>
 																<TableCell align="right">
 																	${waybill.fee.toLocaleString()}
 																</TableCell>
@@ -848,24 +764,15 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 													})}
 												<TableRow>
 													<TableCell colSpan={3} align="right">
-														<Typography
-															variant="body2"
-															fontWeight="bold"
-														>
+														<Typography variant="body2" fontWeight="bold">
 															託運單小計:
 														</Typography>
 													</TableCell>
 													<TableCell align="right">
-														<Typography
-															variant="body2"
-															fontWeight="bold"
-														>
+														<Typography variant="body2" fontWeight="bold">
 															$
 															{viewingInvoice.waybills
-																.reduce(
-																	(sum, w) => sum + w.fee,
-																	0,
-																)
+																.reduce((sum, w) => sum + w.fee, 0)
 																.toLocaleString()}
 														</Typography>
 													</TableCell>
@@ -877,68 +784,50 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 							)}
 
 							{/* 額外費用列表 */}
-							{viewingInvoice.extraExpenses &&
-								viewingInvoice.extraExpenses.length > 0 && (
-									<Box>
-										<Typography
-											variant="subtitle1"
-											fontWeight="bold"
-											gutterBottom
-										>
-											額外費用明細 ({viewingInvoice.extraExpenses.length} 筆)
-										</Typography>
-										<TableContainer component={Paper} variant="outlined">
-											<Table size="small">
-												<TableHead>
-													<TableRow>
-														<StyledTableCell>項目</StyledTableCell>
-														<StyledTableCell>備註</StyledTableCell>
-														<StyledTableCell align="right">
-															金額
-														</StyledTableCell>
-													</TableRow>
-												</TableHead>
-												<TableBody>
-													{viewingInvoice.extraExpenses.map((expense) => (
-														<TableRow key={expense.extraExpenseId}>
-															<TableCell>{expense.item}</TableCell>
-															<TableCell>
-																{expense.notes || '-'}
-															</TableCell>
-															<TableCell align="right">
-																${expense.fee.toLocaleString()}
-															</TableCell>
-														</TableRow>
-													))}
-													<TableRow>
-														<TableCell colSpan={2} align="right">
-															<Typography
-																variant="body2"
-																fontWeight="bold"
-															>
-																額外費用小計:
-															</Typography>
-														</TableCell>
+							{viewingInvoice.extraExpenses && viewingInvoice.extraExpenses.length > 0 && (
+								<Box>
+									<Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+										額外費用明細 ({viewingInvoice.extraExpenses.length} 筆)
+									</Typography>
+									<TableContainer component={Paper} variant="outlined">
+										<Table size="small">
+											<TableHead>
+												<TableRow>
+													<StyledTableCell>項目</StyledTableCell>
+													<StyledTableCell>備註</StyledTableCell>
+													<StyledTableCell align="right">金額</StyledTableCell>
+												</TableRow>
+											</TableHead>
+											<TableBody>
+												{viewingInvoice.extraExpenses.map((expense) => (
+													<TableRow key={expense.extraExpenseId}>
+														<TableCell>{expense.item}</TableCell>
+														<TableCell>{expense.notes || '-'}</TableCell>
 														<TableCell align="right">
-															<Typography
-																variant="body2"
-																fontWeight="bold"
-															>
-																$
-																{viewingInvoice.extraExpenses
-																	.reduce(
-																		(sum, e) => sum + e.fee,
-																		0,
-																	)
-																	.toLocaleString()}
-															</Typography>
+															${expense.fee.toLocaleString()}
 														</TableCell>
 													</TableRow>
-												</TableBody>
-											</Table>
-										</TableContainer>
-									</Box>
-								)}
+												))}
+												<TableRow>
+													<TableCell colSpan={2} align="right">
+														<Typography variant="body2" fontWeight="bold">
+															額外費用小計:
+														</Typography>
+													</TableCell>
+													<TableCell align="right">
+														<Typography variant="body2" fontWeight="bold">
+															$
+															{viewingInvoice.extraExpenses
+																.reduce((sum, e) => sum + e.fee, 0)
+																.toLocaleString()}
+														</Typography>
+													</TableCell>
+												</TableRow>
+											</TableBody>
+										</Table>
+									</TableContainer>
+								</Box>
+							)}
 
 							{/* 時間資訊 */}
 							<Box>
@@ -947,31 +836,19 @@ export function AccountsReceivableSummary({ onEdit }: AccountsReceivableSummaryP
 								</Typography>
 								<Stack spacing={1.5}>
 									<Stack direction="row" spacing={2}>
-										<Typography
-											variant="body2"
-											color="text.secondary"
-											sx={{ minWidth: 100 }}
-										>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
 											建立時間:
 										</Typography>
 										<Typography variant="body2">
-											{new Date(viewingInvoice.createdAt).toLocaleString(
-												'zh-TW',
-											)}
+											{new Date(viewingInvoice.createdAt).toLocaleString('zh-TW')}
 										</Typography>
 									</Stack>
 									<Stack direction="row" spacing={2}>
-										<Typography
-											variant="body2"
-											color="text.secondary"
-											sx={{ minWidth: 100 }}
-										>
+										<Typography variant="body2" color="text.secondary" sx={{ minWidth: 100 }}>
 											更新時間:
 										</Typography>
 										<Typography variant="body2">
-											{new Date(viewingInvoice.updatedAt).toLocaleString(
-												'zh-TW',
-											)}
+											{new Date(viewingInvoice.updatedAt).toLocaleString('zh-TW')}
 										</Typography>
 									</Stack>
 								</Stack>

@@ -98,11 +98,15 @@ export function useInvoiceTable({
 			// }),
 			invoiceColumnHelper.accessor('extraExpenses', {
 				header: '額外費用總額',
-				cell: (info) =>
-					`$${info
-						.getValue()
-						?.reduce((sum, expense) => sum + expense.fee, 0)
-						.toLocaleString()}`,
+				cell: (info) => {
+					const invoice = info.row.original;
+					const subtotal = (info.getValue() ?? [])
+						.filter((expense) => expense.isSelected)
+						.reduce((sum, expense) => sum + expense.fee, 0);
+					const tax = invoice.extraExpensesIncludeTax ? Math.round(subtotal * invoice.taxRate) : 0;
+					const total = subtotal + tax;
+					return `$${total.toLocaleString()}`;
+				},
 				enableSorting: true,
 				enableGrouping: false,
 				enableResizing: true,
@@ -114,8 +118,10 @@ export function useInvoiceTable({
 			invoiceColumnHelper.accessor('waybills', {
 				header: '發票金額',
 				cell: (info) => {
-					const waybillAmount = info.getValue()?.reduce((sum, waybill) => sum + (waybill.fee || 0), 0);
-					const total = waybillAmount + info.row.original.tax;
+					const invoice = info.row.original;
+					const waybillAmount = info.getValue()?.reduce((sum, waybill) => sum + (waybill.fee || 0), 0) ?? 0;
+					const waybillTax = Math.round(waybillAmount * invoice.taxRate);
+					const total = waybillAmount + waybillTax;
 					return `$${total.toLocaleString()}`;
 				},
 				enableSorting: true,

@@ -33,7 +33,9 @@
       "Bash(npm run dev)",
       "Bash(yarn prettier:*)",
       "Bash(yarn lint:fix:*)",
-      "Bash(npx tsc --noEmit)"
+      "Bash(npx tsc --noEmit)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ],
     "deny": []
   }

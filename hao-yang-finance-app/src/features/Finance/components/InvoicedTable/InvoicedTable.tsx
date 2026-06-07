@@ -890,21 +890,56 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 															</TableRow>
 														);
 													})}
-												<TableRow>
-													<TableCell colSpan={3} align="right">
-														<Typography variant="body2" fontWeight="bold">
-															託運單小計:
-														</Typography>
-													</TableCell>
-													<TableCell align="right">
-														<Typography variant="body2" fontWeight="bold">
-															$
-															{viewingInvoice.waybills
-																.reduce((sum, w) => sum + w.fee, 0)
-																.toLocaleString()}
-														</Typography>
-													</TableCell>
-												</TableRow>
+												{(() => {
+													const amount = viewingInvoice.waybills.reduce(
+														(sum, w) => sum + (w.fee || 0),
+														0,
+													);
+													const tax = Math.round(amount * viewingInvoice.taxRate);
+													return (
+														<>
+															<TableRow>
+																<TableCell colSpan={3} align="right">
+																	<Typography variant="body2">託運單小計:</Typography>
+																</TableCell>
+																<TableCell align="right">
+																	<Typography variant="body2">
+																		${amount.toLocaleString()}
+																	</Typography>
+																</TableCell>
+															</TableRow>
+															<TableRow>
+																<TableCell colSpan={3} align="right">
+																	<Typography variant="body2">
+																		稅額 (
+																		{(viewingInvoice.taxRate * 100).toFixed(1)}%):
+																	</Typography>
+																</TableCell>
+																<TableCell align="right">
+																	<Typography variant="body2">
+																		${tax.toLocaleString()}
+																	</Typography>
+																</TableCell>
+															</TableRow>
+															<TableRow>
+																<TableCell colSpan={3} align="right">
+																	<Typography variant="body2" fontWeight="bold">
+																		託運單總計:
+																	</Typography>
+																</TableCell>
+																<TableCell align="right">
+																	<Typography
+																		variant="body2"
+																		fontWeight="bold"
+																		color="primary"
+																	>
+																		${(amount + tax).toLocaleString()}
+																	</Typography>
+																</TableCell>
+															</TableRow>
+														</>
+													);
+												})()}
 											</TableBody>
 										</Table>
 									</TableContainer>
@@ -936,21 +971,63 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 														</TableCell>
 													</TableRow>
 												))}
-												<TableRow>
-													<TableCell colSpan={2} align="right">
-														<Typography variant="body2" fontWeight="bold">
-															額外費用小計:
-														</Typography>
-													</TableCell>
-													<TableCell align="right">
-														<Typography variant="body2" fontWeight="bold">
-															$
-															{viewingInvoice.extraExpenses
-																.reduce((sum, e) => sum + e.fee, 0)
-																.toLocaleString()}
-														</Typography>
-													</TableCell>
-												</TableRow>
+												{(() => {
+													const amount = viewingInvoice.extraExpenses.reduce(
+														(sum, e) => sum + e.fee,
+														0,
+													);
+													const tax = viewingInvoice.extraExpensesIncludeTax
+														? Math.round(amount * viewingInvoice.taxRate)
+														: 0;
+													return (
+														<>
+															<TableRow>
+																<TableCell colSpan={2} align="right">
+																	<Typography variant="body2">
+																		額外費用小計:
+																	</Typography>
+																</TableCell>
+																<TableCell align="right">
+																	<Typography variant="body2">
+																		${amount.toLocaleString()}
+																	</Typography>
+																</TableCell>
+															</TableRow>
+															{viewingInvoice.extraExpensesIncludeTax && (
+																<TableRow>
+																	<TableCell colSpan={2} align="right">
+																		<Typography variant="body2">
+																			稅額 (
+																			{(viewingInvoice.taxRate * 100).toFixed(1)}
+																			%):
+																		</Typography>
+																	</TableCell>
+																	<TableCell align="right">
+																		<Typography variant="body2">
+																			${tax.toLocaleString()}
+																		</Typography>
+																	</TableCell>
+																</TableRow>
+															)}
+															<TableRow>
+																<TableCell colSpan={2} align="right">
+																	<Typography variant="body2" fontWeight="bold">
+																		額外費用總計:
+																	</Typography>
+																</TableCell>
+																<TableCell align="right">
+																	<Typography
+																		variant="body2"
+																		fontWeight="bold"
+																		color="primary"
+																	>
+																		${(amount + tax).toLocaleString()}
+																	</Typography>
+																</TableCell>
+															</TableRow>
+														</>
+													);
+												})()}
 											</TableBody>
 										</Table>
 									</TableContainer>

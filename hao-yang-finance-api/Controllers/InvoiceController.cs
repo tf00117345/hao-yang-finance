@@ -810,7 +810,7 @@ namespace hao_yang_finance_api.Controllers
         public async Task<ActionResult<string>> GetLastInvoiceNumber()
         {
             var lastInvoiceNumber = await _context
-                .Invoices.OrderByDescending(i => i.InvoiceNumber)
+                .Invoices.OrderByDescending(i => i.CreatedAt)
                 .Select(i => i.InvoiceNumber)
                 .FirstOrDefaultAsync();
 

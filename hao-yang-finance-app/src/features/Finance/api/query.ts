@@ -15,10 +15,11 @@ import {
 } from './api';
 
 // 取得發票列表
-export const useInvoicesQuery = (params?: InvoiceQueryParams) => {
+export const useInvoicesQuery = (params?: InvoiceQueryParams, enabled = true) => {
 	return useQuery<Invoice[]>({
 		queryKey: ['invoices', params],
 		queryFn: () => getInvoices(params),
+		enabled,
 	});
 };
 

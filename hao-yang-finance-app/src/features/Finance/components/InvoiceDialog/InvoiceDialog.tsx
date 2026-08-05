@@ -43,7 +43,7 @@ import {
 import { useSuggestedWaybillsQuery, useWaybillsByIdsQuery } from '../../../Waybill/api/query';
 import { Waybill } from '../../../Waybill/types/waybill.types';
 import { useCreateInvoiceMutation, useUpdateInvoiceMutation } from '../../api/mutation';
-import { useLastInvoiceNumberQuery } from '../../api/query';
+import { useInvoicesQuery, useLastInvoiceNumberQuery } from '../../api/query';
 import { CreateInvoiceRequest, Invoice } from '../../types/invoice.type';
 
 // 定義一個常量空數組，避免每次都創建新的物件引用
@@ -393,6 +393,25 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 		return companies.find((company) => company.id === watchedValues.companyId);
 	};
 
+	// 取此公司全部發票（僅在 dialog 開啟且已選公司時啟用），前端切分為已收款/未收款
+	const selectedCompanyId = watchedValues.companyId;
+	const { data: companyInvoices = [] } = useInvoicesQuery(
+		{ companyId: selectedCompanyId },
+		open && !!selectedCompanyId,
+	);
+
+	// 功能1：此公司最近一張已收款發票（依 paidAt 由新到舊）
+	const lastPaidInvoice = useMemo(() => {
+		return companyInvoices
+			.filter((inv) => inv.status === 'paid' && inv.paidAt)
+			.sort((a, b) => (b.paidAt! > a.paidAt! ? 1 : -1))[0];
+	}, [companyInvoices]);
+
+	// 功能2：此公司未付款（未收款）發票，排除編輯中的當前發票
+	const unpaidInvoices = useMemo(() => {
+		return companyInvoices.filter((inv) => inv.status === 'issued' && inv.id !== editingInvoice?.id);
+	}, [companyInvoices, editingInvoice?.id]);
+
 	// 計算金額（單一 useMemo 計算發票區、額外費用區、總計）
 	const amounts = useMemo(() => {
 		// === 發票金額計算區 ===
@@ -563,7 +582,45 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 									<Typography variant="body2">
 										電話: {getSelectedCompanyDetails()?.phone?.join(', ')}
 									</Typography>
+									<Typography variant="body2">
+										最後付款方式:{' '}
+										{lastPaidInvoice?.paymentMethod
+											? `${lastPaidInvoice.paymentMethod}（${format(
+													new Date(lastPaidInvoice.paidAt!),
+													'yyyy-MM-dd',
+												)}）`
+											: '無紀錄'}
+									</Typography>
 								</Stack>
+							</Box>
+						)}
+
+						{/* 此公司未付款發票列表 */}
+						{selectedCompanyId && unpaidInvoices.length > 0 && (
+							<Box sx={{ border: '1px solid #e0e0e0', p: 2, borderRadius: 1, bgcolor: '#fff8e1' }}>
+								<Typography variant="subtitle2" gutterBottom>
+									此公司未付款發票（{unpaidInvoices.length}）
+								</Typography>
+								<TableContainer sx={{ maxHeight: 240 }}>
+									<Table size="small">
+										<TableHead>
+											<TableRow>
+												<TableCell>發票號碼</TableCell>
+												<TableCell>發票日期</TableCell>
+												<TableCell align="right">發票金額</TableCell>
+											</TableRow>
+										</TableHead>
+										<TableBody>
+											{unpaidInvoices.map((inv) => (
+												<TableRow key={inv.id}>
+													<TableCell>{inv.invoiceNumber}</TableCell>
+													<TableCell>{inv.date}</TableCell>
+													<TableCell align="right">${inv.total.toLocaleString()}</TableCell>
+												</TableRow>
+											))}
+										</TableBody>
+									</Table>
+								</TableContainer>
 							</Box>
 						)}
 

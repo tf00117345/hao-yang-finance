@@ -26,6 +26,7 @@ namespace hao_yang_finance_api.Data
         public DbSet<CollectionRequest> CollectionRequests { get; set; }
         public DbSet<WaybillFeeSplit> WaybillFeeSplits { get; set; }
         public DbSet<OutstandingBalance> OutstandingBalances { get; set; }
+        public DbSet<InvoiceAuditLog> InvoiceAuditLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -103,6 +104,9 @@ namespace hao_yang_finance_api.Data
             // Configure Invoice
             modelBuilder.Entity<Invoice>(entity =>
             {
+                entity.HasIndex(i => i.InvoiceNumber)
+                    .IsUnique();
+
                 entity.HasMany(i => i.InvoiceWaybills)
                     .WithOne(iw => iw.Invoice)
                     .HasForeignKey(iw => iw.InvoiceId)
@@ -112,6 +116,13 @@ namespace hao_yang_finance_api.Data
                     .WithOne(ie => ie.Invoice)
                     .HasForeignKey(ie => ie.InvoiceId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure InvoiceAuditLog
+            modelBuilder.Entity<InvoiceAuditLog>(entity =>
+            {
+                entity.HasIndex(a => a.InvoiceId);
+                entity.HasIndex(a => a.Timestamp);
             });
 
             // Configure InvoiceWaybill

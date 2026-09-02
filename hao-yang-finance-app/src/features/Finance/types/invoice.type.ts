@@ -49,6 +49,8 @@ export interface InvoiceExtraExpense {
 // 建立發票請求
 export interface CreateInvoiceRequest {
 	invoiceNumber: string;
+	// 系統當時顯示的建議號碼，供後端稽核比對是否手動改號
+	suggestedInvoiceNumber?: string;
 	date: string;
 	companyId: string;
 	taxRate: number;
@@ -123,4 +125,24 @@ export interface InvoiceStats {
 export interface DateRange {
 	start: Date;
 	end: Date;
+}
+
+// 發票稽核紀錄
+export interface InvoiceAuditLog {
+	id: string;
+	action: 'CREATE' | 'UPDATE' | 'DELETE' | 'VOID' | 'MARK_PAID' | 'RESTORE';
+	invoiceId: string;
+	invoiceNumber: string;
+	suggestedInvoiceNumber?: string;
+	isManuallyModified: boolean;
+	username?: string;
+	timestamp: string;
+	details?: string;
+}
+
+// 發票稽核紀錄查詢參數
+export interface InvoiceAuditLogQueryParams {
+	startDate?: string;
+	endDate?: string;
+	invoiceNumber?: string;
 }

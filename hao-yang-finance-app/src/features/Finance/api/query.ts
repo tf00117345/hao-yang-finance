@@ -3,11 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import {
 	CompanyOutstandingBalanceSummary,
 	Invoice,
+	InvoiceAuditLog,
+	InvoiceAuditLogQueryParams,
 	InvoiceQueryParams,
 	InvoiceStats,
 } from '../types/invoice.type';
 import {
 	getInvoice,
+	getInvoiceAuditLogs,
 	getInvoices,
 	getInvoiceStats,
 	getLastInvoiceNumber,
@@ -47,6 +50,14 @@ export const useLastInvoiceNumberQuery = () => {
 		staleTime: 0,
 		retryOnMount: true,
 		refetchOnMount: 'always',
+	});
+};
+
+// 取得發票稽核紀錄
+export const useInvoiceAuditLogsQuery = (params?: InvoiceAuditLogQueryParams) => {
+	return useQuery<InvoiceAuditLog[]>({
+		queryKey: ['invoice-audit-logs', params],
+		queryFn: () => getInvoiceAuditLogs(params),
 	});
 };
 

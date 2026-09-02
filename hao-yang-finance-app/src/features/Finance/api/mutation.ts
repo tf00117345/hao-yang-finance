@@ -27,6 +27,7 @@ export const useCreateInvoiceMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['waybills'] });
 			queryClient.invalidateQueries({ queryKey: ['invoice-stats'] });
 			queryClient.invalidateQueries({ queryKey: ['last-invoice-number'] });
+			queryClient.invalidateQueries({ queryKey: ['invoice-audit-logs'] });
 		},
 		onError: (error: any) => {
 			const errors = error?.response?.data?.errors;
@@ -54,6 +55,8 @@ export const useUpdateInvoiceMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['invoice', variables.id] });
 			queryClient.invalidateQueries({ queryKey: ['waybills'] });
 			queryClient.invalidateQueries({ queryKey: ['invoice-stats'] });
+			queryClient.invalidateQueries({ queryKey: ['last-invoice-number'] });
+			queryClient.invalidateQueries({ queryKey: ['invoice-audit-logs'] });
 		},
 		onError: (error: any) => {
 			const errors = error?.response?.data?.errors;
@@ -81,6 +84,7 @@ export const useDeleteInvoiceMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['waybills'] });
 			queryClient.invalidateQueries({ queryKey: ['invoice-stats'] });
 			queryClient.invalidateQueries({ queryKey: ['last-invoice-number'] });
+			queryClient.invalidateQueries({ queryKey: ['invoice-audit-logs'] });
 
 			// 移除特定發票的查詢快取
 			queryClient.removeQueries({ queryKey: ['invoice', variables] });
@@ -111,6 +115,7 @@ export const useMarkInvoicePaidMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['invoice', variables.id] });
 			queryClient.invalidateQueries({ queryKey: ['invoice-stats'] });
 			queryClient.invalidateQueries({ queryKey: ['outstanding-balances-by-company'] });
+			queryClient.invalidateQueries({ queryKey: ['invoice-audit-logs'] });
 		},
 		onError: (error: any) => {
 			const errors = error?.response?.data?.errors;
@@ -138,6 +143,8 @@ export const useVoidInvoiceMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['invoice', variables] });
 			queryClient.invalidateQueries({ queryKey: ['waybills'] });
 			queryClient.invalidateQueries({ queryKey: ['invoice-stats'] });
+			queryClient.invalidateQueries({ queryKey: ['last-invoice-number'] });
+			queryClient.invalidateQueries({ queryKey: ['invoice-audit-logs'] });
 		},
 		onError: (error: any) => {
 			const errors = error?.response?.data?.errors;
@@ -165,6 +172,8 @@ export const useRestoreInvoiceMutation = () => {
 			queryClient.invalidateQueries({ queryKey: ['invoice', variables] });
 			queryClient.invalidateQueries({ queryKey: ['waybills'] });
 			queryClient.invalidateQueries({ queryKey: ['invoice-stats'] });
+			queryClient.invalidateQueries({ queryKey: ['last-invoice-number'] });
+			queryClient.invalidateQueries({ queryKey: ['invoice-audit-logs'] });
 		},
 		onError: (error: any) => {
 			const errors = error?.response?.data?.errors;

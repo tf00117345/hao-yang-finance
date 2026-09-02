@@ -378,13 +378,16 @@ export function InvoiceDialog({ open, onClose, waybillList, editingInvoice, onSu
 				},
 			);
 		} else {
-			// 新增模式：使用 CreateInvoiceRequest 格式
-			createMutation.mutate(baseData, {
-				onSuccess: () => {
-					handleClose();
-					onSuccess?.();
+			// 新增模式：使用 CreateInvoiceRequest 格式，帶上系統當時顯示的建議號供後端稽核比對
+			createMutation.mutate(
+				{ ...baseData, suggestedInvoiceNumber: (lastInvoiceNumber as string) || undefined },
+				{
+					onSuccess: () => {
+						handleClose();
+						onSuccess?.();
+					},
 				},
-			});
+			);
 		}
 	};
 

@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using System.Text.Json;
 using hao_yang_finance_api.Attributes;
 using hao_yang_finance_api.Data;
 using hao_yang_finance_api.DTOs;
@@ -19,6 +21,36 @@ namespace hao_yang_finance_api.Controllers
         public InvoiceController(ApplicationDbContext context)
         {
             _context = context;
+        }
+
+        private (string? userId, string? username) GetCurrentUser() =>
+            (
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                User.FindFirst(ClaimTypes.Name)?.Value
+            );
+
+        // 只 stage 稽核列，隨各 action 既有的 SaveChangesAsync 與業務變更同一交易 commit
+        private void AddAuditLog(
+            string action,
+            string invoiceId,
+            string invoiceNumber,
+            object? details = null,
+            string? suggestedInvoiceNumber = null
+        )
+        {
+            var (userId, username) = GetCurrentUser();
+            _context.InvoiceAuditLogs.Add(
+                new InvoiceAuditLog
+                {
+                    Action = action,
+                    InvoiceId = invoiceId,
+                    InvoiceNumber = invoiceNumber,
+                    SuggestedInvoiceNumber = suggestedInvoiceNumber,
+                    UserId = userId,
+                    Username = username,
+                    Details = details == null ? null : JsonSerializer.Serialize(details),
+                }
+            );
         }
 
         // GET: api/Invoice
@@ -345,6 +377,21 @@ namespace hao_yang_finance_api.Controllers
             };
 
             _context.Invoices.Add(invoice);
+
+            AddAuditLog(
+                "CREATE",
+                invoice.Id,
+                invoice.InvoiceNumber,
+                new
+                {
+                    invoice.Date,
+                    invoice.CompanyId,
+                    invoice.Total,
+                    waybillIds = createInvoiceDto.WaybillIds,
+                },
+                createInvoiceDto.SuggestedInvoiceNumber?.Trim().ToUpperInvariant()
+            );
+
             await _context.SaveChangesAsync();
 
             // 新增發票託運單關聯
@@ -565,6 +612,8 @@ namespace hao_yang_finance_api.Controllers
             }
 
             // 更新發票資料
+            var oldInvoiceNumber = invoice.InvoiceNumber;
+            var oldTotal = invoice.Total;
             invoice.InvoiceNumber = normalizedInvoiceNumber;
             invoice.Date = updateInvoiceDto.Date;
             invoice.TaxRate = updateInvoiceDto.TaxRate;
@@ -603,6 +652,19 @@ namespace hao_yang_finance_api.Controllers
                 waybill.InvoiceId = invoice.Id;
                 waybill.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
             }
+
+            AddAuditLog(
+                "UPDATE",
+                invoice.Id,
+                invoice.InvoiceNumber,
+                new
+                {
+                    oldInvoiceNumber,
+                    newInvoiceNumber = invoice.InvoiceNumber,
+                    oldTotal,
+                    newTotal = invoice.Total,
+                }
+            );
 
             await _context.SaveChangesAsync();
 
@@ -644,6 +706,25 @@ namespace hao_yang_finance_api.Controllers
 
             // 刪除發票
             _context.Invoices.Remove(invoice);
+
+            AddAuditLog(
+                "DELETE",
+                invoice.Id,
+                invoice.InvoiceNumber,
+                new
+                {
+                    invoice.InvoiceNumber,
+                    invoice.Date,
+                    invoice.CompanyId,
+                    invoice.Subtotal,
+                    invoice.Tax,
+                    invoice.Total,
+                    invoice.Status,
+                    invoice.Notes,
+                    invoice.CreatedAt,
+                    waybillIds = waybills.Select(w => w.Id).ToList(),
+                }
+            );
 
             await _context.SaveChangesAsync();
             return NoContent();
@@ -691,6 +772,13 @@ namespace hao_yang_finance_api.Controllers
                 _context.OutstandingBalances.Add(outstandingBalance);
             }
 
+            AddAuditLog(
+                "MARK_PAID",
+                invoice.Id,
+                invoice.InvoiceNumber,
+                new { markPaidDto.PaymentMethod, markPaidDto.OutstandingAmount }
+            );
+
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "發票已成功標記為已收款" });
@@ -724,8 +812,11 @@ namespace hao_yang_finance_api.Controllers
                 waybill.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
             }
 
+            var previousStatus = invoice.Status;
             invoice.Status = "void";
             invoice.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+            AddAuditLog("VOID", invoice.Id, invoice.InvoiceNumber, new { previousStatus });
 
             await _context.SaveChangesAsync();
 
@@ -744,6 +835,7 @@ namespace hao_yang_finance_api.Controllers
                 return NotFound(new { message = "找不到指定的發票" });
             }
 
+            var previousStatus = invoice.Status;
             invoice.Status = "issued";
             invoice.PaymentMethod = null;
             invoice.PaymentNote = null;
@@ -759,6 +851,8 @@ namespace hao_yang_finance_api.Controllers
                 waybill.InvoiceId = invoice.Id;
                 waybill.UpdatedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
             }
+
+            AddAuditLog("RESTORE", invoice.Id, invoice.InvoiceNumber, new { previousStatus });
 
             await _context.SaveChangesAsync();
 
@@ -809,34 +903,33 @@ namespace hao_yang_finance_api.Controllers
         [RequirePermission(Permission.InvoiceRead)]
         public async Task<ActionResult<string>> GetLastInvoiceNumber()
         {
-            var lastInvoiceNumber = await _context
+            // 以「最近建立發票的字軌（前兩碼）」為準，取該字軌內最大號碼 +1。
+            // 不能只取最後建立的一筆 +1：補開舊號或刪除最新一筆後，建議號會倒退並與既有號碼衝突。
+            var recentNumbers = await _context
                 .Invoices.OrderByDescending(i => i.CreatedAt)
                 .Select(i => i.InvoiceNumber)
-                .FirstOrDefaultAsync();
+                .ToListAsync();
 
-            if (string.IsNullOrEmpty(lastInvoiceNumber))
+            var latestValid = recentNumbers.FirstOrDefault(n =>
+                n.Length == 10
+                && char.IsAsciiLetterUpper(n[0])
+                && char.IsAsciiLetterUpper(n[1])
+                && n[2..].All(char.IsAsciiDigit)
+            );
+
+            if (latestValid == null)
             {
                 return "AA00000001";
             }
 
-            if (
-                lastInvoiceNumber.Length != 10
-                || !char.IsLetter(lastInvoiceNumber[0])
-                || !char.IsLetter(lastInvoiceNumber[1])
-            )
-            {
-                throw new InvalidOperationException("Invalid invoice number format");
-            }
+            string prefix = latestValid[..2];
 
-            string prefix = lastInvoiceNumber[..2];
-            string numberPart = lastInvoiceNumber[2..];
-
-            if (!long.TryParse(numberPart, out long number))
-            {
-                throw new InvalidOperationException("Invalid invoice number format");
-            }
-
-            number++;
+            long number =
+                recentNumbers
+                    .Where(n =>
+                        n.Length == 10 && n.StartsWith(prefix) && long.TryParse(n[2..], out _)
+                    )
+                    .Max(n => long.Parse(n[2..])) + 1;
 
             if (number > 99999999)
             {
@@ -857,6 +950,59 @@ namespace hao_yang_finance_api.Controllers
             }
 
             return $"{prefix}{number:D8}";
+        }
+
+        // GET: api/Invoice/audit-logs?startDate=2026-08-01&endDate=2026-08-31&invoiceNumber=CA34
+        [HttpGet("audit-logs")]
+        [RequirePermission(Permission.InvoiceRead)]
+        public async Task<ActionResult<IEnumerable<InvoiceAuditLogDto>>> GetAuditLogs(
+            [FromQuery] string? startDate,
+            [FromQuery] string? endDate,
+            [FromQuery] string? invoiceNumber
+        )
+        {
+            var query = _context.InvoiceAuditLogs.AsQueryable();
+
+            if (
+                !string.IsNullOrEmpty(startDate)
+                && DateTime.TryParse(startDate, out var start)
+            )
+            {
+                var startUtc = DateTime.SpecifyKind(start.Date, DateTimeKind.Utc);
+                query = query.Where(a => a.Timestamp >= startUtc);
+            }
+
+            if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out var end))
+            {
+                var endUtc = DateTime.SpecifyKind(end.Date.AddDays(1), DateTimeKind.Utc);
+                query = query.Where(a => a.Timestamp < endUtc);
+            }
+
+            if (!string.IsNullOrEmpty(invoiceNumber))
+            {
+                var keyword = invoiceNumber.Trim().ToUpperInvariant();
+                query = query.Where(a => a.InvoiceNumber.Contains(keyword));
+            }
+
+            var logs = await query.OrderByDescending(a => a.Timestamp).Take(500).ToListAsync();
+
+            var result = logs.Select(a => new InvoiceAuditLogDto
+            {
+                Id = a.Id,
+                Action = a.Action,
+                InvoiceId = a.InvoiceId,
+                InvoiceNumber = a.InvoiceNumber,
+                SuggestedInvoiceNumber = a.SuggestedInvoiceNumber,
+                IsManuallyModified =
+                    a.Action == "CREATE"
+                    && !string.IsNullOrEmpty(a.SuggestedInvoiceNumber)
+                    && a.SuggestedInvoiceNumber != a.InvoiceNumber,
+                Username = a.Username,
+                Timestamp = a.Timestamp,
+                Details = a.Details,
+            });
+
+            return Ok(result);
         }
     }
 }

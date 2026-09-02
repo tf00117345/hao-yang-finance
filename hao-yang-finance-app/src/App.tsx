@@ -15,6 +15,7 @@ import { ProtectedRoute } from './features/Auth/components/ProtectedRoute/Protec
 import { AuthProvider } from './features/Auth/context/AuthContext';
 import DriverSettlementPage from './features/DriverSettlement/components/DriverSettlementPage/DriverSettlementPage';
 import FinancePage from './features/Finance/components/FinancePage/FinancePage';
+import InvoiceAuditPage from './features/Finance/components/InvoiceAuditPage/InvoiceAuditPage';
 import { SettingPage } from './features/Settings/components/SettingPage/SettingPage';
 import { StatisticsPage } from './features/Statistics/components/StatisticsPage';
 import UserManagement from './features/UserManagement/components/UserManagement/UserManagement';
@@ -48,6 +49,7 @@ function App() {
 										<Route path="/query-waybills" element={<WaybillByCompanyPage />} />
 										<Route path="/waybill/*" element={<WaybillPage />} />
 										<Route path="/finance" element={<FinancePage />} />
+										<Route path="/invoice-audit" element={<InvoiceAuditPage />} />
 										<Route path="/driver-settlement" element={<DriverSettlementPage />} />
 										<Route path="/statistics" element={<StatisticsPage />} />
 										<Route path="/user-management" element={<UserManagement />} />

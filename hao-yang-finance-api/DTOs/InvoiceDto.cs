@@ -36,6 +36,11 @@ namespace hao_yang_finance_api.DTOs
         [RegularExpression(@"^[A-Z]{2}\d{8}$", ErrorMessage = "發票號碼格式需為兩個英文字母加八位數字，例如 AB12345678")]
         public string InvoiceNumber { get; set; } = string.Empty;
 
+        // 系統當時顯示的建議號碼（前端帶入，選填），供稽核比對是否手動改號
+        [StringLength(10)]
+        [RegularExpression(@"^[A-Z]{2}\d{8}$", ErrorMessage = "建議發票號碼格式錯誤")]
+        public string? SuggestedInvoiceNumber { get; set; }
+
         [Required(ErrorMessage = "發票日期為必填")] public string Date { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "公司ID為必填")] public string CompanyId { get; set; } = string.Empty;
@@ -134,6 +139,20 @@ namespace hao_yang_finance_api.DTOs
         public string? CompanyId { get; set; }
         public string? Status { get; set; }
         public string? InvoiceNumber { get; set; }
+    }
+
+    // 發票稽核紀錄 DTO
+    public class InvoiceAuditLogDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Action { get; set; } = string.Empty;
+        public string InvoiceId { get; set; } = string.Empty;
+        public string InvoiceNumber { get; set; } = string.Empty;
+        public string? SuggestedInvoiceNumber { get; set; }
+        public bool IsManuallyModified { get; set; }
+        public string? Username { get; set; }
+        public DateTime Timestamp { get; set; }
+        public string? Details { get; set; }
     }
 
     // 發票統計 DTO

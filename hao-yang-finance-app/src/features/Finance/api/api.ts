@@ -3,6 +3,8 @@ import {
 	CompanyOutstandingBalanceSummary,
 	CreateInvoiceRequest,
 	Invoice,
+	InvoiceAuditLog,
+	InvoiceAuditLogQueryParams,
 	InvoiceQueryParams,
 	InvoiceStats,
 	MarkInvoicePaidRequest,
@@ -74,6 +76,18 @@ export const getInvoiceStats = async (startDate?: string, endDate?: string): Pro
 	if (endDate) params.append('endDate', endDate);
 
 	const response = await axiosInstance.get('/invoice/stats', { params });
+	return response.data;
+};
+
+// 取得發票稽核紀錄
+export const getInvoiceAuditLogs = async (params?: InvoiceAuditLogQueryParams): Promise<InvoiceAuditLog[]> => {
+	const queryParams = new URLSearchParams();
+
+	if (params?.startDate) queryParams.append('startDate', params.startDate);
+	if (params?.endDate) queryParams.append('endDate', params.endDate);
+	if (params?.invoiceNumber) queryParams.append('invoiceNumber', params.invoiceNumber);
+
+	const response = await axiosInstance.get('/invoice/audit-logs', { params: queryParams });
 	return response.data;
 };
 

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import BusinessIcon from '@mui/icons-material/Business';
+import HistoryIcon from '@mui/icons-material/History';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
@@ -54,6 +55,11 @@ const routeConfig = [
 		name: '財務表',
 		path: 'finance',
 		icon: <ReceiptLong />,
+	},
+	{
+		name: '發票異動紀錄',
+		path: 'invoice-audit',
+		icon: <HistoryIcon />,
 	},
 	{
 		name: '司機結算表',

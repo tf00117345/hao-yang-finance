@@ -17,6 +17,7 @@ import {
 	useReactTable,
 } from '@tanstack/react-table';
 
+import { NoteCell } from '../components/shared/NoteCell';
 import { Invoice } from '../types/invoice.type';
 
 const invoiceColumnHelper = createColumnHelper<Invoice>();
@@ -153,6 +154,28 @@ export function useInvoiceTable({
 				filterFn: 'equals',
 				size: 100,
 			}),
+			invoiceColumnHelper.accessor('notes', {
+				header: '備註',
+				cell: (info) => <NoteCell value={info.getValue()} />,
+				enableSorting: false,
+				enableGrouping: false,
+				enableResizing: true,
+				enableColumnFilter: true,
+				filterFn: 'includesString',
+				size: 200,
+				minSize: 160,
+			}),
+			invoiceColumnHelper.accessor('paymentNote', {
+				header: '付款備註',
+				cell: (info) => <NoteCell value={info.getValue()} />,
+				enableSorting: false,
+				enableGrouping: false,
+				enableResizing: true,
+				enableColumnFilter: true,
+				filterFn: 'includesString',
+				size: 200,
+				minSize: 160,
+			}),
 			// invoiceColumnHelper.accessor('paymentMethod', {
 			// 	header: '付款方式',
 			// 	cell: (info) => info.getValue(),
@@ -163,15 +186,6 @@ export function useInvoiceTable({
 			// 	filterFn: 'equals',
 			// 	size: 120,
 			// 	minSize: 120,
-			// }),
-			// invoiceColumnHelper.accessor('paymentNote', {
-			// 	header: '付款備註',
-			// 	cell: (info) => info.getValue(),
-			// 	enableSorting: true,
-			// 	enableGrouping: true,
-			// 	enableResizing: true,
-			// 	size: 200,
-			// 	minSize: 200,
 			// }),
 			{
 				id: 'actions',

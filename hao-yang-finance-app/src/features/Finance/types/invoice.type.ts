@@ -31,6 +31,8 @@ export interface InvoiceWaybill {
 	driverName: string;
 	waybillCompanyId: string;
 	waybillCompanyName: string;
+	notes?: string;
+	paymentNotes?: string;
 	loadingLocations: Array<{ from: string; to: string }>;
 	extraExpensesIncludeTax: boolean;
 	extraExpenses: InvoiceExtraExpense[];

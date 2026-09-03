@@ -147,6 +147,8 @@ namespace hao_yang_finance_api.Controllers
                             DriverName = iw.Waybill.Driver?.Name ?? "",
                             WaybillCompanyId = iw.Waybill.CompanyId,
                             WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
+                            Notes = iw.Waybill.Notes,
+                            PaymentNotes = iw.Waybill.PaymentNotes,
                             LoadingLocations = iw
                                 .Waybill.LoadingLocations.OrderBy(ll => ll.SequenceOrder)
                                 .Select(ll => new LoadingLocationDto
@@ -243,6 +245,8 @@ namespace hao_yang_finance_api.Controllers
                         DriverName = iw.Waybill.Driver?.Name ?? "",
                         WaybillCompanyId = iw.Waybill.CompanyId,
                         WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
+                        Notes = iw.Waybill.Notes,
+                        PaymentNotes = iw.Waybill.PaymentNotes,
                         LoadingLocations = iw
                             .Waybill.LoadingLocations.OrderBy(ll => ll.SequenceOrder)
                             .Select(ll => new LoadingLocationDto
@@ -468,6 +472,8 @@ namespace hao_yang_finance_api.Controllers
                         DriverName = iw.Waybill.Driver?.Name ?? "",
                         WaybillCompanyId = iw.Waybill.CompanyId,
                         WaybillCompanyName = iw.Waybill.Company?.Name ?? "",
+                        Notes = iw.Waybill.Notes,
+                        PaymentNotes = iw.Waybill.PaymentNotes,
                         ExtraExpensesIncludeTax = createdInvoice.ExtraExpensesIncludeTax,
                         ExtraExpenses = createdInvoice
                             .InvoiceExtraExpenses.Where(iee =>

@@ -12,6 +12,7 @@ import {
 	useReactTable,
 } from '@tanstack/react-table';
 
+import { NoteCell } from '../components/shared/NoteCell';
 import { InvoiceWaybill } from '../types/invoice.type';
 
 const columnHelper = createColumnHelper<InvoiceWaybill>();
@@ -87,6 +88,22 @@ export function useWaybillSubTable(data: InvoiceWaybill[], invoiceId: string) {
 				enableSorting: true,
 				enableColumnFilter: true,
 				filterFn: 'includesString',
+			}),
+			columnHelper.accessor('notes', {
+				header: '備註',
+				cell: (info) => <NoteCell value={info.getValue()} />,
+				enableSorting: false,
+				enableColumnFilter: true,
+				filterFn: 'includesString',
+				size: 200,
+			}),
+			columnHelper.accessor('paymentNotes', {
+				header: '收款備註',
+				cell: (info) => <NoteCell value={info.getValue()} />,
+				enableSorting: false,
+				enableColumnFilter: true,
+				filterFn: 'includesString',
+				size: 200,
 			}),
 		],
 		[],

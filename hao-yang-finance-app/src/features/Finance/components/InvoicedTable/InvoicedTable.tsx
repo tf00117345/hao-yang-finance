@@ -562,7 +562,7 @@ export function InvoicedTable({ invoices, onEdit }: InvoicedTableProps) {
 								</StyledTableRow>
 								{row.getIsExpanded() && (
 									<TableRow>
-										<TableCell colSpan={8} sx={{ p: 0, border: 0 }}>
+										<TableCell colSpan={9} sx={{ p: 0, border: 0 }}>
 											<Collapse in={row.getIsExpanded()} timeout="auto" unmountOnExit>
 												<InvoicedWaybillSubTable invoice={row.original} />
 											</Collapse>
